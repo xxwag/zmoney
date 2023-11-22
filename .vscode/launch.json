@@ -1,0 +1,48 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "zmoney",
+            "cwd": "PRGRMNG\\zmoney",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "zmoney (profile mode)",
+            "cwd": "PRGRMNG\\zmoney",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "zmoney (release mode)",
+            "cwd": "PRGRMNG\\zmoney",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        },
+        {
+            "name": "zmoney.old",
+            "cwd": "PRGRMNG\\zmoney.old",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "zmoney.old (profile mode)",
+            "cwd": "PRGRMNG\\zmoney.old",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "zmoney.old (release mode)",
+            "cwd": "PRGRMNG\\zmoney.old",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        }
+    ]
+}
