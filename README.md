@@ -1,6 +1,4 @@
 
-Great, with the information that your repository is for a "number lottery" Flutter application, I'll adjust the GitHub README template accordingly. Here's a revised version tailored to fit your Flutter app:
-
 ZMONEYTC Number Lottery Flutter App
 Introduction
 Welcome to the ZMONEYTC Number Lottery App, a Flutter-based application designed to bring exciting lottery experiences to your fingertips. This repository contains the source code and documentation for our innovative lottery application.
