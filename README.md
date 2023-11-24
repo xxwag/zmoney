@@ -28,6 +28,7 @@ void main() {
   runApp(ZMoney1App());
 }
 Contributing
+
 Contributions to enhance the app are always welcome. Please read our contributing guidelines for more information on how to submit pull requests.
 
 License
@@ -50,4 +51,3 @@ For more information, visit: www.zahasmaster.pro
 Contact
 For more information or inquiries about the ZMONEYTC Number Lottery App, please visit ZMONEYTC's website.
 
-This README template is tailored for your specific project, reflecting the nature of your Flutter application and the associated details. You can add this to your GitHub repository by editing the README.md file, ensuring it aligns with your project's characteristics and requirements.
