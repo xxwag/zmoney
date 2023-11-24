@@ -23,7 +23,7 @@ License
 ===============================================================================
 Copyright © [2024], ZMONEYTC. All Rights Reserved.
 
-This code is the exclusive property of Maxmilian Vebr. The code was written solely by Maxmilian Vebr and Alexandr Fuksa.
+This code is the exclusive property of Maxmilian Vebr a Alexandr Fuksa. The code was written solely by Maxmilian Vebr and Alexandr Fuksa.
 
 All components and libraries utilized within this code have publicly available licenses. The author, Maxmilian Vebr, affirms that this code does not violate any regulations or rights.
 
