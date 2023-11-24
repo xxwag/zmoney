@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'dart:async';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:confetti/confetti.dart'; // Import the confetti package
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,40 +39,61 @@ class LandingPageState extends State<LandingPage>
   late BannerAd _bannerAd;
   bool _isBannerAdReady = false;
   bool _showTutorial = true; // State to manage tutorial visibility
-  bool _showPartyAnimation = true; // State for party animation
+  final bool _showPartyAnimation = true; // State for party animation
 
   int _tutorialStep = 0; // To keep track of tutorial steps
   late ConfettiController _confettiController; // ConfettiController
 
-  // Define tutorialSteps as a class-level variable using TutorialStep
-  final List<TutorialStep> tutorialSteps = [
-    TutorialStep(
-      widget: _tutorialStepWidget('This is the Go button. Tap here to start.'),
-      alignment: Alignment.bottomCenter,
-    ),
-    TutorialStep(
-      widget: _tutorialStepWidget('Here you can enter numbers.'),
-      alignment: Alignment.center,
-    ),
-    // Add more steps as needed
-  ];
+  // GlobalKeys for target widgets
+  GlobalKey key1 = GlobalKey();
+  GlobalKey key2 = GlobalKey();
+  // Add more keys as needed
+
+  late List<TutorialStep> tutorialSteps;
+
+  void _incrementLaunchCount() async {
+    final prefs = await SharedPreferences.getInstance();
+    int launchCount = prefs.getInt('launchCount') ?? 0;
+    prefs.setInt('launchCount', launchCount + 1);
+  }
 
   @override
   void initState() {
     super.initState();
-    _initBannerAd();
 
-    _confettiController = ConfettiController(
-        duration:
-            const Duration(seconds: 10)); // Initialize the ConfettiController
+    _incrementLaunchCount();
+    _confettiController =
+        ConfettiController(duration: const Duration(seconds: 10));
     _confettiController.play();
 
-    // Optional: Set a delay to automatically turn off the party animation
-    Future.delayed(const Duration(seconds: 5), () {
-      setState(() {
-        _showPartyAnimation = false;
-      });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        setState(() {
+          _showTutorial = true;
+          tutorialSteps = [
+            TutorialStep(
+              widget: _tutorialStepWidget(
+                  'This is the Go button. Tap here to start.'),
+              targetKey: key1,
+              direction: TooltipDirection.bottom,
+              description:
+                  'Tap the Go button to start your journey!', // Add description
+            ),
+            TutorialStep(
+              widget: _tutorialStepWidget('Here you can enter numbers.'),
+              targetKey: key2,
+              direction: TooltipDirection.top,
+              description: 'Enter numbers in this field.', // Add description
+            ),
+            // Additional steps...
+          ];
+        });
+      }
     });
+
+    // Check if the tutorial has been completed previously
+    _checkTutorialCompletion();
+    _initBannerAd();
   }
 
   void _initBannerAd() {
@@ -120,6 +142,17 @@ class LandingPageState extends State<LandingPage>
     super.dispose();
   }
 
+  void _playConfettiAnimation() {
+    _confettiController.play();
+
+    // Schedule the animation to stop after a certain duration
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) {
+        _confettiController.stop();
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     var screenSize = MediaQuery.of(context).size;
@@ -132,8 +165,6 @@ class LandingPageState extends State<LandingPage>
             color: _showPartyAnimation
                 ? Colors.yellow
                 : const Color(0xFF369A82), // Switch background color
-            //width: screenSize.width,
-            //height: screenSize.height,
           ),
           // Confetti animation widget
           Align(
@@ -170,64 +201,9 @@ class LandingPageState extends State<LandingPage>
                         ),
                       ),
                       SizedBox(height: screenSize.height * 0.1),
-                      SizedBox(
-                        width: screenSize.width * 0.8,
-                        child: Column(
-                          children: [
-                            Container(
-                              width: screenSize.width * 0.8,
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 10),
-                              decoration: ShapeDecoration(
-                                color: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                              child: TextField(
-                                keyboardType: TextInputType.number,
-                                inputFormatters: [
-                                  FilteringTextInputFormatter.digitsOnly,
-                                  LengthLimitingTextInputFormatter(7),
-                                ],
-                                decoration: const InputDecoration(
-                                  border: InputBorder.none,
-                                  hintText: 'Enter numbers',
-                                ),
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  fontSize: 24,
-                                  fontFamily: 'Inter',
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                      _buildNumberInput(screenSize),
                       SizedBox(height: screenSize.height * 0.1),
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: const BoxDecoration(
-                          boxShadow: [
-                            BoxShadow(
-                              color: Color(0x3F000000),
-                              blurRadius: 4,
-                              offset: Offset(0, 4),
-                              spreadRadius: 0,
-                            ),
-                          ],
-                        ),
-                        child: const Text(
-                          'Go!',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 40,
-                            fontFamily: 'Inter',
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
+                      _buildGoButton(screenSize),
                       SizedBox(height: screenSize.height * 0.1),
                       GestureDetector(
                         onTap: startTimer,
@@ -259,55 +235,146 @@ class LandingPageState extends State<LandingPage>
   }
 
   Widget _buildTutorialOverlay() {
-    return Visibility(
-      visible: _showTutorial,
-      child: GestureDetector(
-        onTap: _nextTutorialStep,
-        child: Stack(
-          children: [
-            // Semi-transparent overlay removed to allow interaction with the page
-            Align(
-              alignment: tutorialSteps[_tutorialStep].alignment,
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 500),
-                child:
-                    _animatedTutorialStep(tutorialSteps[_tutorialStep].widget),
-              ),
+    if (_tutorialStep >= tutorialSteps.length) {
+      return const SizedBox.shrink();
+    }
+
+    final currentStep = tutorialSteps[_tutorialStep];
+    final keyContext = currentStep.targetKey.currentContext;
+
+    if (keyContext != null) {
+      final RenderBox renderBox = keyContext.findRenderObject() as RenderBox;
+      final position = renderBox.localToGlobal(Offset.zero);
+
+      return Positioned(
+        left: position.dx,
+        top: position.dy,
+        child: GestureDetector(
+          onTap: _nextTutorialStep,
+          child: Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
+              boxShadow: const [
+                BoxShadow(color: Colors.black26, blurRadius: 4, spreadRadius: 2)
+              ],
             ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Tutorial Step $_tutorialStep',
+                  style: const TextStyle(color: Colors.black, fontSize: 16),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  currentStep.description, // Display the description
+                  style: const TextStyle(color: Colors.black87),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    } else {
+      return const SizedBox.shrink();
+    }
+  }
+
+  Widget _buildNumberInput(Size screenSize) {
+    return SizedBox(
+      width: screenSize.width * 0.8,
+      child: Container(
+        width: screenSize.width * 0.8,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        decoration: ShapeDecoration(
+          color: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+        child: TextField(
+          key: key1, // Assign the GlobalKey here
+          keyboardType: TextInputType.number,
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+            LengthLimitingTextInputFormatter(7),
           ],
+          decoration: const InputDecoration(
+            border: InputBorder.none,
+            hintText: 'Enter numbers',
+          ),
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 24,
+            fontFamily: 'Inter',
+          ),
+          onTap: _playConfettiAnimation, // Play confetti on interaction
         ),
       ),
     );
   }
 
-  Widget _animatedTutorialStep(Widget widget) {
-    return ScaleTransition(
-      scale: Tween<double>(begin: 0.8, end: 1.0).animate(
-        CurvedAnimation(
-            parent: AnimationController(
-                vsync: this, duration: const Duration(milliseconds: 500)),
-            curve: Curves.elasticOut),
-      ),
-      child: Container(
-        key: ValueKey<int>(_tutorialStep),
-        padding: const EdgeInsets.all(20),
-        margin: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          boxShadow: const [
-            BoxShadow(color: Colors.black45, blurRadius: 10, spreadRadius: 2)
-          ],
+  Widget _buildGoButton(Size screenSize) {
+    return Container(
+      key: key2, // Assign the GlobalKey here
+      child: GestureDetector(
+        onTap: () {
+          startTimer();
+          _playConfettiAnimation(); // Play confetti on interaction
+        },
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: const BoxDecoration(
+            boxShadow: [
+              BoxShadow(
+                color: Color(0x3F000000),
+                blurRadius: 4,
+                offset: Offset(0, 4),
+                spreadRadius: 0,
+              ),
+            ],
+          ),
+          child: const Text(
+            'Go!',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 40,
+              fontFamily: 'Inter',
+              fontWeight: FontWeight.w700,
+            ),
+          ),
         ),
-        child: widget,
       ),
     );
+  }
+
+  void _checkTutorialCompletion() async {
+    final prefs = await SharedPreferences.getInstance();
+    final tutorialCompleted = prefs.getBool('tutorialCompleted') ?? false;
+
+    if (tutorialCompleted) {
+      // Tutorial was completed previously, reset it
+      await prefs.setBool('tutorialCompleted', false); // Reset to false
+      setState(() => _showTutorial = true); // Show the tutorial again
+    } else {
+      // Tutorial was not completed, keep the current state
+      setState(() => _showTutorial = false);
+    }
+  }
+
+  void _completeTutorial() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('tutorialCompleted', true);
   }
 
   void _nextTutorialStep() {
     if (_tutorialStep < tutorialSteps.length - 1) {
       setState(() => _tutorialStep++);
     } else {
+      _completeTutorial();
       setState(() {
         _tutorialStep = 0;
         _showTutorial = false;
@@ -334,7 +401,16 @@ class LandingPageState extends State<LandingPage>
 
 class TutorialStep {
   final Widget widget;
-  final Alignment alignment;
+  final GlobalKey targetKey;
+  final TooltipDirection direction;
+  final String description; // Add this line
 
-  TutorialStep({required this.widget, required this.alignment});
+  TutorialStep({
+    required this.widget,
+    required this.targetKey,
+    required this.direction,
+    required this.description, // Add this line
+  });
 }
+
+enum TooltipDirection { top, right, bottom, left }

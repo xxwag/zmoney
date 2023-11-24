@@ -24,7 +24,7 @@ events:
       The output was:
       0
       MSBuild version 17.7.2+d6990bcfa for .NET Framework
-      Build started 11/20/2023 8:38:00 PM.
+      Build started 11/23/2023 10:18:38 PM.
       
       Project "D:\\zmoney\\build\\windows\\CMakeFiles\\3.26.4-msvc4\\CompilerIdCXX\\CompilerIdCXX.vcxproj" on node 1 (default targets).
       PrepareForBuild:
@@ -52,7 +52,7 @@ events:
           0 Warning(s)
           0 Error(s)
       
-      Time Elapsed 00:00:02.09
+      Time Elapsed 00:00:01.83
       
       
       Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "CompilerIdCXX.exe"
@@ -71,8 +71,8 @@ events:
     checks:
       - "Detecting CXX compiler ABI info"
     directories:
-      source: "D:/zmoney/build/windows/CMakeFiles/CMakeScratch/TryCompile-538gnn"
-      binary: "D:/zmoney/build/windows/CMakeFiles/CMakeScratch/TryCompile-538gnn"
+      source: "D:/zmoney/build/windows/CMakeFiles/CMakeScratch/TryCompile-84z1d2"
+      binary: "D:/zmoney/build/windows/CMakeFiles/CMakeScratch/TryCompile-84z1d2"
     cmakeVariables:
       CMAKE_CXX_FLAGS: "/DWIN32 /D_WINDOWS /W3 /GR /EHsc"
       CMAKE_CXX_FLAGS_DEBUG: "/MDd /Zi /Ob0 /Od /RTC1"
@@ -81,38 +81,38 @@ events:
       variable: "CMAKE_CXX_ABI_COMPILED"
       cached: true
       stdout: |
-        Change Dir: D:/zmoney/build/windows/CMakeFiles/CMakeScratch/TryCompile-538gnn
+        Change Dir: D:/zmoney/build/windows/CMakeFiles/CMakeScratch/TryCompile-84z1d2
         
-        Run Build Command(s):C:/Program Files/Microsoft Visual Studio/2022/Community/MSBuild/Current/Bin/amd64/MSBuild.exe cmTC_039b4.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:n && MSBuild version 17.7.2+d6990bcfa for .NET Framework
-        Build started 11/20/2023 8:38:03 PM.
+        Run Build Command(s):C:/Program Files/Microsoft Visual Studio/2022/Community/MSBuild/Current/Bin/amd64/MSBuild.exe cmTC_dd508.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:n && MSBuild version 17.7.2+d6990bcfa for .NET Framework
+        Build started 11/23/2023 10:18:41 PM.
         
-        Project "D:\\zmoney\\build\\windows\\CMakeFiles\\CMakeScratch\\TryCompile-538gnn\\cmTC_039b4.vcxproj" on node 1 (default targets).
+        Project "D:\\zmoney\\build\\windows\\CMakeFiles\\CMakeScratch\\TryCompile-84z1d2\\cmTC_dd508.vcxproj" on node 1 (default targets).
         PrepareForBuild:
-          Creating directory "cmTC_039b4.dir\\Debug\\".
-          Creating directory "D:\\zmoney\\build\\windows\\CMakeFiles\\CMakeScratch\\TryCompile-538gnn\\Debug\\".
-          Creating directory "cmTC_039b4.dir\\Debug\\cmTC_039b4.tlog\\".
+          Creating directory "cmTC_dd508.dir\\Debug\\".
+          Creating directory "D:\\zmoney\\build\\windows\\CMakeFiles\\CMakeScratch\\TryCompile-84z1d2\\Debug\\".
+          Creating directory "cmTC_dd508.dir\\Debug\\cmTC_dd508.tlog\\".
         InitializeBuildStatus:
-          Creating "cmTC_039b4.dir\\Debug\\cmTC_039b4.tlog\\unsuccessfulbuild" because "AlwaysCreate" was specified.
-          Touching "cmTC_039b4.dir\\Debug\\cmTC_039b4.tlog\\unsuccessfulbuild".
+          Creating "cmTC_dd508.dir\\Debug\\cmTC_dd508.tlog\\unsuccessfulbuild" because "AlwaysCreate" was specified.
+          Touching "cmTC_dd508.dir\\Debug\\cmTC_dd508.tlog\\unsuccessfulbuild".
         ClCompile:
-          C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.37.32822\\bin\\HostX64\\x64\\CL.exe /c /Zi /W3 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\\"Debug\\"" /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"cmTC_039b4.dir\\Debug\\\\" /Fd"cmTC_039b4.dir\\Debug\\vc143.pdb" /external:W3 /Gd /TP /errorReport:queue "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\share\\cmake-3.26\\Modules\\CMakeCXXCompilerABI.cpp"
+          C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.37.32822\\bin\\HostX64\\x64\\CL.exe /c /Zi /W3 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\\"Debug\\"" /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"cmTC_dd508.dir\\Debug\\\\" /Fd"cmTC_dd508.dir\\Debug\\vc143.pdb" /external:W3 /Gd /TP /errorReport:queue "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\share\\cmake-3.26\\Modules\\CMakeCXXCompilerABI.cpp"
           Microsoft (R) C/C++ Optimizing Compiler Version 19.37.32825 for x64
           Copyright (C) Microsoft Corporation.  All rights reserved.
-          cl /c /Zi /W3 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\\"Debug\\"" /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"cmTC_039b4.dir\\Debug\\\\" /Fd"cmTC_039b4.dir\\Debug\\vc143.pdb" /external:W3 /Gd /TP /errorReport:queue "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\share\\cmake-3.26\\Modules\\CMakeCXXCompilerABI.cpp"
+          cl /c /Zi /W3 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\\"Debug\\"" /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"cmTC_dd508.dir\\Debug\\\\" /Fd"cmTC_dd508.dir\\Debug\\vc143.pdb" /external:W3 /Gd /TP /errorReport:queue "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\share\\cmake-3.26\\Modules\\CMakeCXXCompilerABI.cpp"
           CMakeCXXCompilerABI.cpp
         Link:
-          C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.37.32822\\bin\\HostX64\\x64\\link.exe /ERRORREPORT:QUEUE /OUT:"D:\\zmoney\\build\\windows\\CMakeFiles\\CMakeScratch\\TryCompile-538gnn\\Debug\\cmTC_039b4.exe" /INCREMENTAL /ILK:"cmTC_039b4.dir\\Debug\\cmTC_039b4.ilk" /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"D:/zmoney/build/windows/CMakeFiles/CMakeScratch/TryCompile-538gnn/Debug/cmTC_039b4.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"D:/zmoney/build/windows/CMakeFiles/CMakeScratch/TryCompile-538gnn/Debug/cmTC_039b4.lib" /MACHINE:X64  /machine:x64 cmTC_039b4.dir\\Debug\\CMakeCXXCompilerABI.obj
-          cmTC_039b4.vcxproj -> D:\\zmoney\\build\\windows\\CMakeFiles\\CMakeScratch\\TryCompile-538gnn\\Debug\\cmTC_039b4.exe
+          C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.37.32822\\bin\\HostX64\\x64\\link.exe /ERRORREPORT:QUEUE /OUT:"D:\\zmoney\\build\\windows\\CMakeFiles\\CMakeScratch\\TryCompile-84z1d2\\Debug\\cmTC_dd508.exe" /INCREMENTAL /ILK:"cmTC_dd508.dir\\Debug\\cmTC_dd508.ilk" /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"D:/zmoney/build/windows/CMakeFiles/CMakeScratch/TryCompile-84z1d2/Debug/cmTC_dd508.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"D:/zmoney/build/windows/CMakeFiles/CMakeScratch/TryCompile-84z1d2/Debug/cmTC_dd508.lib" /MACHINE:X64  /machine:x64 cmTC_dd508.dir\\Debug\\CMakeCXXCompilerABI.obj
+          cmTC_dd508.vcxproj -> D:\\zmoney\\build\\windows\\CMakeFiles\\CMakeScratch\\TryCompile-84z1d2\\Debug\\cmTC_dd508.exe
         FinalizeBuildStatus:
-          Deleting file "cmTC_039b4.dir\\Debug\\cmTC_039b4.tlog\\unsuccessfulbuild".
-          Touching "cmTC_039b4.dir\\Debug\\cmTC_039b4.tlog\\cmTC_039b4.lastbuildstate".
-        Done Building Project "D:\\zmoney\\build\\windows\\CMakeFiles\\CMakeScratch\\TryCompile-538gnn\\cmTC_039b4.vcxproj" (default targets).
+          Deleting file "cmTC_dd508.dir\\Debug\\cmTC_dd508.tlog\\unsuccessfulbuild".
+          Touching "cmTC_dd508.dir\\Debug\\cmTC_dd508.tlog\\cmTC_dd508.lastbuildstate".
+        Done Building Project "D:\\zmoney\\build\\windows\\CMakeFiles\\CMakeScratch\\TryCompile-84z1d2\\cmTC_dd508.vcxproj" (default targets).
         
         Build succeeded.
             0 Warning(s)
             0 Error(s)
         
-        Time Elapsed 00:00:01.54
+        Time Elapsed 00:00:01.51
         
       exitCode: 0
 ...
