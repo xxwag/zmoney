@@ -5,6 +5,7 @@ import 'dart:async';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:confetti/confetti.dart'; // Import the confetti package
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:math' as math; // Import the math library
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -67,28 +68,31 @@ class LandingPageState extends State<LandingPage>
     _confettiController.play();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        setState(() {
-          _showTutorial = true;
-          tutorialSteps = [
-            TutorialStep(
-              widget: _tutorialStepWidget(
-                  'This is the Go button. Tap here to start.'),
-              targetKey: key1,
-              direction: TooltipDirection.bottom,
-              description:
-                  'Tap the Go button to start your journey!', // Add description
-            ),
-            TutorialStep(
-              widget: _tutorialStepWidget('Here you can enter numbers.'),
-              targetKey: key2,
-              direction: TooltipDirection.top,
-              description: 'Enter numbers in this field.', // Add description
-            ),
-            // Additional steps...
-          ];
-        });
-      }
+      Future.delayed(const Duration(seconds: 1), () {
+        // Adjust the duration as needed
+        if (mounted) {
+          setState(() {
+            _showTutorial = true;
+            tutorialSteps = [
+              TutorialStep(
+                widget: _tutorialStepWidget(
+                    'This is the Go button. Tap here to start.'),
+                targetKey: key1,
+                direction: TooltipDirection.bottom,
+                description:
+                    'Tap the Go button to start your journey!', // Add description
+              ),
+              TutorialStep(
+                widget: _tutorialStepWidget('Here you can enter numbers.'),
+                targetKey: key2,
+                direction: TooltipDirection.top,
+                description: 'Enter numbers in this field.', // Add description
+              ),
+              // Additional steps...
+            ];
+          });
+        }
+      });
     });
 
     // Check if the tutorial has been completed previously
@@ -171,7 +175,16 @@ class LandingPageState extends State<LandingPage>
             alignment: Alignment.topCenter,
             child: ConfettiWidget(
               confettiController: _confettiController,
-              blastDirectionality: BlastDirectionality.explosive,
+              blastDirectionality: BlastDirectionality.directional,
+              blastDirection:
+                  -math.pi / 2, // Makes particles fall straight down
+              particleDrag: 0.05, // Apply drag to the particles
+              emissionFrequency: 0.05, // Control emission frequency
+              numberOfParticles: 20, // Number of particles to be emitted
+              gravity: 0.05, // Adjust gravity to make it look like raining
+              colors: const [
+                Colors.green
+              ], // Colors can be adjusted or made transparent for images
               // Other properties as per your design
             ),
           ),
