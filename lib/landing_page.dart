@@ -382,22 +382,112 @@ class LandingPageState extends State<LandingPage>
   }
 
   void _showResultDialog(bool isCorrect) {
+    if (isCorrect) {
+      _confettiController.play();
+    }
+
     showDialog(
       context: context,
+      barrierDismissible: false, // Disable closing by tapping outside
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(isCorrect ? 'Congratulations!' : 'Try Again!'),
-          content: Text(isCorrect ? 'You won!' : 'You lost. Please try again.'),
-          actions: <Widget>[
-            TextButton(
-              child: Text('OK'),
-              onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
-              },
-            ),
-          ],
+        return WillPopScope(
+          onWillPop: () async => false, // Disable closing by back button
+          child: isCorrect ? _buildWinOverlay() : _buildLoseOverlay(),
         );
       },
+    );
+  }
+
+  Widget _buildWinOverlay() {
+    return GestureDetector(
+      onTap: () => Navigator.of(context).pop(), // Close on tap
+      child: Container(
+        color: Colors.transparent,
+        child: Center(
+          child: Container(
+            padding: EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.greenAccent,
+              borderRadius: BorderRadius.circular(15),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.green.shade200,
+                  blurRadius: 10,
+                  spreadRadius: 5,
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.celebration, size: 48, color: Colors.white),
+                SizedBox(height: 8),
+                Text(
+                  'Congratulations!',
+                  style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white),
+                ),
+                SizedBox(height: 16),
+                TextButton(
+                  child: Text('OK', style: TextStyle(color: Colors.white)),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoseOverlay() {
+    return GestureDetector(
+      onTap: () => Navigator.of(context).pop(), // Close on tap
+      child: Container(
+        color: Colors.transparent,
+        child: Center(
+          child: Container(
+            padding: EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.redAccent,
+              borderRadius: BorderRadius.circular(15),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.red.shade200,
+                  blurRadius: 10,
+                  spreadRadius: 5,
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.sentiment_very_dissatisfied,
+                    size: 48, color: Colors.white),
+                SizedBox(height: 8),
+                Text(
+                  'Try Again!',
+                  style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white),
+                ),
+                SizedBox(height: 16),
+                TextButton(
+                  child: Text('OK', style: TextStyle(color: Colors.white)),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 
