@@ -1,5 +1,6 @@
 D:/zmoney/build/windows/runner/Debug/data/icudtl.dat
 D:/zmoney/build/windows/runner/Debug/flutter_windows.dll
+D:/zmoney/build/windows/runner/Debug/windows_notification_plugin.dll
 D:/zmoney/build/windows/runner/Debug/data/flutter_assets/AssetManifest.bin
 D:/zmoney/build/windows/runner/Debug/data/flutter_assets/AssetManifest.json
 D:/zmoney/build/windows/runner/Debug/data/flutter_assets/FontManifest.json
