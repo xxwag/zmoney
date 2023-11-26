@@ -148,6 +148,10 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <Project>{4DC4DB4F-E212-3ADA-814F-C2333C7BB8DE}</Project>
       <Name>flutter_wrapper_plugin</Name>
     </ProjectReference>
+    <ProjectReference Include="D:\zmoney\build\windows\plugins\windows_notification\windows_notification_plugin.vcxproj">
+      <Project>{0D2BAA11-FD67-35E0-8387-C5DDD590DD18}</Project>
+      <Name>windows_notification_plugin</Name>
+    </ProjectReference>
     <ProjectReference Include="D:\zmoney\build\windows\runner\zmoney.vcxproj">
       <Project>{1563682B-3FB2-3F37-8B77-FA13923A6AF3}</Project>
       <Name>zmoney</Name>

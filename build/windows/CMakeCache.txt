@@ -195,6 +195,15 @@ runner_IS_TOP_LEVEL:STATIC=OFF
 runner_SOURCE_DIR:STATIC=D:/zmoney/windows/runner
 
 //Value Computed by CMake
+windows_notification_BINARY_DIR:STATIC=D:/zmoney/build/windows/plugins/windows_notification
+
+//Value Computed by CMake
+windows_notification_IS_TOP_LEVEL:STATIC=OFF
+
+//Value Computed by CMake
+windows_notification_SOURCE_DIR:STATIC=D:/zmoney/windows/flutter/ephemeral/.plugin_symlinks/windows_notification/windows
+
+//Value Computed by CMake
 zmoney_BINARY_DIR:STATIC=D:/zmoney/build/windows
 
 //Value Computed by CMake
@@ -282,7 +291,7 @@ CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_MT
 CMAKE_MT-ADVANCED:INTERNAL=1
 //number of local generators
-CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=3
+CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=4
 //Platform information initialized
 CMAKE_PLATFORM_INFO_INITIALIZED:INTERNAL=1
 //noop for ranlib

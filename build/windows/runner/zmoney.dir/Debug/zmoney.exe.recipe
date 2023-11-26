@@ -8,6 +8,9 @@
       <FullPath>D:\zmoney\build\windows\flutter\x64\Debug\flutter_assemble</FullPath>
     </ProjectOutput>
     <ProjectOutput>
+      <FullPath>D:\zmoney\build\windows\plugins\windows_notification\Debug\windows_notification_plugin.dll</FullPath>
+    </ProjectOutput>
+    <ProjectOutput>
       <FullPath>D:\zmoney\build\windows\runner\Debug\zmoney.exe</FullPath>
     </ProjectOutput>
   </ProjectOutputs>
