@@ -194,6 +194,12 @@
       "languageVersion": "3.0"
     },
     {
+      "name": "screen_retriever",
+      "rootUri": "file:///C:/Users/xxwag/AppData/Local/Pub/Cache/hosted/pub.dev/screen_retriever-0.1.9",
+      "packageUri": "lib/",
+      "languageVersion": "2.18"
+    },
+    {
       "name": "shared_preferences",
       "rootUri": "file:///C:/Users/xxwag/AppData/Local/Pub/Cache/hosted/pub.dev/shared_preferences-2.2.2",
       "packageUri": "lib/",
@@ -315,7 +321,7 @@
     },
     {
       "name": "webview_flutter_platform_interface",
-      "rootUri": "file:///C:/Users/xxwag/AppData/Local/Pub/Cache/hosted/pub.dev/webview_flutter_platform_interface-2.7.0",
+      "rootUri": "file:///C:/Users/xxwag/AppData/Local/Pub/Cache/hosted/pub.dev/webview_flutter_platform_interface-2.8.0",
       "packageUri": "lib/",
       "languageVersion": "3.0"
     },
@@ -330,6 +336,12 @@
       "rootUri": "file:///C:/Users/xxwag/AppData/Local/Pub/Cache/hosted/pub.dev/win32-5.1.0",
       "packageUri": "lib/",
       "languageVersion": "3.1"
+    },
+    {
+      "name": "window_manager",
+      "rootUri": "file:///C:/Users/xxwag/AppData/Local/Pub/Cache/hosted/pub.dev/window_manager-0.3.7",
+      "packageUri": "lib/",
+      "languageVersion": "2.18"
     },
     {
       "name": "windows_notification",
@@ -350,7 +362,7 @@
       "languageVersion": "3.1"
     }
   ],
-  "generated": "2023-11-26T03:34:58.613308Z",
+  "generated": "2023-11-28T20:47:50.276225Z",
   "generator": "pub",
   "generatorVersion": "3.1.0"
 }
