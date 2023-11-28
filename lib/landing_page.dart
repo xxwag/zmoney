@@ -43,7 +43,7 @@ class LandingPageState extends State<LandingPage>
   GlobalKey key2 = GlobalKey();
   // Add more keys as needed
 
-  late List<TutorialStep> tutorialSteps;
+  List<TutorialStep> tutorialSteps = [];
 
   void _incrementLaunchCount() async {
     final prefs = await SharedPreferences.getInstance();
@@ -66,7 +66,7 @@ class LandingPageState extends State<LandingPage>
     // TADY SE MUSI DODELAT TUTORIAL STEPY, KAZDEJ JE NAVAZANEJ NA KEY (key1, key2) KTERYM SE MUSI OZNACIT ELEMENT WIDGETU
     // VIz. DOLE TUTORIAL STEP CLASS
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Future.delayed(const Duration(seconds: 2), () {
+      Future.delayed(const Duration(seconds: 0), () {
         // Adjust the duration as needed
         if (mounted) {
           setState(() {
@@ -355,6 +355,9 @@ class LandingPageState extends State<LandingPage>
           body: jsonEncode({'guess': guess}),
         );
 
+        print('Response Status Code: ${response.statusCode}');
+        print('Response Body: ${response.body}');
+
         if (response.statusCode == 200) {
           var result = json.decode(response.body);
           bool isCorrect = result['correct'];
@@ -363,8 +366,7 @@ class LandingPageState extends State<LandingPage>
           setState(() {
             _isWaitingForResponse = false; // Stop waiting stage
             // Show result to user (win/lose)
-            _showResultDialog(
-                isCorrect); // Implement this method to show result
+            _showResultDialog(isCorrect);
           });
         } else {
           // Handle error
@@ -372,6 +374,12 @@ class LandingPageState extends State<LandingPage>
             _isWaitingForResponse = false; // Stop waiting stage
           });
         }
+      } catch (e) {
+        // Handle exception
+        print('Exception: $e');
+        setState(() {
+          _isWaitingForResponse = false; // Stop waiting stage
+        });
       } catch (e) {
         // Handle exception
         setState(() {

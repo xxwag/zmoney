@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
         android:label="zmoney"
-        android:name="${applicationName}"
+       
         android:icon="@mipmap/ic_launcher">
        
     <!-- Sample Ad Manager app ID: ca-app-pub-3940256099942544~3347511713 -->
@@ -24,9 +24,20 @@
               android:name="io.flutter.embedding.android.NormalTheme"
               android:resource="@style/NormalTheme"
               />
+                <!-- Default intent filter for the main launcher activity -->
             <intent-filter>
+            <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
+
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+
+            <!-- Intent filter for OAuth redirection -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="${appAuthRedirectScheme}" />
             </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.

@@ -195,6 +195,24 @@ runner_IS_TOP_LEVEL:STATIC=OFF
 runner_SOURCE_DIR:STATIC=D:/zmoney/windows/runner
 
 //Value Computed by CMake
+screen_retriever_BINARY_DIR:STATIC=D:/zmoney/build/windows/plugins/screen_retriever
+
+//Value Computed by CMake
+screen_retriever_IS_TOP_LEVEL:STATIC=OFF
+
+//Value Computed by CMake
+screen_retriever_SOURCE_DIR:STATIC=D:/zmoney/windows/flutter/ephemeral/.plugin_symlinks/screen_retriever/windows
+
+//Value Computed by CMake
+window_manager_BINARY_DIR:STATIC=D:/zmoney/build/windows/plugins/window_manager
+
+//Value Computed by CMake
+window_manager_IS_TOP_LEVEL:STATIC=OFF
+
+//Value Computed by CMake
+window_manager_SOURCE_DIR:STATIC=D:/zmoney/windows/flutter/ephemeral/.plugin_symlinks/window_manager/windows
+
+//Value Computed by CMake
 windows_notification_BINARY_DIR:STATIC=D:/zmoney/build/windows/plugins/windows_notification
 
 //Value Computed by CMake
@@ -291,7 +309,7 @@ CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_MT
 CMAKE_MT-ADVANCED:INTERNAL=1
 //number of local generators
-CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=4
+CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=6
 //Platform information initialized
 CMAKE_PLATFORM_INFO_INITIALIZED:INTERNAL=1
 //noop for ranlib

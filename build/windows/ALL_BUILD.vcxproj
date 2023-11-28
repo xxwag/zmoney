@@ -148,6 +148,14 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <Project>{4DC4DB4F-E212-3ADA-814F-C2333C7BB8DE}</Project>
       <Name>flutter_wrapper_plugin</Name>
     </ProjectReference>
+    <ProjectReference Include="D:\zmoney\build\windows\plugins\screen_retriever\screen_retriever_plugin.vcxproj">
+      <Project>{FABF7F56-3788-33D1-B031-6D3E53A4BB61}</Project>
+      <Name>screen_retriever_plugin</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\zmoney\build\windows\plugins\window_manager\window_manager_plugin.vcxproj">
+      <Project>{CA6F6502-4F45-3FC5-A462-040A07111447}</Project>
+      <Name>window_manager_plugin</Name>
+    </ProjectReference>
     <ProjectReference Include="D:\zmoney\build\windows\plugins\windows_notification\windows_notification_plugin.vcxproj">
       <Project>{0D2BAA11-FD67-35E0-8387-C5DDD590DD18}</Project>
       <Name>windows_notification_plugin</Name>

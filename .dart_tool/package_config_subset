@@ -114,6 +114,10 @@ plugin_platform_interface
 3.0
 file:///C:/Users/xxwag/AppData/Local/Pub/Cache/hosted/pub.dev/plugin_platform_interface-2.1.7/
 file:///C:/Users/xxwag/AppData/Local/Pub/Cache/hosted/pub.dev/plugin_platform_interface-2.1.7/lib/
+screen_retriever
+2.18
+file:///C:/Users/xxwag/AppData/Local/Pub/Cache/hosted/pub.dev/screen_retriever-0.1.9/
+file:///C:/Users/xxwag/AppData/Local/Pub/Cache/hosted/pub.dev/screen_retriever-0.1.9/lib/
 shared_preferences
 2.19
 file:///C:/Users/xxwag/AppData/Local/Pub/Cache/hosted/pub.dev/shared_preferences-2.2.2/
@@ -192,8 +196,8 @@ file:///C:/Users/xxwag/AppData/Local/Pub/Cache/hosted/pub.dev/webview_flutter_an
 file:///C:/Users/xxwag/AppData/Local/Pub/Cache/hosted/pub.dev/webview_flutter_android-3.12.1/lib/
 webview_flutter_platform_interface
 3.0
-file:///C:/Users/xxwag/AppData/Local/Pub/Cache/hosted/pub.dev/webview_flutter_platform_interface-2.7.0/
-file:///C:/Users/xxwag/AppData/Local/Pub/Cache/hosted/pub.dev/webview_flutter_platform_interface-2.7.0/lib/
+file:///C:/Users/xxwag/AppData/Local/Pub/Cache/hosted/pub.dev/webview_flutter_platform_interface-2.8.0/
+file:///C:/Users/xxwag/AppData/Local/Pub/Cache/hosted/pub.dev/webview_flutter_platform_interface-2.8.0/lib/
 webview_flutter_wkwebview
 2.19
 file:///C:/Users/xxwag/AppData/Local/Pub/Cache/hosted/pub.dev/webview_flutter_wkwebview-3.9.4/
@@ -202,6 +206,10 @@ win32
 3.1
 file:///C:/Users/xxwag/AppData/Local/Pub/Cache/hosted/pub.dev/win32-5.1.0/
 file:///C:/Users/xxwag/AppData/Local/Pub/Cache/hosted/pub.dev/win32-5.1.0/lib/
+window_manager
+2.18
+file:///C:/Users/xxwag/AppData/Local/Pub/Cache/hosted/pub.dev/window_manager-0.3.7/
+file:///C:/Users/xxwag/AppData/Local/Pub/Cache/hosted/pub.dev/window_manager-0.3.7/lib/
 windows_notification
 2.18
 file:///C:/Users/xxwag/AppData/Local/Pub/Cache/hosted/pub.dev/windows_notification-0.0.3/

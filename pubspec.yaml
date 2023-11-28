@@ -19,6 +19,7 @@ dependencies:
   device_info: ^2.0.3
   flutter_config: ^2.0.1
   flutter_appauth: ^6.0.2
+  window_manager: ^0.3.7
 
 dev_dependencies:
   flutter_test:

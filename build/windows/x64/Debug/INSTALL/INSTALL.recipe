@@ -8,6 +8,12 @@
       <FullPath>D:\zmoney\build\windows\flutter\x64\Debug\flutter_assemble</FullPath>
     </ProjectOutput>
     <ProjectOutput>
+      <FullPath>D:\zmoney\build\windows\plugins\screen_retriever\Debug\screen_retriever_plugin.dll</FullPath>
+    </ProjectOutput>
+    <ProjectOutput>
+      <FullPath>D:\zmoney\build\windows\plugins\window_manager\Debug\window_manager_plugin.dll</FullPath>
+    </ProjectOutput>
+    <ProjectOutput>
       <FullPath>D:\zmoney\build\windows\plugins\windows_notification\Debug\windows_notification_plugin.dll</FullPath>
     </ProjectOutput>
     <ProjectOutput>
