@@ -340,27 +340,46 @@ class LandingPageState extends State<LandingPage>
   }
 
   Future<void> submitGuess() async {
-    String guess = _numberController.text;
-    if (guess.isNotEmpty &&
+    NgrokManager.fetchNgrokData();
+    String guessStr = _numberController.text; // Guess as a string
+
+    if (guessStr.isNotEmpty &&
         NgrokManager.ngrokUrl.isNotEmpty &&
         !_timerStarted) {
       setState(() {
         _isWaitingForResponse = true; // Start waiting stage
       });
 
+      // Convert string to integer
+      int? guessInt = int.tryParse(guessStr);
+      if (guessInt == null) {
+        print('Invalid number entered');
+        setState(() {
+          _isWaitingForResponse = false;
+        });
+        return;
+      }
+
+      // Debug print for converted guess
+      print('Converted guess to integer: $guessInt');
+
       try {
         var response = await http.post(
           Uri.parse('${NgrokManager.ngrokUrl}/api/guess'),
           headers: {"Content-Type": "application/json"},
-          body: jsonEncode({'guess': guess}),
+          body: jsonEncode({'guess': guessInt}), // Send the integer guess
         );
 
+        // Debug prints for response
         print('Response Status Code: ${response.statusCode}');
         print('Response Body: ${response.body}');
 
         if (response.statusCode == 200) {
           var result = json.decode(response.body);
           bool isCorrect = result['correct'];
+
+          // Debug print for result
+          print('Guess result: $isCorrect');
 
           // Handle the result
           setState(() {
@@ -369,23 +388,22 @@ class LandingPageState extends State<LandingPage>
             _showResultDialog(isCorrect);
           });
         } else {
-          // Handle error
+          // Handle non-200 responses
+          print('Non-200 HTTP response');
           setState(() {
             _isWaitingForResponse = false; // Stop waiting stage
           });
         }
       } catch (e) {
         // Handle exception
-        print('Exception: $e');
-        setState(() {
-          _isWaitingForResponse = false; // Stop waiting stage
-        });
-      } catch (e) {
-        // Handle exception
+        print('Exception during HTTP request: $e');
         setState(() {
           _isWaitingForResponse = false; // Stop waiting stage
         });
       }
+    } else {
+      // Debug print if initial conditions are not met
+      print('Cannot submit guess: Empty guess, no URL, or timer started');
     }
   }
 

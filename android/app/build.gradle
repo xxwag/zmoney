@@ -58,9 +58,9 @@ android {
 
       signingConfigs {
         release {
-            keyAlias 'mykey'
+            keyAlias 'zmoney'
             keyPassword '420420'
-            storeFile file('masterkey.jks') // Ensure this path is correct
+            storeFile file('zmoneytc.jks') // Ensure this path is correct
             storePassword '420420'
             storeType 'pkcs12'
         }

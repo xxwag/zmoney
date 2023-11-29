@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.example.zmoney.app-mergeReleaseResources-28:/values/values.xml",
+            "outputFile": "com.gg.zmoney.app-mergeReleaseResources-28:/values/values.xml",
             "map": [
                 {
                     "source": "D:\\zmoney\\build\\google_mobile_ads\\intermediates\\packaged_res\\release\\values\\values.xml",
@@ -317,10 +317,10 @@
                     "from": {
                         "startLines": "3,14",
                         "startColumns": "4,4",
-                        "startOffsets": "176,832",
+                        "startOffsets": "173,818",
                         "endLines": "7,16",
                         "endColumns": "12,12",
-                        "endOffsets": "483,998"
+                        "endOffsets": "476,982"
                     },
                     "to": {
                         "startLines": "1861,1865",

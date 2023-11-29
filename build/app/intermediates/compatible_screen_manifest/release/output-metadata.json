@@ -4,7 +4,7 @@
     "type": "COMPATIBLE_SCREEN_MANIFEST",
     "kind": "Directory"
   },
-  "applicationId": "com.example.zmoney",
+  "applicationId": "com.gg.zmoney",
   "variantName": "release",
   "elements": []
 }
