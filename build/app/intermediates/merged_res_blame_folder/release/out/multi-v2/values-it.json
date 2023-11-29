@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.example.zmoney.app-mergeReleaseResources-28:/values-it/values-it.xml",
+            "outputFile": "com.gg.zmoney.app-mergeReleaseResources-28:/values-it/values-it.xml",
             "map": [
                 {
                     "source": "C:\\Users\\xxwag\\.gradle\\caches\\transforms-3\\f5aeeb70e4aa208ac830e747eaf33ddc\\transformed\\jetified-play-services-basement-18.2.0\\res\\values-it\\values.xml",

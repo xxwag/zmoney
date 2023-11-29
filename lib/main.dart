@@ -13,27 +13,48 @@ void main() async {
   // Initialize the window manager
   await windowManager.ensureInitialized();
 
-  // Set the desired window size (e.g., 800x600)
-  WindowOptions windowOptions = const WindowOptions(
-    size: Size(800, 450),
-    center: true, // Center the window
-  );
-  windowManager.waitUntilReadyToShow(windowOptions, () async {
-    await windowManager.show();
-    await windowManager.focus();
-  });
-
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({Key? key}) : super(key: key);
 
   @override
+  _MyAppState createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  final List<Size> _windowSizes = [
+    const Size(450, 800),
+    const Size(600, 1200),
+    const Size(1024, 768),
+  ];
+  int _currentSizeIndex = 0;
+
+  void _changeWindowSize() async {
+    setState(() {
+      _currentSizeIndex = (_currentSizeIndex + 1) % _windowSizes.length;
+    });
+
+    WindowOptions windowOptions = WindowOptions(
+      size: _windowSizes[_currentSizeIndex],
+      center: true,
+    );
+    await windowManager.setSize(windowOptions.size!);
+    await windowManager.center();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       title: 'App Lottery',
-      home: LandingPage(),
+      home: Scaffold(
+        body: const LandingPage(),
+        floatingActionButton: FloatingActionButton(
+          onPressed: _changeWindowSize,
+          child: const Icon(Icons.aspect_ratio),
+        ),
+      ),
     );
   }
 }
