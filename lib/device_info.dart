@@ -1,14 +1,13 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:io';
-import 'package:device_info/device_info.dart';
 
-Future<Map<String, dynamic>> fetchUserDetails() async {
+/*Future<Map<String, dynamic>> fetchUserDetails() async {
   // Fetch IP Address
   String ipAddress = await fetchIPAddress();
 
   // Fetch Device Information
-  Map<String, dynamic> deviceInfo = await getDeviceInfo();
+  //Map<String, dynamic> deviceInfo = await getDeviceInfo();
 
   // Combine and return the data
   return {
@@ -16,7 +15,7 @@ Future<Map<String, dynamic>> fetchUserDetails() async {
     ...deviceInfo,
   };
 }
-
+*/
 Future<String> fetchIPAddress() async {
   final response =
       await http.get(Uri.parse('https://api.ipify.org?format=json'));
@@ -29,7 +28,7 @@ Future<String> fetchIPAddress() async {
   }
 }
 
-Future<Map<String, dynamic>> getDeviceInfo() async {
+/*Future<Map<String, dynamic>> getDeviceInfo() async {
   DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
   Map<String, dynamic> deviceData = {};
 
@@ -82,3 +81,4 @@ Future<Map<String, dynamic>> getDeviceInfo() async {
 
   return deviceData;
 }
+*/

@@ -1,12 +1,16 @@
 package com.gg.zmoney
 
 import android.os.Bundle
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.ads.RequestConfiguration
 import io.flutter.embedding.android.FlutterActivity
 
 class MainActivity: FlutterActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Install the SplashScreen
+        installSplashScreen()
+        
         super.onCreate(savedInstanceState)
 
         // Initialize the Mobile Ads SDK.

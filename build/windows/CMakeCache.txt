@@ -28,9 +28,6 @@ CMAKE_CXX_FLAGS_DEBUG:STRING=/MDd /Zi /Ob0 /Od /RTC1
 //Flags used by the CXX compiler during MINSIZEREL builds.
 CMAKE_CXX_FLAGS_MINSIZEREL:STRING=/MD /O1 /Ob1 /DNDEBUG
 
-//Flags used by the CXX compiler during PROFILE builds.
-CMAKE_CXX_FLAGS_PROFILE:STRING=
-
 //Flags used by the CXX compiler during RELEASE builds.
 CMAKE_CXX_FLAGS_RELEASE:STRING=/MD /O2 /Ob2 /DNDEBUG
 
@@ -48,9 +45,6 @@ CMAKE_EXE_LINKER_FLAGS_DEBUG:STRING=/debug /INCREMENTAL
 
 //Flags used by the linker during MINSIZEREL builds.
 CMAKE_EXE_LINKER_FLAGS_MINSIZEREL:STRING=/INCREMENTAL:NO
-
-//Flags used by the linker during PROFILE builds.
-CMAKE_EXE_LINKER_FLAGS_PROFILE:STRING=
 
 //Flags used by the linker during RELEASE builds.
 CMAKE_EXE_LINKER_FLAGS_RELEASE:STRING=/INCREMENTAL:NO
@@ -78,10 +72,6 @@ CMAKE_MODULE_LINKER_FLAGS_DEBUG:STRING=/debug /INCREMENTAL
 //Flags used by the linker during the creation of modules during
 // MINSIZEREL builds.
 CMAKE_MODULE_LINKER_FLAGS_MINSIZEREL:STRING=/INCREMENTAL:NO
-
-//Flags used by the linker during the creation of modules during
-// PROFILE builds.
-CMAKE_MODULE_LINKER_FLAGS_PROFILE:STRING=
 
 //Flags used by the linker during the creation of modules during
 // RELEASE builds.
@@ -115,9 +105,6 @@ CMAKE_RC_FLAGS_DEBUG:STRING=-D_DEBUG
 //Flags for Windows Resource Compiler during MINSIZEREL builds.
 CMAKE_RC_FLAGS_MINSIZEREL:STRING=
 
-//Flags for Windows Resource Compiler during PROFILE builds.
-CMAKE_RC_FLAGS_PROFILE:STRING=
-
 //Flags for Windows Resource Compiler during RELEASE builds.
 CMAKE_RC_FLAGS_RELEASE:STRING=
 
@@ -135,10 +122,6 @@ CMAKE_SHARED_LINKER_FLAGS_DEBUG:STRING=/debug /INCREMENTAL
 //Flags used by the linker during the creation of shared libraries
 // during MINSIZEREL builds.
 CMAKE_SHARED_LINKER_FLAGS_MINSIZEREL:STRING=/INCREMENTAL:NO
-
-//Flags used by the linker during the creation of shared libraries
-// during PROFILE builds.
-CMAKE_SHARED_LINKER_FLAGS_PROFILE:STRING=
 
 //Flags used by the linker during the creation of shared libraries
 // during RELEASE builds.
@@ -168,10 +151,6 @@ CMAKE_STATIC_LINKER_FLAGS_DEBUG:STRING=
 CMAKE_STATIC_LINKER_FLAGS_MINSIZEREL:STRING=
 
 //Flags used by the linker during the creation of static libraries
-// during PROFILE builds.
-CMAKE_STATIC_LINKER_FLAGS_PROFILE:STRING=
-
-//Flags used by the linker during the creation of static libraries
 // during RELEASE builds.
 CMAKE_STATIC_LINKER_FLAGS_RELEASE:STRING=
 
@@ -186,6 +165,15 @@ CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO:STRING=
 CMAKE_VERBOSE_MAKEFILE:BOOL=FALSE
 
 //Value Computed by CMake
+flutter_secure_storage_windows_BINARY_DIR:STATIC=D:/zmoney/build/windows/plugins/flutter_secure_storage_windows
+
+//Value Computed by CMake
+flutter_secure_storage_windows_IS_TOP_LEVEL:STATIC=OFF
+
+//Value Computed by CMake
+flutter_secure_storage_windows_SOURCE_DIR:STATIC=D:/zmoney/windows/flutter/ephemeral/.plugin_symlinks/flutter_secure_storage_windows/windows
+
+//Value Computed by CMake
 runner_BINARY_DIR:STATIC=D:/zmoney/build/windows/runner
 
 //Value Computed by CMake
@@ -193,24 +181,6 @@ runner_IS_TOP_LEVEL:STATIC=OFF
 
 //Value Computed by CMake
 runner_SOURCE_DIR:STATIC=D:/zmoney/windows/runner
-
-//Value Computed by CMake
-screen_retriever_BINARY_DIR:STATIC=D:/zmoney/build/windows/plugins/screen_retriever
-
-//Value Computed by CMake
-screen_retriever_IS_TOP_LEVEL:STATIC=OFF
-
-//Value Computed by CMake
-screen_retriever_SOURCE_DIR:STATIC=D:/zmoney/windows/flutter/ephemeral/.plugin_symlinks/screen_retriever/windows
-
-//Value Computed by CMake
-window_manager_BINARY_DIR:STATIC=D:/zmoney/build/windows/plugins/window_manager
-
-//Value Computed by CMake
-window_manager_IS_TOP_LEVEL:STATIC=OFF
-
-//Value Computed by CMake
-window_manager_SOURCE_DIR:STATIC=D:/zmoney/windows/flutter/ephemeral/.plugin_symlinks/window_manager/windows
 
 //Value Computed by CMake
 windows_notification_BINARY_DIR:STATIC=D:/zmoney/build/windows/plugins/windows_notification
@@ -257,8 +227,6 @@ CMAKE_CXX_FLAGS-ADVANCED:INTERNAL=1
 CMAKE_CXX_FLAGS_DEBUG-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_CXX_FLAGS_MINSIZEREL
 CMAKE_CXX_FLAGS_MINSIZEREL-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CMAKE_CXX_FLAGS_PROFILE
-CMAKE_CXX_FLAGS_PROFILE-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_CXX_FLAGS_RELEASE
 CMAKE_CXX_FLAGS_RELEASE-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_CXX_FLAGS_RELWITHDEBINFO
@@ -273,8 +241,6 @@ CMAKE_EXE_LINKER_FLAGS-ADVANCED:INTERNAL=1
 CMAKE_EXE_LINKER_FLAGS_DEBUG-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_EXE_LINKER_FLAGS_MINSIZEREL
 CMAKE_EXE_LINKER_FLAGS_MINSIZEREL-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CMAKE_EXE_LINKER_FLAGS_PROFILE
-CMAKE_EXE_LINKER_FLAGS_PROFILE-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_EXE_LINKER_FLAGS_RELEASE
 CMAKE_EXE_LINKER_FLAGS_RELEASE-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO
@@ -300,8 +266,6 @@ CMAKE_MODULE_LINKER_FLAGS-ADVANCED:INTERNAL=1
 CMAKE_MODULE_LINKER_FLAGS_DEBUG-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_MODULE_LINKER_FLAGS_MINSIZEREL
 CMAKE_MODULE_LINKER_FLAGS_MINSIZEREL-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CMAKE_MODULE_LINKER_FLAGS_PROFILE
-CMAKE_MODULE_LINKER_FLAGS_PROFILE-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_MODULE_LINKER_FLAGS_RELEASE
 CMAKE_MODULE_LINKER_FLAGS_RELEASE-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO
@@ -309,7 +273,7 @@ CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_MT
 CMAKE_MT-ADVANCED:INTERNAL=1
 //number of local generators
-CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=6
+CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=5
 //Platform information initialized
 CMAKE_PLATFORM_INFO_INITIALIZED:INTERNAL=1
 //noop for ranlib
@@ -323,8 +287,6 @@ CMAKE_RC_FLAGS-ADVANCED:INTERNAL=1
 CMAKE_RC_FLAGS_DEBUG-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_RC_FLAGS_MINSIZEREL
 CMAKE_RC_FLAGS_MINSIZEREL-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CMAKE_RC_FLAGS_PROFILE
-CMAKE_RC_FLAGS_PROFILE-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_RC_FLAGS_RELEASE
 CMAKE_RC_FLAGS_RELEASE-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_RC_FLAGS_RELWITHDEBINFO
@@ -337,8 +299,6 @@ CMAKE_SHARED_LINKER_FLAGS-ADVANCED:INTERNAL=1
 CMAKE_SHARED_LINKER_FLAGS_DEBUG-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_SHARED_LINKER_FLAGS_MINSIZEREL
 CMAKE_SHARED_LINKER_FLAGS_MINSIZEREL-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CMAKE_SHARED_LINKER_FLAGS_PROFILE
-CMAKE_SHARED_LINKER_FLAGS_PROFILE-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_SHARED_LINKER_FLAGS_RELEASE
 CMAKE_SHARED_LINKER_FLAGS_RELEASE-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO
@@ -353,8 +313,6 @@ CMAKE_STATIC_LINKER_FLAGS-ADVANCED:INTERNAL=1
 CMAKE_STATIC_LINKER_FLAGS_DEBUG-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_STATIC_LINKER_FLAGS_MINSIZEREL
 CMAKE_STATIC_LINKER_FLAGS_MINSIZEREL-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CMAKE_STATIC_LINKER_FLAGS_PROFILE
-CMAKE_STATIC_LINKER_FLAGS_PROFILE-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_STATIC_LINKER_FLAGS_RELEASE
 CMAKE_STATIC_LINKER_FLAGS_RELEASE-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO
