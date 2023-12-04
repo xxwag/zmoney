@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.gg.zmoney.app-mergeReleaseResources-28:/values-v23/values-v23.xml",
+            "outputFile": "com.gg.zmoney.app-mergeReleaseResources-30:/values-v23/values-v23.xml",
             "map": [
                 {
                     "source": "C:\\Users\\xxwag\\.gradle\\caches\\transforms-3\\0788b261b5f1c186d068c8d89bf931f5\\transformed\\work-runtime-2.7.0\\res\\values-v23\\values-v23.xml",

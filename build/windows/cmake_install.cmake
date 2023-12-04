@@ -44,12 +44,7 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("D:/zmoney/build/windows/plugins/screen_retriever/cmake_install.cmake")
-endif()
-
-if(NOT CMAKE_INSTALL_LOCAL_ONLY)
-  # Include the install script for the subdirectory.
-  include("D:/zmoney/build/windows/plugins/window_manager/cmake_install.cmake")
+  include("D:/zmoney/build/windows/plugins/flutter_secure_storage_windows/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
@@ -162,7 +157,7 @@ endif()
 if(CMAKE_INSTALL_COMPONENT STREQUAL "Runtime" OR NOT CMAKE_INSTALL_COMPONENT)
   if(CMAKE_INSTALL_CONFIG_NAME MATCHES "^([Dd][Ee][Bb][Uu][Gg])$")
     list(APPEND CMAKE_ABSOLUTE_DESTINATION_FILES
-     "D:/zmoney/build/windows/runner/Debug/screen_retriever_plugin.dll;D:/zmoney/build/windows/runner/Debug/window_manager_plugin.dll;D:/zmoney/build/windows/runner/Debug/windows_notification_plugin.dll")
+     "D:/zmoney/build/windows/runner/Debug/flutter_secure_storage_windows_plugin.dll;D:/zmoney/build/windows/runner/Debug/windows_notification_plugin.dll")
     if(CMAKE_WARN_ON_ABSOLUTE_INSTALL_DESTINATION)
       message(WARNING "ABSOLUTE path INSTALL DESTINATION : ${CMAKE_ABSOLUTE_DESTINATION_FILES}")
     endif()
@@ -170,13 +165,12 @@ if(CMAKE_INSTALL_COMPONENT STREQUAL "Runtime" OR NOT CMAKE_INSTALL_COMPONENT)
       message(FATAL_ERROR "ABSOLUTE path INSTALL DESTINATION forbidden (by caller): ${CMAKE_ABSOLUTE_DESTINATION_FILES}")
     endif()
     file(INSTALL DESTINATION "D:/zmoney/build/windows/runner/Debug" TYPE FILE FILES
-      "D:/zmoney/build/windows/plugins/screen_retriever/Debug/screen_retriever_plugin.dll"
-      "D:/zmoney/build/windows/plugins/window_manager/Debug/window_manager_plugin.dll"
+      "D:/zmoney/build/windows/plugins/flutter_secure_storage_windows/Debug/flutter_secure_storage_windows_plugin.dll"
       "D:/zmoney/build/windows/plugins/windows_notification/Debug/windows_notification_plugin.dll"
       )
   elseif(CMAKE_INSTALL_CONFIG_NAME MATCHES "^([Pp][Rr][Oo][Ff][Ii][Ll][Ee])$")
     list(APPEND CMAKE_ABSOLUTE_DESTINATION_FILES
-     "D:/zmoney/build/windows/runner/Profile/screen_retriever_plugin.dll;D:/zmoney/build/windows/runner/Profile/window_manager_plugin.dll;D:/zmoney/build/windows/runner/Profile/windows_notification_plugin.dll")
+     "D:/zmoney/build/windows/runner/Profile/flutter_secure_storage_windows_plugin.dll;D:/zmoney/build/windows/runner/Profile/windows_notification_plugin.dll")
     if(CMAKE_WARN_ON_ABSOLUTE_INSTALL_DESTINATION)
       message(WARNING "ABSOLUTE path INSTALL DESTINATION : ${CMAKE_ABSOLUTE_DESTINATION_FILES}")
     endif()
@@ -184,13 +178,12 @@ if(CMAKE_INSTALL_COMPONENT STREQUAL "Runtime" OR NOT CMAKE_INSTALL_COMPONENT)
       message(FATAL_ERROR "ABSOLUTE path INSTALL DESTINATION forbidden (by caller): ${CMAKE_ABSOLUTE_DESTINATION_FILES}")
     endif()
     file(INSTALL DESTINATION "D:/zmoney/build/windows/runner/Profile" TYPE FILE FILES
-      "D:/zmoney/build/windows/plugins/screen_retriever/Profile/screen_retriever_plugin.dll"
-      "D:/zmoney/build/windows/plugins/window_manager/Profile/window_manager_plugin.dll"
+      "D:/zmoney/build/windows/plugins/flutter_secure_storage_windows/Profile/flutter_secure_storage_windows_plugin.dll"
       "D:/zmoney/build/windows/plugins/windows_notification/Profile/windows_notification_plugin.dll"
       )
   elseif(CMAKE_INSTALL_CONFIG_NAME MATCHES "^([Rr][Ee][Ll][Ee][Aa][Ss][Ee])$")
     list(APPEND CMAKE_ABSOLUTE_DESTINATION_FILES
-     "D:/zmoney/build/windows/runner/Release/screen_retriever_plugin.dll;D:/zmoney/build/windows/runner/Release/window_manager_plugin.dll;D:/zmoney/build/windows/runner/Release/windows_notification_plugin.dll")
+     "D:/zmoney/build/windows/runner/Release/flutter_secure_storage_windows_plugin.dll;D:/zmoney/build/windows/runner/Release/windows_notification_plugin.dll")
     if(CMAKE_WARN_ON_ABSOLUTE_INSTALL_DESTINATION)
       message(WARNING "ABSOLUTE path INSTALL DESTINATION : ${CMAKE_ABSOLUTE_DESTINATION_FILES}")
     endif()
@@ -198,8 +191,7 @@ if(CMAKE_INSTALL_COMPONENT STREQUAL "Runtime" OR NOT CMAKE_INSTALL_COMPONENT)
       message(FATAL_ERROR "ABSOLUTE path INSTALL DESTINATION forbidden (by caller): ${CMAKE_ABSOLUTE_DESTINATION_FILES}")
     endif()
     file(INSTALL DESTINATION "D:/zmoney/build/windows/runner/Release" TYPE FILE FILES
-      "D:/zmoney/build/windows/plugins/screen_retriever/Release/screen_retriever_plugin.dll"
-      "D:/zmoney/build/windows/plugins/window_manager/Release/window_manager_plugin.dll"
+      "D:/zmoney/build/windows/plugins/flutter_secure_storage_windows/Release/flutter_secure_storage_windows_plugin.dll"
       "D:/zmoney/build/windows/plugins/windows_notification/Release/windows_notification_plugin.dll"
       )
   endif()

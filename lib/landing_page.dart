@@ -31,9 +31,9 @@ class LandingPageState extends State<LandingPage>
 
   bool _isWaitingForResponse = false;
 
-  final FlutterAppAuth appAuth = FlutterAppAuth();
+  final FlutterAppAuth appAuth = const FlutterAppAuth();
 
-  String _userToken = '';
+  final String _userToken = '';
 
   int _tutorialStep = 0; // To keep track of tutorial steps
   late ConfettiController _confettiController; // ConfettiController
@@ -267,17 +267,15 @@ class LandingPageState extends State<LandingPage>
             child: ConfettiWidget(
               confettiController: _confettiController,
               blastDirectionality: BlastDirectionality.directional,
-              blastDirection:
-                  -math.pi / 1, // Adjusted for straight-down particles
-              particleDrag: 0.05, // Static or dynamic, as needed
-              minBlastForce: 1, // Keep as is or adjust as needed
+              blastDirection: -math.pi / 1, // For straight-down particles
+              particleDrag: 0.05, // Drag of the particles
+              minBlastForce: 1, // Minimum blast force
               maxBlastForce:
-                  maxBlastForce, // Dynamically calculated with a maximum limit
-              emissionFrequency: 0.05,
-              numberOfParticles: 13,
-              gravity: 0.01,
-              colors: const [Colors.green],
-              // Other properties as per your design
+                  maxBlastForce, // Dynamically calculated with a limit
+              emissionFrequency: 0.05, // Frequency of emission (within 0 to 1)
+              numberOfParticles: 13, // Number of particles
+              gravity: 0.01, // Gravity effect on particles
+              colors: const [Colors.green], // Color of particles
             ),
           ),
           // Main content in a Column
@@ -353,7 +351,9 @@ class LandingPageState extends State<LandingPage>
       // Convert string to integer
       int? guessInt = int.tryParse(guessStr);
       if (guessInt == null) {
-        print('Invalid number entered');
+        if (kDebugMode) {
+          print('Invalid number entered');
+        }
         setState(() {
           _isWaitingForResponse = false;
         });
@@ -361,7 +361,6 @@ class LandingPageState extends State<LandingPage>
       }
 
       // Debug print for converted guess
-      print('Converted guess to integer: $guessInt');
 
       try {
         var response = await http.post(
@@ -371,15 +370,12 @@ class LandingPageState extends State<LandingPage>
         );
 
         // Debug prints for response
-        print('Response Status Code: ${response.statusCode}');
-        print('Response Body: ${response.body}');
 
         if (response.statusCode == 200) {
           var result = json.decode(response.body);
           bool isCorrect = result['correct'];
 
           // Debug print for result
-          print('Guess result: $isCorrect');
 
           // Handle the result
           setState(() {
@@ -389,21 +385,18 @@ class LandingPageState extends State<LandingPage>
           });
         } else {
           // Handle non-200 responses
-          print('Non-200 HTTP response');
           setState(() {
             _isWaitingForResponse = false; // Stop waiting stage
           });
         }
       } catch (e) {
         // Handle exception
-        print('Exception during HTTP request: $e');
         setState(() {
           _isWaitingForResponse = false; // Stop waiting stage
         });
       }
     } else {
       // Debug print if initial conditions are not met
-      print('Cannot submit guess: Empty guess, no URL, or timer started');
     }
   }
 
@@ -431,7 +424,7 @@ class LandingPageState extends State<LandingPage>
         color: Colors.transparent,
         child: Center(
           child: Container(
-            padding: EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Colors.greenAccent,
               borderRadius: BorderRadius.circular(15),
@@ -446,18 +439,19 @@ class LandingPageState extends State<LandingPage>
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.celebration, size: 48, color: Colors.white),
-                SizedBox(height: 8),
-                Text(
+                const Icon(Icons.celebration, size: 48, color: Colors.white),
+                const SizedBox(height: 8),
+                const Text(
                   'Congratulations!',
                   style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                       color: Colors.white),
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 TextButton(
-                  child: Text('OK', style: TextStyle(color: Colors.white)),
+                  child:
+                      const Text('OK', style: TextStyle(color: Colors.white)),
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
@@ -477,7 +471,7 @@ class LandingPageState extends State<LandingPage>
         color: Colors.transparent,
         child: Center(
           child: Container(
-            padding: EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Colors.redAccent,
               borderRadius: BorderRadius.circular(15),
@@ -492,19 +486,20 @@ class LandingPageState extends State<LandingPage>
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.sentiment_very_dissatisfied,
+                const Icon(Icons.sentiment_very_dissatisfied,
                     size: 48, color: Colors.white),
-                SizedBox(height: 8),
-                Text(
+                const SizedBox(height: 8),
+                const Text(
                   'Try Again!',
                   style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                       color: Colors.white),
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 TextButton(
-                  child: Text('OK', style: TextStyle(color: Colors.white)),
+                  child:
+                      const Text('OK', style: TextStyle(color: Colors.white)),
                   onPressed: () {
                     Navigator.of(context).pop();
                   },

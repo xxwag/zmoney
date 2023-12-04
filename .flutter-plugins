@@ -1,11 +1,17 @@
 # This is a generated file; do not edit or check into version control.
-device_info=C:\\Users\\xxwag\\AppData\\Local\\Pub\\Cache\\hosted\\pub.dev\\device_info-2.0.3\\
 flutter_appauth=C:\\Users\\xxwag\\AppData\\Local\\Pub\\Cache\\hosted\\pub.dev\\flutter_appauth-6.0.2\\
 flutter_config=C:\\Users\\xxwag\\AppData\\Local\\Pub\\Cache\\hosted\\pub.dev\\flutter_config-2.0.2\\
+flutter_secure_storage=C:\\Users\\xxwag\\AppData\\Local\\Pub\\Cache\\hosted\\pub.dev\\flutter_secure_storage-9.0.0\\
+flutter_secure_storage_linux=C:\\Users\\xxwag\\AppData\\Local\\Pub\\Cache\\hosted\\pub.dev\\flutter_secure_storage_linux-1.2.0\\
+flutter_secure_storage_macos=C:\\Users\\xxwag\\AppData\\Local\\Pub\\Cache\\hosted\\pub.dev\\flutter_secure_storage_macos-3.0.1\\
+flutter_secure_storage_web=C:\\Users\\xxwag\\AppData\\Local\\Pub\\Cache\\hosted\\pub.dev\\flutter_secure_storage_web-1.1.2\\
+flutter_secure_storage_windows=C:\\Users\\xxwag\\AppData\\Local\\Pub\\Cache\\hosted\\pub.dev\\flutter_secure_storage_windows-3.0.0\\
 google_mobile_ads=C:\\Users\\xxwag\\AppData\\Local\\Pub\\Cache\\hosted\\pub.dev\\google_mobile_ads-3.1.0\\
+path_provider=C:\\Users\\xxwag\\AppData\\Local\\Pub\\Cache\\hosted\\pub.dev\\path_provider-2.1.1\\
+path_provider_android=C:\\Users\\xxwag\\AppData\\Local\\Pub\\Cache\\hosted\\pub.dev\\path_provider_android-2.2.1\\
+path_provider_foundation=C:\\Users\\xxwag\\AppData\\Local\\Pub\\Cache\\hosted\\pub.dev\\path_provider_foundation-2.3.1\\
 path_provider_linux=C:\\Users\\xxwag\\AppData\\Local\\Pub\\Cache\\hosted\\pub.dev\\path_provider_linux-2.2.1\\
 path_provider_windows=C:\\Users\\xxwag\\AppData\\Local\\Pub\\Cache\\hosted\\pub.dev\\path_provider_windows-2.2.1\\
-screen_retriever=C:\\Users\\xxwag\\AppData\\Local\\Pub\\Cache\\hosted\\pub.dev\\screen_retriever-0.1.9\\
 shared_preferences=C:\\Users\\xxwag\\AppData\\Local\\Pub\\Cache\\hosted\\pub.dev\\shared_preferences-2.2.2\\
 shared_preferences_android=C:\\Users\\xxwag\\AppData\\Local\\Pub\\Cache\\hosted\\pub.dev\\shared_preferences_android-2.2.1\\
 shared_preferences_foundation=C:\\Users\\xxwag\\AppData\\Local\\Pub\\Cache\\hosted\\pub.dev\\shared_preferences_foundation-2.3.4\\
@@ -15,5 +21,4 @@ shared_preferences_windows=C:\\Users\\xxwag\\AppData\\Local\\Pub\\Cache\\hosted\
 webview_flutter=C:\\Users\\xxwag\\AppData\\Local\\Pub\\Cache\\hosted\\pub.dev\\webview_flutter-4.4.2\\
 webview_flutter_android=C:\\Users\\xxwag\\AppData\\Local\\Pub\\Cache\\hosted\\pub.dev\\webview_flutter_android-3.12.1\\
 webview_flutter_wkwebview=C:\\Users\\xxwag\\AppData\\Local\\Pub\\Cache\\hosted\\pub.dev\\webview_flutter_wkwebview-3.9.4\\
-window_manager=C:\\Users\\xxwag\\AppData\\Local\\Pub\\Cache\\hosted\\pub.dev\\window_manager-0.3.7\\
 windows_notification=C:\\Users\\xxwag\\AppData\\Local\\Pub\\Cache\\hosted\\pub.dev\\windows_notification-0.0.3\\

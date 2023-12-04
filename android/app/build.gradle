@@ -14,12 +14,12 @@ if (localPropertiesFile.exists()) {
 
 def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
 if (flutterVersionCode == null) {
-    flutterVersionCode = '1'
+    flutterVersionCode = '2'
 }
 
 def flutterVersionName = localProperties.getProperty('flutter.versionName')
 if (flutterVersionName == null) {
-    flutterVersionName = '1.0'
+    flutterVersionName = '2.0'
 }
 
 android {
@@ -30,6 +30,11 @@ android {
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
+        allprojects {
+            tasks.withType(JavaCompile) {
+                options.compilerArgs << "-Xlint:deprecation"
+            }
+        }
     }
 
     kotlinOptions {
@@ -45,10 +50,10 @@ android {
         applicationId "com.gg.zmoney"
         // You can update the following values to match your application needs.
         // For more information, see: https://docs.flutter.dev/deployment/android#reviewing-the-gradle-build-configuration.
-        minSdkVersion flutter.minSdkVersion
+        minSdkVersion 21
         targetSdkVersion flutter.targetSdkVersion
-        versionCode flutterVersionCode.toInteger()
-        versionName flutterVersionName
+        versionCode 2 // Increment this number manually
+        versionName "2.0.0"
         multiDexEnabled true
         manifestPlaceholders = [
         'applicationName': "com.gg.zmoney.MainActivity", // Replace with your application class name
@@ -57,14 +62,18 @@ android {
     }
 
       signingConfigs {
-        release {
-            keyAlias 'zmoney'
-            keyPassword '420420'
-            storeFile file('zmoneytc.jks') // Ensure this path is correct
-            storePassword '420420'
+    release {
+        if (localProperties.containsKey('keyAlias') && localProperties.containsKey('keyPassword') && 
+            localProperties.containsKey('storePassword') && localProperties.containsKey('keyStorePath')) {
+
+            keyAlias localProperties['keyAlias']
+            keyPassword localProperties['keyPassword']
+            storeFile file(localProperties['keyStorePath'])
+            storePassword localProperties['storePassword']
             storeType 'pkcs12'
         }
     }
+}
 
     buildTypes {
         release {
@@ -84,4 +93,5 @@ dependencies {
     implementation 'com.android.support:multidex:1.0.3'
     // Correct place for Google Mobile Ads SDK dependency
     implementation 'com.google.android.gms:play-services-ads:22.5.0'
+      implementation 'androidx.core:core-splashscreen:1.0.0' // Ensure you have the latest version
 }
