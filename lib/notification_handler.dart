@@ -1,4 +1,5 @@
 import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:windows_notification/notification_message.dart';
@@ -10,7 +11,9 @@ class NotificationHandler {
   );
 
   static void showNotification(String title, String message) {
-    print("Current platform: ${Platform.operatingSystem}");
+    if (kDebugMode) {
+      print("Current platform: ${Platform.operatingSystem}");
+    }
 
     if (Platform.isAndroid) {
       // No need to show toast for Android

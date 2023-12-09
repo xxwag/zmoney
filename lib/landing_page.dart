@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math; // Import the math library
 import 'package:http/http.dart' as http;
-import 'package:flutter_appauth/flutter_appauth.dart';
+
 import 'package:confetti/confetti.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -12,7 +12,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:zmoney/ngrok.dart';
 
 class LandingPage extends StatefulWidget {
-  const LandingPage({Key? key}) : super(key: key);
+  const LandingPage({super.key});
 
   @override
   LandingPageState createState() => LandingPageState();
@@ -30,10 +30,6 @@ class LandingPageState extends State<LandingPage>
   final TextEditingController _numberController = TextEditingController();
 
   bool _isWaitingForResponse = false;
-
-  final FlutterAppAuth appAuth = const FlutterAppAuth();
-
-  final String _userToken = '';
 
   int _tutorialStep = 0; // To keep track of tutorial steps
   late ConfettiController _confettiController; // ConfettiController
@@ -145,46 +141,6 @@ class LandingPageState extends State<LandingPage>
     }
   }
 */
-
-  /*Future<Map<String, dynamic>> requestOAuthTokens() async {
-    // Replace these values with your OAuth configuration
-    final clientId = 'YOUR_CLIENT_ID'; 
-    final redirectUri = 'YOUR_REDIRECT_URI';
-    final issuer = 'YOUR_ISSUER';
-    final discoveryUrl = 'YOUR_DISCOVERY_URL';
-    final scopes = ['openid', 'profile', 'email']; // Adjust scopes as needed
-
-    final FlutterAppAuth appAuth = FlutterAppAuth();
-
-    try {
-      // Start the OAuth flow
-      final AuthorizationTokenResponse? result =
-          await appAuth.authorizeAndExchangeCode(
-        AuthorizationTokenRequest(
-        clientId: clientId,
-          redirectUri: Uri.parse(redirectUri),
-          issuer: issuer,
-          discoveryUrl: discoveryUrl,
-          scopes: scopes,
-        ),
-      );
-
-      if (result != null) {
-        // Handle the authorization token response
-        // You can access tokens like result.accessToken and result.idToken
-        return {
-          'accessToken': result.accessToken,
-          'idToken': result.idToken,
-        };
-      } else {
-        // Handle authorization error
-        throw Exception('Authorization failed');
-      }
-    } catch (e) {
-      // Handle exceptions
-      throw Exception('OAuth error: $e');
-    }
- } */
 
   void _initBannerAd() {
     _bannerAd = BannerAd(

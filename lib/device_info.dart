@@ -1,6 +1,5 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'dart:io';
 
 /*Future<Map<String, dynamic>> fetchUserDetails() async {
   // Fetch IP Address

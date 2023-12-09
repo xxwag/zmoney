@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "446412900874",
+    "project_id": "what-e7630",
+    "storage_bucket": "what-e7630.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:446412900874:android:0f97beb396296e6227adf3",
+        "android_client_info": {
+          "package_name": "com.gg.zmoney"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "446412900874-s0sn21mq8jm4ugbm780sfrfo31sro8hj.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.gg.zmoney",
+            "certificate_hash": "34f220dbf735443e30a0c874626ae3f03e5aa24b"
+          }
+        },
+        {
+          "client_id": "446412900874-ifkm836l5ftprj362groq3q3gd5brq3c.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBT-NeVmw7-vGAsfkP12KCX1nIo9hxwNyg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "446412900874-ifkm836l5ftprj362groq3q3gd5brq3c.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

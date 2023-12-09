@@ -3,7 +3,7 @@
     <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
 
     <application
-        android:label="zmoney"
+        android:label="Number Guesser"
         android:icon="@mipmap/ic_launcher">
 
         <!-- Sample Ad Manager app ID -->
@@ -36,7 +36,7 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="${appAuthRedirectScheme}" />
+                  <data android:scheme="com.gg.zmoney" android:host="oauth2redirect" />
             </intent-filter>
         </activity>
 
