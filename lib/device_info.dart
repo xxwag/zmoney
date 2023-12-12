@@ -27,6 +27,58 @@ Future<String> fetchIPAddress() async {
   }
 }
 
+
+// DEAD CODE Z LANDING PAGE 
+
+/*
+  Future<Map<String, dynamic>> requestToken() async {
+    // Ensure Ngrok URL is fetched and updated
+    await NgrokManager.fetchNgrokData();
+
+    // Check if Ngrok URL is available
+    if (NgrokManager.ngrokUrl.isEmpty) {
+      // Handle error: Ngrok URL not available
+      throw Exception('Ngrok URL is not available');
+    }
+
+    // Collect user details
+    Map<String, dynamic> userDetails = await fetchUserDetails();
+
+    // Collect device information
+    Map<String, dynamic> deviceInfo = await getDeviceInfo();
+
+    // Fetch the app verification hash from environment variables
+    String appVerificationHash =
+        FlutterConfig.get('APP_VERIFICATION_HASH').toString();
+
+    // Prepare the request payload with additional device information
+    Map<String, dynamic> payload = {
+      "userDetails": userDetails,
+      "deviceInfo": deviceInfo,
+      "appVerification": appVerificationHash,
+      // Add any other necessary data
+    };
+
+    // Make the token request to the server using Ngrok URL
+    final response = await http.post(
+      Uri.parse('${NgrokManager.ngrokUrl}/api/requestToken'),
+      headers: {
+        "Content-Type": "application/json",
+        // Additional headers as needed
+      },
+      body: json.encode(payload),
+    );
+
+    if (response.statusCode == 200) {
+      // Parse the response and return
+      return json.decode(response.body);
+    } else {
+      // Handle errors
+      throw Exception('Failed to request token: ${response.body}');
+    }
+  }
+*/
+
 /*Future<Map<String, dynamic>> getDeviceInfo() async {
   DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
   Map<String, dynamic> deviceData = {};

@@ -17,6 +17,7 @@ class NgrokManager {
   }
 
   static Future<void> fetchNgrokData() async {
+    print("fetching ngrok data");
     const apiUrl = 'https://api.ngrok.com/tunnels';
     try {
       final String? authToken = await _getNgrokToken();

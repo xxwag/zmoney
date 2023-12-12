@@ -12,7 +12,7 @@ class NotificationHandler {
 
   static void showNotification(String title, String message) {
     if (kDebugMode) {
-      print("Current platform: ${Platform.operatingSystem}");
+      print("kDebug mode: Current platform: ${Platform.operatingSystem}");
     }
 
     if (Platform.isAndroid) {
