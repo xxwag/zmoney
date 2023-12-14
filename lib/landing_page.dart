@@ -38,20 +38,24 @@ class LandingPageState extends State<LandingPage>
   // GlobalKeys for target widgets
   GlobalKey key1 = GlobalKey();
   GlobalKey key2 = GlobalKey();
+  GlobalKey keyLanguageSelector = GlobalKey();
   // Add more keys as needed
 
   String _selectedLanguageCode = 'en'; // Default language code
 
+  List<String> translatedTexts = List.filled(10, '', growable: false);
+
   String translatedText1 = 'How Much?';
-  String translatedText2 = 'Enter Numbers';
-  String translatedText3 = 'Go!';
+  String translatedText2 = 'Please insert numerical value';
+  String translatedText3 = 'What the fuck';
   String translatedText4 = 'Ready';
   String translatedText5 = 'The next try will be available in:';
   String translatedText6 = 'This is the Go button. Tap here to start.';
   String translatedText7 = 'Tap the Go button to start your journey!';
   String translatedText8 = 'Here you can enter numbers.';
   String translatedText9 = 'Enter numbers in this field.';
-  String translatedText10 = '';
+  String translatedText10 = 'Select your language';
+
   List<TutorialStep> tutorialSteps = [];
 
   void _incrementLaunchCount() async {
@@ -82,17 +86,26 @@ class LandingPageState extends State<LandingPage>
             _showTutorial = true;
             tutorialSteps = [
               TutorialStep(
-                widget: _tutorialStepWidget(translatedText6),
-                targetKey: key1,
-                direction: TooltipDirection.bottom,
-                description: translatedText7, // Add description
+                widget:
+                    _tutorialStepWidget("Select your preferred language here."),
+                targetKey: keyLanguageSelector,
+                direction: TooltipDirection.top,
+                description:
+                    "This dropdown allows you to choose your language.",
               ),
               TutorialStep(
-                widget: _tutorialStepWidget(translatedText8),
+                widget: _tutorialStepWidget(translatedTexts[7]),
+                targetKey: key1,
+                direction: TooltipDirection.bottom,
+                description: translatedTexts[8], // Add description
+              ),
+              TutorialStep(
+                widget: _tutorialStepWidget(translatedTexts[6]),
                 targetKey: key2,
                 direction: TooltipDirection.top,
-                description: translatedText9, // Add description
+                description: translatedTexts[5], // Add description
               ),
+
               // Additional steps...
             ];
           });
@@ -104,6 +117,34 @@ class LandingPageState extends State<LandingPage>
     _checkTutorialCompletion();
     _initBannerAd();
   }
+
+  void _restartTutorialIfNeeded() {
+    if (_showTutorial) {
+      // Reset tutorial steps with updated translations
+      tutorialSteps = [
+        TutorialStep(
+          widget: _tutorialStepWidget(translatedTexts[7]),
+          targetKey: key1,
+          direction: TooltipDirection.bottom,
+          description: translatedTexts[8],
+        ),
+        TutorialStep(
+          widget: _tutorialStepWidget(translatedTexts[6]),
+          targetKey: key2,
+          direction: TooltipDirection.top,
+          description: translatedTexts[5],
+        ),
+        // Additional steps...
+      ];
+
+      // Reset tutorial step and make tutorial visible
+      setState(() {
+        _tutorialStep = 0;
+        _showTutorial = true;
+      });
+    }
+  }
+
 /*
   Future<Map<String, dynamic>> requestToken() async {
     // Ensure Ngrok URL is fetched and updated
@@ -153,236 +194,6 @@ class LandingPageState extends State<LandingPage>
   }
 */
 
-  Future<String> combineTextsForTranslation() async {
-    final prefs = await SharedPreferences.getInstance();
-    const separator = "|||"; // Unique separator
-    List<String> texts = [];
-
-    // Fetch each translation from shared preferences
-    for (int i = 1; i <= 10; i++) {
-      String key = 'translatedText$i$_selectedLanguageCode';
-      String text = prefs.getString(key) ?? "Default Text $i";
-      texts.add(text);
-    }
-
-    return texts.join(separator);
-  }
-
-  Future<String> translateText(String text, String toLang,
-      {String fromLang = 'en'}) async {
-    var url = Uri.parse(
-        'https://libretranslate.de/translate'); // LibreTranslate API URL
-
-    try {
-      var response = await http.post(
-        url,
-        headers: {"Content-Type": "application/json"},
-        body: json.encode({
-          "q": text,
-          "source": fromLang,
-          "target": toLang,
-          "format": "text"
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        var data = json.decode(response.body);
-        return data['translatedText'];
-      } else {
-        print('Failed to translate. Status code: ${response.statusCode}');
-        return text; // Return original text on failure
-      }
-    } catch (e) {
-      print('Error occurred: $e');
-      return text; // Return original text on error
-    }
-  }
-
-//GARBAGE BELLOW TO BE SEEN, IM 2LAZY TO CHANGE THE INITIAL SET OF STRINGS INT LIST AND CALL IT EVERYTIME FROM THE WIDGETS FROM IT🤷
-  Future<void> fetchAndSetTranslations(String targetLanguageCode) async {
-    final prefs = await SharedPreferences.getInstance();
-    print("Fetching translations for language code: $targetLanguageCode");
-
-    // Attempt to retrieve previously stored translations
-    String? storedTranslatedText1 =
-        prefs.getString('translatedText1_$targetLanguageCode');
-    String? storedTranslatedText2 =
-        prefs.getString('translatedText2_$targetLanguageCode');
-    String? storedTranslatedText3 =
-        prefs.getString('translatedText3_$targetLanguageCode');
-    String? storedTranslatedText4 =
-        prefs.getString('translatedText4_$targetLanguageCode');
-    String? storedTranslatedText5 =
-        prefs.getString('translatedText5_$targetLanguageCode');
-    String? storedTranslatedText6 =
-        prefs.getString('translatedText6_$targetLanguageCode');
-    String? storedTranslatedText7 =
-        prefs.getString('translatedText7_$targetLanguageCode');
-    String? storedTranslatedText8 =
-        prefs.getString('translatedText8_$targetLanguageCode');
-    String? storedTranslatedText9 =
-        prefs.getString('translatedText9_$targetLanguageCode');
-    String? storedTranslatedText10 =
-        prefs.getString('translatedText10_$targetLanguageCode');
-
-    // Check if all translations are available in shared preferences
-    bool areTranslationsAvailable = storedTranslatedText1 != null &&
-        storedTranslatedText2 != null &&
-        storedTranslatedText3 != null &&
-        storedTranslatedText4 != null &&
-        storedTranslatedText5 != null &&
-        storedTranslatedText6 != null &&
-        storedTranslatedText7 != null &&
-        storedTranslatedText8 != null &&
-        storedTranslatedText9 != null &&
-        storedTranslatedText10 != null;
-
-    if (!areTranslationsAvailable) {
-      print(
-          "Translations not available in shared preferences. Proceeding with translation.");
-
-      // Use 'await' to properly get the result from the async function
-      String combinedTexts = await combineTextsForTranslation();
-      print("Combined texts for translation: $combinedTexts");
-
-      String translatedCombinedTexts =
-          await translateText(combinedTexts, targetLanguageCode);
-      print("Received translated text: $translatedCombinedTexts");
-      List<String> individualTranslations =
-          translatedCombinedTexts.split("|||");
-
-      // Ensure there are enough elements in the list
-      if (individualTranslations.length < 10) {
-        print(
-            "Warning: Received fewer translations than expected. Filling missing translations.");
-      }
-      while (individualTranslations.length < 10) {
-        individualTranslations.add("Translation Missing");
-      }
-      print(
-          "Warning: Received fewer translations than expected. Filling missing translations.");
-
-      // Update state and store new translations
-      setState(() {
-        translatedText1 = individualTranslations[0].trim();
-        prefs.setString('translatedText1_$targetLanguageCode', translatedText1);
-        print(
-            "Stored 'translatedText1' for '$targetLanguageCode': $translatedText1");
-
-        translatedText2 = individualTranslations[1].trim();
-        prefs.setString('translatedText2_$targetLanguageCode', translatedText2);
-        print(
-            "Stored 'translatedText2' for '$targetLanguageCode': $translatedText2");
-
-        translatedText3 = individualTranslations[2].trim();
-        prefs.setString('translatedText3_$targetLanguageCode', translatedText3);
-        print(
-            "Stored 'translatedText3' for '$targetLanguageCode': $translatedText3");
-
-        translatedText4 = individualTranslations[3].trim();
-        prefs.setString('translatedText4_$targetLanguageCode', translatedText4);
-        print(
-            "Stored 'translatedText4' for '$targetLanguageCode': $translatedText4");
-
-        translatedText5 = individualTranslations[4].trim();
-        prefs.setString('translatedText5_$targetLanguageCode', translatedText5);
-        print(
-            "Stored 'translatedText5' for '$targetLanguageCode': $translatedText5");
-
-        translatedText6 = individualTranslations[5].trim();
-        prefs.setString('translatedText6_$targetLanguageCode', translatedText6);
-        print(
-            "Stored 'translatedText6' for '$targetLanguageCode': $translatedText6");
-
-        translatedText7 = individualTranslations[6].trim();
-        prefs.setString('translatedText7_$targetLanguageCode', translatedText7);
-        print(
-            "Stored 'translatedText7' for '$targetLanguageCode': $translatedText7");
-
-        translatedText8 = individualTranslations[7].trim();
-        prefs.setString('translatedText8_$targetLanguageCode', translatedText8);
-        print(
-            "Stored 'translatedText8' for '$targetLanguageCode': $translatedText8");
-
-        translatedText9 = individualTranslations[8].trim();
-        prefs.setString('translatedText9_$targetLanguageCode', translatedText9);
-        print(
-            "Stored 'translatedText9' for '$targetLanguageCode': $translatedText9");
-
-        translatedText10 = individualTranslations[9].trim();
-        prefs.setString(
-            'translatedText10_$targetLanguageCode', translatedText10);
-        print(
-            "Stored 'translatedText10' for '$targetLanguageCode': $translatedText10");
-
-        print(
-            "All translations updated and stored in shared preferences for '$targetLanguageCode'.");
-        print("Translations updated and stored in shared preferences.");
-      });
-    } else {
-      print("Using stored translations from shared preferences.");
-      setState(() {
-        translatedText1 = storedTranslatedText1;
-        translatedText2 = storedTranslatedText2;
-        translatedText3 = storedTranslatedText3;
-        translatedText4 = storedTranslatedText4;
-        translatedText5 = storedTranslatedText5;
-        translatedText6 = storedTranslatedText6;
-        translatedText7 = storedTranslatedText7;
-        translatedText8 = storedTranslatedText8;
-        translatedText9 = storedTranslatedText9;
-        translatedText10 = storedTranslatedText10;
-        print("Using stored translations from shared preferences.");
-      });
-    }
-  }
-
-  Widget _buildLanguageSelector() {
-    Map<String, String> languages = {
-      'en': 'English',
-      'fr': 'French',
-      'zh': 'Chinese',
-      'da': 'Danish',
-      'nl': 'Dutch',
-      'de': 'German',
-      'el': 'Greek',
-      'it': 'Italian',
-      'ja': 'Japanese',
-      'lt': 'Lithuanian',
-      'nb': 'Norwegian Bokmål',
-      'pl': 'Polish',
-      'pt': 'Portuguese',
-      'ro': 'Romanian',
-      'es': 'Spanish',
-      // Add other supported languages here
-    };
-
-    return DropdownButton<String>(
-      value: _selectedLanguageCode,
-      icon: const Icon(Icons.arrow_downward),
-      elevation: 16,
-      style: const TextStyle(color: Colors.deepPurple),
-      underline: Container(
-        height: 2,
-        color: Colors.deepPurpleAccent,
-      ),
-      onChanged: (String? newValue) {
-        if (newValue != null && newValue != _selectedLanguageCode) {
-          setState(() {
-            _selectedLanguageCode = newValue;
-          });
-          fetchAndSetTranslations(newValue); // Fetch new translations
-        }
-      },
-      items: languages.entries.map<DropdownMenuItem<String>>((entry) {
-        return DropdownMenuItem<String>(
-          value: entry.key,
-          child: Text(entry.value),
-        );
-      }).toList(),
-    );
-  }
-
   void _initBannerAd() {
     _bannerAd = BannerAd(
       adUnitId: 'ca-app-pub-4652990815059289/6968524603', // Test ad unit ID
@@ -400,14 +211,6 @@ class LandingPageState extends State<LandingPage>
     );
 
     _bannerAd.load();
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    _bannerAd.dispose();
-    _confettiController.dispose();
-    super.dispose();
   }
 
   void _playConfettiAnimation() {
@@ -440,10 +243,153 @@ class LandingPageState extends State<LandingPage>
     });
   }
 
+  Future<String> combineEnglishTextsForTranslation(
+      SharedPreferences prefs) async {
+    const separator = "*/"; // Unique separator
+    List<String> texts = [];
+
+    for (int i = 1; i <= 10; i++) {
+      String key = 'translatedText$i' '_en'; // Corrected key format
+      String text = prefs.getString(key) ?? "Default Text $i";
+      texts.add(text);
+    }
+
+    return texts.join(separator);
+  }
+
+  Future<String> translateText(String text, String toLang,
+      {String fromLang = 'auto'}) async {
+    var url = Uri.parse('https://libretranslate.de/translate');
+    print('haluški$text');
+    try {
+      var response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: json.encode({
+          "q": text,
+          "source": fromLang,
+          "target": toLang,
+          "format": "text",
+          "api_key": "" // Include the API key if you have one
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        var decodedResponse =
+            utf8.decode(response.bodyBytes); // Explicit UTF-8 decoding
+        var data = json.decode(decodedResponse);
+        return data['translatedText'];
+      } else {
+        print('Failed to translate. Status code: ${response.statusCode}');
+        return text; // Return original text on failure
+      }
+    } catch (e) {
+      print('Error occurred: $e');
+      return text; // Return original text on error
+    }
+  }
+
+  Future<void> fetchAndSetTranslations(String targetLanguageCode) async {
+    final prefs = await SharedPreferences.getInstance();
+    print("Fetching translations for language code: $targetLanguageCode");
+
+    // Use the original English texts as a base for translation
+    String combinedEnglishTexts =
+        await combineEnglishTextsForTranslation(prefs);
+    print("Combined English texts for translation: $combinedEnglishTexts");
+
+    List<String> updatedTranslations = List.filled(10, '', growable: false);
+
+    if (targetLanguageCode != 'en') {
+      // Translate English texts to the target language
+      String translatedCombinedTexts =
+          await translateText(combinedEnglishTexts, targetLanguageCode);
+      print("Received translated text: $translatedCombinedTexts");
+      List<String> individualTranslations = translatedCombinedTexts.split("*/");
+
+      // Ensure there are enough elements in the list
+      for (int i = 0;
+          i < individualTranslations.length && i < updatedTranslations.length;
+          i++) {
+        updatedTranslations[i] = individualTranslations[i].trim();
+      }
+    } else {
+      // Use English texts directly
+      for (int i = 0; i < updatedTranslations.length; i++) {
+        updatedTranslations[i] = prefs.getString('translatedText${i + 1}_en') ??
+            "Default Text ${i + 1}";
+      }
+    }
+
+    // Update state with new translations
+    setState(() {
+      translatedTexts = updatedTranslations;
+    });
+    _restartTutorialIfNeeded();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _bannerAd.dispose();
+    _confettiController.dispose();
+    super.dispose();
+  }
+
+  Widget _buildLanguageSelector() {
+    Map<String, String> languages = {
+      'en': 'English',
+      'cs': 'Czechia',
+      'fr': 'French',
+      'zh': 'Chinese',
+      'da': 'Danish',
+      'nl': 'Dutch',
+      'de': 'German',
+      'el': 'Greek',
+      'it': 'Italian',
+      'ja': 'Japanese',
+      'lt': 'Lithuanian',
+      'nb': 'Norwegian Bokmål',
+      'pl': 'Polish',
+      'pt': 'Portuguese',
+      'ro': 'Romanian',
+      'es': 'Spanish',
+
+      // Add other supported languages here
+    };
+
+    return DropdownButton<String>(
+      key: keyLanguageSelector, // Assign the GlobalKey here
+      value: _selectedLanguageCode,
+      icon: const Icon(Icons.arrow_downward),
+      elevation: 16,
+      style: const TextStyle(color: Colors.deepPurple),
+      underline: Container(
+        height: 2,
+        color: Colors.deepPurpleAccent,
+      ),
+      onChanged: (String? newValue) {
+        if (newValue != null && newValue != _selectedLanguageCode) {
+          setState(() {
+            _selectedLanguageCode = newValue;
+          });
+          fetchAndSetTranslations(newValue); // Fetch new translations
+        }
+      },
+      items: languages.entries.map<DropdownMenuItem<String>>((entry) {
+        return DropdownMenuItem<String>(
+          value: entry.key,
+          child: Text(entry.value),
+        );
+      }).toList(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     var screenSize = MediaQuery.of(context).size;
 
+    print(translatedTexts);
     // Calculate maxBlastForce based on screen width, with a maximum limit
     double calculatedBlastForce = screenSize.width / 1; // Example calculation
     double maxAllowedBlastForce = 2000; // Set your maximum limit here
@@ -497,7 +443,7 @@ class LandingPageState extends State<LandingPage>
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Text(
-                        translatedText1, // Use translated text
+                        translatedTexts[0], // Use translated text
                         textAlign: TextAlign.center,
                         style: const TextStyle(
                           color: Color(0xFF0D251F),
@@ -507,16 +453,24 @@ class LandingPageState extends State<LandingPage>
                         ),
                       ),
                       SizedBox(height: screenSize.height * 0.1),
-                      _buildNumberInput(screenSize, translatedText2),
+                      _buildNumberInput(
+                        screenSize,
+                        translatedTexts[1],
+                      ),
                       SizedBox(height: screenSize.height * 0.1),
-                      _buildGoButton(screenSize, translatedText3),
+                      _buildGoButton(
+                        screenSize,
+                        translatedTexts[2],
+                      ),
                       SizedBox(height: screenSize.height * 0.1),
                       GestureDetector(
                         onTap: startTimer,
                         child: Text(
                           _timerStarted
-                              ? '$translatedText5 ${_remainingTime ~/ 60}:${(_remainingTime % 60).toString().padLeft(2, '0')}'
-                              : translatedText4,
+                              ? '${translatedTexts[4]} ${_remainingTime ~/ 60}:${(_remainingTime % 60).toString().padLeft(2, '0')}'
+                              : translatedTexts[
+                                  3], // Assuming translatedText4 corresponds to index 3 in translatedTexts
+
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                             color: Colors.white,
@@ -534,6 +488,77 @@ class LandingPageState extends State<LandingPage>
           ),
           _showTutorial ? _buildTutorialOverlay() : const SizedBox.shrink(),
         ],
+      ),
+    );
+  }
+
+  Widget _buildNumberInput(Size screenSize, String hintText) {
+    return SizedBox(
+      width: screenSize.width * 0.8,
+      child: Container(
+        width: screenSize.width * 0.8,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        decoration: ShapeDecoration(
+          color: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+        child: TextField(
+          key: key1, // Assign the GlobalKey here
+          controller: _numberController,
+          keyboardType: TextInputType.number,
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+            LengthLimitingTextInputFormatter(7),
+          ],
+          decoration: InputDecoration(
+            border: InputBorder.none,
+            hintText: hintText, // Use the translated text
+          ),
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 24,
+            fontFamily: 'Inter',
+          ),
+          onTap: _playConfettiAnimation, // Play confetti on interaction
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGoButton(Size screenSize, String buttonText) {
+    return GestureDetector(
+      onTap: () {
+        if (!_isWaitingForResponse && !_timerStarted) {
+          submitGuess();
+        }
+      },
+      child: Container(
+        key: key2, // Assign the GlobalKey here
+        padding: const EdgeInsets.all(20),
+        decoration: const BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: Color(0x3F000000),
+              blurRadius: 4,
+              offset: Offset(0, 4),
+              spreadRadius: 0,
+            ),
+          ],
+        ),
+        child: _isWaitingForResponse
+            ? const CircularProgressIndicator()
+            : Text(
+                buttonText, // Use the translated text
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 40,
+                  fontFamily: 'Inter',
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
       ),
     );
   }
@@ -824,9 +849,16 @@ class LandingPageState extends State<LandingPage>
       final RenderBox renderBox = keyContext.findRenderObject() as RenderBox;
       final position = renderBox.localToGlobal(Offset.zero);
 
+      // Define a custom offset
+      Offset customOffset = Offset.zero;
+      if (currentStep.targetKey == keyLanguageSelector) {
+        customOffset =
+            const Offset(30.0, 60.0); // Adjust these values as needed
+      }
+
       return Positioned(
-        left: position.dx,
-        top: position.dy,
+        left: position.dx + customOffset.dx,
+        top: position.dy + customOffset.dy,
         child: GestureDetector(
           onTap: _nextTutorialStep,
           child: Container(
@@ -858,77 +890,6 @@ class LandingPageState extends State<LandingPage>
     } else {
       return const SizedBox.shrink();
     }
-  }
-
-  Widget _buildNumberInput(Size screenSize, String hintText) {
-    return SizedBox(
-      width: screenSize.width * 0.8,
-      child: Container(
-        width: screenSize.width * 0.8,
-        padding: const EdgeInsets.symmetric(horizontal: 10),
-        decoration: ShapeDecoration(
-          color: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
-        child: TextField(
-          key: key1, // Assign the GlobalKey here
-          controller: _numberController,
-          keyboardType: TextInputType.number,
-          inputFormatters: [
-            FilteringTextInputFormatter.digitsOnly,
-            LengthLimitingTextInputFormatter(7),
-          ],
-          decoration: InputDecoration(
-            border: InputBorder.none,
-            hintText: hintText, // Use the translated text
-          ),
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontSize: 24,
-            fontFamily: 'Inter',
-          ),
-          onTap: _playConfettiAnimation, // Play confetti on interaction
-        ),
-      ),
-    );
-  }
-
-  Widget _buildGoButton(Size screenSize, String buttonText) {
-    return GestureDetector(
-      onTap: () {
-        if (!_isWaitingForResponse && !_timerStarted) {
-          submitGuess();
-        }
-      },
-      child: Container(
-        key: key2, // Assign the GlobalKey here
-        padding: const EdgeInsets.all(20),
-        decoration: const BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: Color(0x3F000000),
-              blurRadius: 4,
-              offset: Offset(0, 4),
-              spreadRadius: 0,
-            ),
-          ],
-        ),
-        child: _isWaitingForResponse
-            ? const CircularProgressIndicator()
-            : Text(
-                buttonText, // Use the translated text
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 40,
-                  fontFamily: 'Inter',
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-      ),
-    );
   }
 
   void _checkTutorialCompletion() async {
