@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math; // Import the math library
+import 'dart:math';
 import 'package:http/http.dart' as http;
 
 import 'package:confetti/confetti.dart';
@@ -27,13 +28,14 @@ class LandingPageState extends State<LandingPage>
   late BannerAd _bannerAd;
   bool _isBannerAdReady = false;
   bool _showTutorial = true; // State to manage tutorial visibility
-  final bool _showPartyAnimation = true; // State for party animation
+  bool _showPartyAnimation = true; // State for party animation
   final TextEditingController _numberController = TextEditingController();
 
   bool _isWaitingForResponse = false;
 
   int _tutorialStep = 0; // To keep track of tutorial steps
   late ConfettiController _confettiController; // ConfettiController
+  int randomAnimationType = 1; // Default to 1 or any valid animation type
 
   // GlobalKeys for target widgets
   GlobalKey key1 = GlobalKey();
@@ -42,6 +44,8 @@ class LandingPageState extends State<LandingPage>
   // Add more keys as needed
 
   String _selectedLanguageCode = 'en'; // Default language code
+
+  double _prizePoolAmount = 100000; // Starting amount
 
   List<String> translatedTexts = List.filled(10, '', growable: false);
 
@@ -58,6 +62,30 @@ class LandingPageState extends State<LandingPage>
 
   List<TutorialStep> tutorialSteps = [];
 
+  Color _currentColor = Colors.black; // Default color, can be black or white
+
+  List<Color> colorSequence = [
+    const Color(0xFF2196F3), // Bright Blue
+    const Color(0xFF64B5F6), // Light Blue (Transition)
+    const Color(0xFF4CAF50), // Green
+    const Color(0xFF81C784), // Light Green (Transition)
+    const Color(0xFFFFC107), // Amber
+    const Color(0xFFFFD54F), // Light Amber (Transition)
+    const Color(0xFFFF5722), // Deep Orange
+    const Color(0xFFFF8A65), // Light Orange (Transition)
+    const Color(0xFF9C27B0), // Purple
+    const Color(0xFFCE93D8), // Light Purple (Transition)
+    const Color(0xFFE91E63), // Pink
+    const Color(0xFFF48FB1), // Light Pink (Transition)
+    const Color(0xFF00BCD4), // Cyan
+    const Color(0xFF80DEEA), // Light Cyan (Transition)
+    const Color(0xFF2196F3), // Bright Blue (looping back)
+  ];
+  Duration animationDuration = const Duration(seconds: 5);
+
+  int _currentColorIndex = 0;
+  bool _isAnimating = false;
+
   void _incrementLaunchCount() async {
     final prefs = await SharedPreferences.getInstance();
     int launchCount = prefs.getInt('launchCount') ?? 0;
@@ -68,7 +96,7 @@ class LandingPageState extends State<LandingPage>
   @override
   void initState() {
     super.initState();
-
+    _increasePrizePool();
     NgrokManager.fetchNgrokData();
     fetchAndSetTranslations(_selectedLanguageCode);
     _incrementLaunchCount();
@@ -112,7 +140,7 @@ class LandingPageState extends State<LandingPage>
         }
       });
     });
-
+    togglePartyAnimation();
     // Check if the tutorial has been completed previously
     _checkTutorialCompletion();
     _initBannerAd();
@@ -143,6 +171,111 @@ class LandingPageState extends State<LandingPage>
         _showTutorial = true;
       });
     }
+  }
+
+  void togglePartyAnimation() {
+    int randomAnimationType = Random().nextInt(4) + 1;
+
+    setState(() {
+      _isAnimating = true;
+    });
+
+    switch (randomAnimationType) {
+      case 1:
+        print("Using Animation Type 1: Cycling Through Colors");
+        animationType1();
+        break;
+      case 2:
+        print("Using Animation Type 2: Blinking Black and White");
+        animationType2();
+        break;
+      case 3:
+        print("Using Animation Type 3: Cycling Through Colors in Reverse");
+        animationType3();
+        break;
+      case 4:
+        print("Using Animation Type 4: Fast Blinking Black and White");
+        animationType4();
+        break;
+      default:
+        print("Invalid Animation Type");
+        break;
+    }
+
+    // Stop the animation after a specified duration
+    Future.delayed(const Duration(seconds: 5), () {
+      if (mounted) {
+        setState(() {
+          _isAnimating = false;
+        });
+      }
+    });
+  }
+
+  void animationType1() {
+    _isAnimating = true;
+    cycleThroughColors();
+  }
+
+  void animationType2() {
+    _isAnimating = true;
+    fastBlinkBlackAndWhite();
+  }
+
+  void fastBlinkBlackAndWhite() {
+    if (!_isAnimating) return;
+
+    setState(() {
+      _currentColor =
+          (_currentColor == Colors.black) ? Colors.white : Colors.black;
+    });
+
+    Future.delayed(const Duration(milliseconds: 250), () {
+      // Faster blink rate
+      if (mounted && _isAnimating) {
+        fastBlinkBlackAndWhite();
+      }
+    });
+  }
+
+  void animationType3() {
+    _isAnimating = true;
+    cycleThroughColorsReverse();
+  }
+
+  void cycleThroughColorsReverse() {
+    if (!_isAnimating) return;
+
+    setState(() {
+      _currentColorIndex =
+          (_currentColorIndex - 1).abs() % colorSequence.length;
+    });
+
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted && _isAnimating) {
+        cycleThroughColorsReverse();
+      }
+    });
+  }
+
+  void animationType4() {
+    _isAnimating = true;
+    fastBlinkBlackAndWhite();
+  }
+
+  void cycleThroughColors() {
+    if (!_isAnimating) return;
+
+    setState(() {
+      _currentColorIndex = (_currentColorIndex + 1) % colorSequence.length;
+      _showPartyAnimation = !_showPartyAnimation; // Toggles the state
+    });
+
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted && _isAnimating) {
+        cycleThroughColors(); // Continue cycling through colors
+      }
+    });
   }
 
 /*
@@ -385,9 +518,59 @@ class LandingPageState extends State<LandingPage>
     );
   }
 
+  void _increasePrizePool() {
+    if (_prizePoolAmount < 1000000) {
+      // Generate a random increase amount, you can adjust the range as needed
+      int randomIncrease = Random().nextInt(500) + 100; // Between 100 and 600
+
+      setState(() {
+        _prizePoolAmount += randomIncrease; // Increment the amount unevenly
+      });
+
+      // Schedule the next update with a random delay
+      int randomDelay = Random().nextInt(5) + 1; // Between 1 and 5 seconds
+      Future.delayed(Duration(seconds: randomDelay), _increasePrizePool);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     var screenSize = MediaQuery.of(context).size;
+
+    Color containerColor;
+    // Determine the color based on the animation type
+    switch (randomAnimationType) {
+      case 1:
+      case 3:
+        // For animation types 1 and 3, use the color sequence
+        containerColor = colorSequence[_currentColorIndex];
+        break;
+      case 2:
+      case 4:
+        // For animation types 2 and 4, use the current color (black or white)
+        containerColor = _currentColor;
+        break;
+      default:
+        containerColor = Colors.transparent; // Default color
+    }
+
+    // Prize Pool Counter Widget
+    Widget prizePoolCounter = Positioned(
+      bottom: 20, // Distance from the bottom of the screen
+      left: 0,
+      right: 0,
+      child: Center(
+        child: Text(
+          '\$${_prizePoolAmount.toStringAsFixed(0)}',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Colors.green,
+            fontFamily: 'Digital-7', // Consider a digital font
+          ),
+        ),
+      ),
+    );
 
     print(translatedTexts);
     // Calculate maxBlastForce based on screen width, with a maximum limit
@@ -399,12 +582,15 @@ class LandingPageState extends State<LandingPage>
       body: Stack(
         children: [
           AnimatedContainer(
-            duration: const Duration(seconds: 2),
-            color: _showPartyAnimation
-                ? Colors.yellow
-                : const Color(0xFF369A82), // Switch background color
+            duration: const Duration(milliseconds: 500),
+            width: screenSize.width,
+            height: screenSize.height,
+            color: containerColor,
+            // Other properties...
           ),
+
           // TADY MAME HAFO PROBLEMU, CHTELO BY TO CUSTOM ANIMATION CONTROLLER
+          prizePoolCounter, // Add the prize pool counter here
           Align(
             alignment: Alignment.topRight,
             child: ConfettiWidget(
