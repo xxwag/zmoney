@@ -381,8 +381,28 @@ class LandingPageState extends State<LandingPage>
     const separator = "*/"; // Unique separator
     List<String> texts = [];
 
-    for (int i = 1; i <= 10; i++) {
+    // Predefined list of default English texts
+    List<String> defaultTexts = [
+      'How Much?',
+      'Please insert numerical value',
+      'What the fuck',
+      'Ready',
+      'The next try will be available in:',
+      'This is the Go button. Tap here to start.',
+      'Tap the Go button to start your journey!',
+      'Here you can enter numbers.',
+      'Enter numbers in this field.',
+      'Select your language'
+    ];
+
+    // Checking and creating SharedPreferences entries if they don't exist
+    for (int i = 1; i <= defaultTexts.length; i++) {
       String key = 'translatedText$i' '_en'; // Corrected key format
+      if (!prefs.containsKey(key)) {
+        // If the key doesn't exist, set the default English text
+        await prefs.setString(key, defaultTexts[i - 1]);
+      }
+      // Fetching the text from SharedPreferences
       String text = prefs.getString(key) ?? "Default Text $i";
       texts.add(text);
     }
