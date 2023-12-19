@@ -12,6 +12,8 @@ import 'package:flutter/services.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:zmoney/ngrok.dart';
+import 'package:animated_flip_counter/animated_flip_counter.dart';
+import 'package:zmoney/side_menu.dart';
 
 class LandingPage extends StatefulWidget {
   const LandingPage({super.key});
@@ -36,18 +38,15 @@ class LandingPageState extends State<LandingPage>
   int _tutorialStep = 0; // To keep track of tutorial steps
   late ConfettiController _confettiController; // ConfettiController
   int randomAnimationType = 1; // Default to 1 or any valid animation type
-
   // GlobalKeys for target widgets
   GlobalKey key1 = GlobalKey();
   GlobalKey key2 = GlobalKey();
   GlobalKey keyLanguageSelector = GlobalKey();
   // Add more keys as needed
-
   String _selectedLanguageCode = 'en'; // Default language code
 
-  double _prizePoolAmount = 100000; // Starting amount
-
-  List<String> translatedTexts = List.filled(10, '', growable: false);
+  List<String> translatedTexts =
+      List.filled(15, '', growable: false); // Expanded to 15
 
   String translatedText1 = 'How Much?';
   String translatedText2 = 'Please insert numerical value';
@@ -59,6 +58,13 @@ class LandingPageState extends State<LandingPage>
   String translatedText8 = 'Here you can enter numbers.';
   String translatedText9 = 'Enter numbers in this field.';
   String translatedText10 = 'Select your language';
+  String translatedText11 = 'Game Menu';
+  String translatedText12 = 'How to play: Enter numbers & test your luck.';
+  String translatedText13 = 'You can win various prices, including real money.';
+  String translatedText14 = 'Account inventory';
+  String translatedText15 = 'Settings';
+
+  double _prizePoolAmount = 100000; // Starting amount
 
   List<TutorialStep> tutorialSteps = [];
 
@@ -378,21 +384,26 @@ class LandingPageState extends State<LandingPage>
 
   Future<String> combineEnglishTextsForTranslation(
       SharedPreferences prefs) async {
-    const separator = "*/"; // Unique separator
+    const separator = "999666"; // Unique separator
     List<String> texts = [];
 
     // Predefined list of default English texts
     List<String> defaultTexts = [
-      'How Much?',
-      'Please insert numerical value',
-      'What the fuck',
-      'Ready',
-      'The next try will be available in:',
-      'This is the Go button. Tap here to start.',
-      'Tap the Go button to start your journey!',
-      'Here you can enter numbers.',
-      'Enter numbers in this field.',
-      'Select your language'
+      '$translatedText1',
+      '$translatedText2',
+      '$translatedText3',
+      '$translatedText4',
+      '$translatedText5',
+      '$translatedText6',
+      '$translatedText7',
+      '$translatedText8',
+      '$translatedText9',
+      '$translatedText10',
+      '$translatedText11',
+      '$translatedText12',
+      '$translatedText13',
+      '$translatedText14',
+      '$translatedText15'
     ];
 
     // Checking and creating SharedPreferences entries if they don't exist
@@ -405,6 +416,11 @@ class LandingPageState extends State<LandingPage>
       // Fetching the text from SharedPreferences
       String text = prefs.getString(key) ?? "Default Text $i";
       texts.add(text);
+    }
+
+    // After fetching, print each translated text
+    for (int i = 0; i < texts.length; i++) {
+      print("translatedText${i + 1}: ${texts[i]}");
     }
 
     return texts.join(separator);
@@ -451,14 +467,15 @@ class LandingPageState extends State<LandingPage>
         await combineEnglishTextsForTranslation(prefs);
     print("Combined English texts for translation: $combinedEnglishTexts");
 
-    List<String> updatedTranslations = List.filled(10, '', growable: false);
+    List<String> updatedTranslations = List.filled(15, '', growable: false);
 
     if (targetLanguageCode != 'en') {
       // Translate English texts to the target language
       String translatedCombinedTexts =
           await translateText(combinedEnglishTexts, targetLanguageCode);
       print("Received translated text: $translatedCombinedTexts");
-      List<String> individualTranslations = translatedCombinedTexts.split("*/");
+      List<String> individualTranslations =
+          translatedCombinedTexts.split("999666");
 
       // Ensure there are enough elements in the list
       for (int i = 0;
@@ -561,11 +578,13 @@ class LandingPageState extends State<LandingPage>
     // Determine the color based on the animation type
     switch (randomAnimationType) {
       case 1:
+        containerColor = colorSequence[_currentColorIndex];
       case 3:
         // For animation types 1 and 3, use the color sequence
         containerColor = colorSequence[_currentColorIndex];
         break;
       case 2:
+        containerColor = colorSequence[_currentColorIndex];
       case 4:
         // For animation types 2 and 4, use the current color (black or white)
         containerColor = _currentColor;
@@ -574,31 +593,87 @@ class LandingPageState extends State<LandingPage>
         containerColor = Colors.transparent; // Default color
     }
 
-    // Prize Pool Counter Widget
     Widget prizePoolCounter = Positioned(
-      bottom: 20, // Distance from the bottom of the screen
+      bottom: 20,
       left: 0,
       right: 0,
       child: Center(
-        child: Text(
-          '\$${_prizePoolAmount.toStringAsFixed(0)}',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Colors.green,
-            fontFamily: 'Digital-7', // Consider a digital font
-          ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            // Calculate the dimensions for the pill
+            double textWidth = constraints.maxWidth;
+            double textHeight = 24; // Assuming this is the text height
+            double pillWidth = 200; // textWidth + textHeight;
+            double pillHeight = textHeight + textHeight;
+
+            return Container(
+              width: pillWidth,
+              height: pillHeight,
+              decoration: BoxDecoration(
+                color: Color.fromARGB(
+                    128, 255, 255, 255), // Set the pill background to grey
+                borderRadius:
+                    BorderRadius.circular(pillHeight / 2), // Pill shape
+              ),
+              alignment: Alignment.center,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Outline
+                  AnimatedFlipCounter(
+                    duration: Duration(milliseconds: 500),
+                    value: _prizePoolAmount, // Replace with your dynamic value
+                    textStyle: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: const Color.fromARGB(
+                          0, 255, 255, 255), // White color for the outline
+                      fontFamily: 'Digital-7',
+                      shadows: [
+                        Shadow(
+                          // Bottom-left shadow
+                          offset: Offset(-1.5, -1.5),
+                          color: Color.fromARGB(0, 255, 255, 255),
+                        ),
+                        Shadow(
+                          // Top-right shadow
+                          offset: Offset(1.5, 1.5),
+                          color: const Color.fromARGB(0, 255, 255, 255),
+                        ),
+                      ],
+                    ),
+                    prefix: "\$",
+                  ),
+                  // Main Text
+                  AnimatedFlipCounter(
+                    duration: Duration(milliseconds: 500),
+                    value: _prizePoolAmount, // Replace with your dynamic value
+                    textStyle: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green,
+                      fontFamily: 'Digital-7',
+                    ),
+                    prefix: "\$",
+                  ),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );
 
-    print(translatedTexts);
     // Calculate maxBlastForce based on screen width, with a maximum limit
     double calculatedBlastForce = screenSize.width / 1; // Example calculation
     double maxAllowedBlastForce = 2000; // Set your maximum limit here
     double maxBlastForce = math.min(calculatedBlastForce, maxAllowedBlastForce);
 
     return Scaffold(
+      drawer: SideMenuDrawer(
+        translatedTexts: translatedTexts,
+        containerColor: containerColor,
+      ),
       body: Stack(
         children: [
           AnimatedContainer(
@@ -627,10 +702,25 @@ class LandingPageState extends State<LandingPage>
               colors: const [Colors.green], // Color of particles
             ),
           ),
-          // Main content in a Column
+
+          // Positioned IconButton wrapped in a Builder to open the drawer
           Positioned(
             top: 20,
             left: 20,
+            child: Builder(
+              builder: (context) => IconButton(
+                icon: Icon(Icons.menu, size: 30.0),
+                onPressed: () {
+                  // Open the drawer
+                  Scaffold.of(context).openDrawer();
+                },
+              ),
+            ),
+          ),
+          // Main content in a Column
+          Positioned(
+            top: 20,
+            right: 20,
             child:
                 _buildLanguageSelector(), // Language selector at the top left corner
           ),
@@ -696,6 +786,61 @@ class LandingPageState extends State<LandingPage>
         ],
       ),
     );
+  }
+
+  Widget _buildTutorialOverlay() {
+    if (_tutorialStep >= tutorialSteps.length) {
+      return const SizedBox.shrink();
+    }
+
+    final currentStep = tutorialSteps[_tutorialStep];
+    final keyContext = currentStep.targetKey.currentContext;
+
+    if (keyContext != null) {
+      final RenderBox renderBox = keyContext.findRenderObject() as RenderBox;
+      final position = renderBox.localToGlobal(Offset.zero);
+
+      // Define a custom offset
+      Offset customOffset = Offset.zero;
+      if (currentStep.targetKey == keyLanguageSelector) {
+        customOffset =
+            const Offset(-200.0, 80.0); // Adjust these values as needed
+      }
+
+      return Positioned(
+        left: position.dx + customOffset.dx,
+        top: position.dy + customOffset.dy,
+        child: GestureDetector(
+          onTap: _nextTutorialStep,
+          child: Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
+              boxShadow: const [
+                BoxShadow(color: Colors.black26, blurRadius: 4, spreadRadius: 2)
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Tutorial Step $_tutorialStep',
+                  style: const TextStyle(color: Colors.black, fontSize: 16),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  currentStep.description, // Display the description
+                  style: const TextStyle(color: Colors.black87),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    } else {
+      return const SizedBox.shrink();
+    }
   }
 
   Widget _buildNumberInput(Size screenSize, String hintText) {
@@ -1041,61 +1186,6 @@ class LandingPageState extends State<LandingPage>
         ),
       ),
     );
-  }
-
-  Widget _buildTutorialOverlay() {
-    if (_tutorialStep >= tutorialSteps.length) {
-      return const SizedBox.shrink();
-    }
-
-    final currentStep = tutorialSteps[_tutorialStep];
-    final keyContext = currentStep.targetKey.currentContext;
-
-    if (keyContext != null) {
-      final RenderBox renderBox = keyContext.findRenderObject() as RenderBox;
-      final position = renderBox.localToGlobal(Offset.zero);
-
-      // Define a custom offset
-      Offset customOffset = Offset.zero;
-      if (currentStep.targetKey == keyLanguageSelector) {
-        customOffset =
-            const Offset(30.0, 60.0); // Adjust these values as needed
-      }
-
-      return Positioned(
-        left: position.dx + customOffset.dx,
-        top: position.dy + customOffset.dy,
-        child: GestureDetector(
-          onTap: _nextTutorialStep,
-          child: Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: const [
-                BoxShadow(color: Colors.black26, blurRadius: 4, spreadRadius: 2)
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Tutorial Step $_tutorialStep',
-                  style: const TextStyle(color: Colors.black, fontSize: 16),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  currentStep.description, // Display the description
-                  style: const TextStyle(color: Colors.black87),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    } else {
-      return const SizedBox.shrink();
-    }
   }
 
   void _checkTutorialCompletion() async {
