@@ -726,12 +726,16 @@ class LandingPageState extends State<LandingPage>
           ),
           Column(
             children: [
+              // Show the banner ad if ready, otherwise show the placeholder
               if (_isBannerAdReady)
                 SizedBox(
                   width: _bannerAd.size.width.toDouble(),
                   height: _bannerAd.size.height.toDouble(),
                   child: AdWidget(ad: _bannerAd),
-                ),
+                )
+              else
+                _bannerAdPlaceholder(),
+
               Expanded(
                 child: Center(
                   child: Column(
@@ -784,6 +788,26 @@ class LandingPageState extends State<LandingPage>
           ),
           _showTutorial ? _buildTutorialOverlay() : const SizedBox.shrink(),
         ],
+      ),
+    );
+  }
+
+  Widget _bannerAdPlaceholder() {
+    return Container(
+      width: _bannerAd.size.width.toDouble(),
+      height: _bannerAd.size.height.toDouble(),
+      decoration: BoxDecoration(
+        color: Colors.grey[300], // Light grey color
+        border: Border.all(color: Colors.grey),
+      ),
+      child: Center(
+        child: Text(
+          'Ad Placeholder',
+          style: TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
     );
   }
