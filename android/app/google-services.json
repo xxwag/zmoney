@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "446412900874",
+    "firebase_url": "https://what-e7630-default-rtdb.europe-west1.firebasedatabase.app",
     "project_id": "what-e7630",
     "storage_bucket": "what-e7630.appspot.com"
   },
@@ -40,7 +41,8 @@
             }
           ]
         }
-      }
+      },
+      "admob_app_id": "ca-app-pub-4652990815059289~7790651680"
     }
   ],
   "configuration_version": "1"
