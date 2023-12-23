@@ -23,6 +23,7 @@ dependencies:
   firebase_auth: ^4.15.3
   animated_flip_counter: ^0.2.6
   marquee: ^2.2.3
+  firebase_core: ^2.24.2
   
 
 dev_dependencies:
