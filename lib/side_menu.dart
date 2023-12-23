@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:marquee/marquee.dart';
 
 class SideMenuDrawer extends StatefulWidget {
   final List<String> translatedTexts;
   final int marqueeThreshold = 20; // Threshold for applying Marquee
   final Color containerColor; // Color for the background container
 
-  SideMenuDrawer({
+  const SideMenuDrawer({
+    super.key,
     required this.translatedTexts,
     required this.containerColor,
   });
 
   @override
-  _SideMenuDrawerState createState() => _SideMenuDrawerState();
+  SideMenuDrawerState createState() => _ideMenuDrawerState();
 }
 
 class _SideMenuDrawerState extends State<SideMenuDrawer> {

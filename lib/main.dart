@@ -4,92 +4,71 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:zmoney/landing_page.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:zmoney/welcome_screen.dart';
 import 'firebase_options.dart';
-
-// Assuming you have this file
+import 'package:flutter/services.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  // Clear shared preferences
-  await clearSharedPreferences();
-
-  // Environment variable loading and secure storage setup
   String envFileName = ".env";
-  if (Platform.isAndroid || Platform.isIOS) {
-    // Platform-specific code if needed
-  }
   await dotenv.load(fileName: envFileName);
+
   const secureStorage = FlutterSecureStorage();
   await secureStorage.write(
       key: 'ngrokToken', value: dotenv.env['NGROK_TOKEN']);
 
-  MobileAds.instance.initialize();
+  // Conditional initialization for Android and iOS
+  if (Platform.isAndroid || Platform.isIOS) {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+
+    // Initialize Google Mobile Ads
+    MobileAds.instance.initialize();
+
+    // Initialize Play Games Services for Android
+    if (Platform.isAndroid) {
+      final PlayGamesService playGamesService = PlayGamesService();
+      bool isAuthenticated = await playGamesService.isAuthenticated();
+      if (isAuthenticated) {
+        // If authenticated, get Player ID or perform other actions
+        // Use playerId as needed
+      }
+    }
+  }
+
   runApp(const MyApp());
 }
 
 Future<void> clearSharedPreferences() async {
   final SharedPreferences prefs = await SharedPreferences.getInstance();
-  await prefs.clear(); // This clears all data in SharedPreferences
+  await prefs.clear();
 }
 
 class MyApp extends StatelessWidget {
-  // ignore: use_super_parameters
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return const MaterialApp(
-      title: 'App Lottery',
-      home: WelcomeScreen(), // Start with WelcomeScreen
+      title: 'How Much? - The App',
+      home: WelcomeScreen(),
     );
   }
 }
 
-// WelcomeScreen implementation
-class WelcomeScreen extends StatelessWidget {
-  const WelcomeScreen({super.key});
+class PlayGamesService {
+  static const platform = MethodChannel('com.gg.zmoney/play_games');
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Welcome to App Lottery'),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            ElevatedButton(
-              onPressed: () {
-                // TODO: Implement OAuth2 Login Logic
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const LandingPage()));
-              },
-              child: const Text('Login with OAuth2'),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                // TODO: Implement Google Play Services Login Logic
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const LandingPage()));
-              },
-              child: const Text('Login with Google Play Services'),
-            ),
-          ],
-        ),
-      ),
-    );
+  Future<bool> isAuthenticated() async {
+    final bool isAuthenticated = await platform.invokeMethod('isAuthenticated');
+    return isAuthenticated;
+  }
+
+  Future<String> getPlayerId() async {
+    final String playerId = await platform.invokeMethod('getPlayerId');
+    return playerId;
   }
 }

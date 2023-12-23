@@ -14,6 +14,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:zmoney/ngrok.dart';
 import 'package:animated_flip_counter/animated_flip_counter.dart';
 import 'package:zmoney/side_menu.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart'; // Import the necessary library
 
 class LandingPage extends StatefulWidget {
   const LandingPage({super.key});
@@ -67,6 +68,12 @@ class LandingPageState extends State<LandingPage>
   double _prizePoolAmount = 100000; // Starting amount
 
   List<TutorialStep> tutorialSteps = [];
+// Remove the unused _adTimer field
+// Timer _adTimer;
+  int _currentAdIndex = 0;
+// Initialize the _adTimer field with a value
+  Timer _adTimer = Timer(Duration.zero, () {});
+  List<BannerAd> _bannerAds = [];
 
   Color _currentColor = Colors.black; // Default color, can be black or white
 
@@ -333,25 +340,6 @@ class LandingPageState extends State<LandingPage>
   }
 */
 
-  void _initBannerAd() {
-    _bannerAd = BannerAd(
-      adUnitId: 'ca-app-pub-4652990815059289/6968524603', // Test ad unit ID
-      size: AdSize.banner,
-      request: const AdRequest(),
-      listener: BannerAdListener(
-        onAdLoaded: (_) => setState(() => _isBannerAdReady = true),
-        onAdFailedToLoad: (ad, error) {
-          if (kDebugMode) {
-            print('Ad failed to load: $error');
-          }
-          ad.dispose();
-        },
-      ),
-    );
-
-    _bannerAd.load();
-  }
-
   void _playConfettiAnimation() {
     _confettiController.play();
 
@@ -568,6 +556,62 @@ class LandingPageState extends State<LandingPage>
       int randomDelay = Random().nextInt(5) + 1; // Between 1 and 5 seconds
       Future.delayed(Duration(seconds: randomDelay), _increasePrizePool);
     }
+  }
+
+  void _initBannerAd() {
+    _bannerAd = BannerAd(
+      adUnitId: 'ca-app-pub-4652990815059289/6968524603', // Test ad unit ID
+      size: AdSize.banner,
+      request: const AdRequest(),
+      listener: BannerAdListener(
+        onAdLoaded: (_) => setState(() => _isBannerAdReady = true),
+        onAdFailedToLoad: (ad, error) {
+          if (kDebugMode) {
+            print('Ad failed to load: $error');
+          }
+          ad.dispose();
+        },
+      ),
+    );
+
+    _bannerAd.load();
+  }
+
+  void _initBannerAds() {
+    _bannerAds = [
+      _createBannerAd('ca-app-pub-4652990815059289/6968524603'),
+      _createBannerAd('ca-app-pub-4652990815059289/6968524604'),
+      // Add more ad unit IDs as needed
+    ];
+
+    _adTimer = Timer.periodic(Duration(seconds: 30), (timer) {
+      if (_currentAdIndex >= _bannerAds.length) {
+        _currentAdIndex = 0;
+      }
+
+      _bannerAds[_currentAdIndex].load(); // Just call load() without 'if'
+
+      _currentAdIndex++;
+    });
+  }
+
+  BannerAd _createBannerAd(String adUnitId) {
+    return BannerAd(
+      adUnitId: adUnitId,
+      size: AdSize.banner,
+      request: const AdRequest(),
+      listener: BannerAdListener(
+        onAdLoaded: (_) {
+          // No need to call setState here, as the ad will be displayed by the timer
+        },
+        onAdFailedToLoad: (ad, error) {
+          if (kDebugMode) {
+            print('Ad failed to load: $error');
+          }
+          ad.dispose();
+        },
+      ),
+    )..load();
   }
 
   @override
