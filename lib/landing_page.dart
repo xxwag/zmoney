@@ -10,11 +10,14 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:marquee/marquee.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:zmoney/animation_widget.dart';
+import 'package:zmoney/marquee.dart';
 import 'package:zmoney/ngrok.dart';
 import 'package:animated_flip_counter/animated_flip_counter.dart';
 import 'package:zmoney/side_menu.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart'; // Import the necessary library
+// Import the necessary library
 
 class LandingPage extends StatefulWidget {
   const LandingPage({super.key});
@@ -50,8 +53,8 @@ class LandingPageState extends State<LandingPage>
       List.filled(15, '', growable: false); // Expanded to 15
 
   String translatedText1 = 'How Much?';
-  String translatedText2 = 'Please insert numerical value';
-  String translatedText3 = 'What the fuck';
+  String translatedText2 = 'Enter numbers';
+  String translatedText3 = 'Go!';
   String translatedText4 = 'Ready';
   String translatedText5 = 'The next try will be available in:';
   String translatedText6 = 'This is the Go button. Tap here to start.';
@@ -67,13 +70,13 @@ class LandingPageState extends State<LandingPage>
 
   double _prizePoolAmount = 100000; // Starting amount
 
+  bool _isGoButtonLocked = false; // To track the Go button lock state
+  bool isButtonLocked = false; // Add this variable to your widget state
+
   List<TutorialStep> tutorialSteps = [];
 // Remove the unused _adTimer field
 // Timer _adTimer;
-  int _currentAdIndex = 0;
 // Initialize the _adTimer field with a value
-  Timer _adTimer = Timer(Duration.zero, () {});
-  List<BannerAd> _bannerAds = [];
 
   Color _currentColor = Colors.black; // Default color, can be black or white
 
@@ -195,23 +198,18 @@ class LandingPageState extends State<LandingPage>
 
     switch (randomAnimationType) {
       case 1:
-        print("Using Animation Type 1: Cycling Through Colors");
         animationType1();
         break;
       case 2:
-        print("Using Animation Type 2: Blinking Black and White");
         animationType2();
         break;
       case 3:
-        print("Using Animation Type 3: Cycling Through Colors in Reverse");
         animationType3();
         break;
       case 4:
-        print("Using Animation Type 4: Fast Blinking Black and White");
         animationType4();
         break;
       default:
-        print("Invalid Animation Type");
         break;
     }
 
@@ -355,19 +353,29 @@ class LandingPageState extends State<LandingPage>
     if (_timer != null) {
       _timer!.cancel(); // Cancel any existing timer
     }
-    setState(() {
-      _timerStarted = true;
-      _remainingTime = 600; // 10 minutes in seconds
-    });
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_remainingTime > 0) {
-        setState(() {
-          _remainingTime--;
-        });
-      } else {
-        _timer!.cancel();
-      }
-    });
+
+    if (!_isGoButtonLocked) {
+      // Check if the Go button is not locked
+      setState(() {
+        _timerStarted = true;
+        _remainingTime = 600; // 10 minutes in seconds
+      });
+
+      _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        if (_remainingTime > 0) {
+          setState(() {
+            _remainingTime--;
+          });
+        } else {
+          _timer!.cancel();
+
+          // Unlock the Go button after the timer expires
+          setState(() {
+            _isGoButtonLocked = false;
+          });
+        }
+      });
+    }
   }
 
   Future<String> combineEnglishTextsForTranslation(
@@ -377,21 +385,21 @@ class LandingPageState extends State<LandingPage>
 
     // Predefined list of default English texts
     List<String> defaultTexts = [
-      '$translatedText1',
-      '$translatedText2',
-      '$translatedText3',
-      '$translatedText4',
-      '$translatedText5',
-      '$translatedText6',
-      '$translatedText7',
-      '$translatedText8',
-      '$translatedText9',
-      '$translatedText10',
-      '$translatedText11',
-      '$translatedText12',
-      '$translatedText13',
-      '$translatedText14',
-      '$translatedText15'
+      translatedText1,
+      translatedText2,
+      translatedText3,
+      translatedText4,
+      translatedText5,
+      translatedText6,
+      translatedText7,
+      translatedText8,
+      translatedText9,
+      translatedText10,
+      translatedText11,
+      translatedText12,
+      translatedText13,
+      translatedText14,
+      translatedText15
     ];
 
     // Checking and creating SharedPreferences entries if they don't exist
@@ -407,9 +415,7 @@ class LandingPageState extends State<LandingPage>
     }
 
     // After fetching, print each translated text
-    for (int i = 0; i < texts.length; i++) {
-      print("translatedText${i + 1}: ${texts[i]}");
-    }
+    for (int i = 0; i < texts.length; i++) {}
 
     return texts.join(separator);
   }
@@ -417,7 +423,6 @@ class LandingPageState extends State<LandingPage>
   Future<String> translateText(String text, String toLang,
       {String fromLang = 'auto'}) async {
     var url = Uri.parse('https://libretranslate.de/translate');
-    print('haluški$text');
     try {
       var response = await http.post(
         url,
@@ -437,23 +442,19 @@ class LandingPageState extends State<LandingPage>
         var data = json.decode(decodedResponse);
         return data['translatedText'];
       } else {
-        print('Failed to translate. Status code: ${response.statusCode}');
         return text; // Return original text on failure
       }
     } catch (e) {
-      print('Error occurred: $e');
       return text; // Return original text on error
     }
   }
 
   Future<void> fetchAndSetTranslations(String targetLanguageCode) async {
     final prefs = await SharedPreferences.getInstance();
-    print("Fetching translations for language code: $targetLanguageCode");
 
     // Use the original English texts as a base for translation
     String combinedEnglishTexts =
         await combineEnglishTextsForTranslation(prefs);
-    print("Combined English texts for translation: $combinedEnglishTexts");
 
     List<String> updatedTranslations = List.filled(15, '', growable: false);
 
@@ -461,7 +462,6 @@ class LandingPageState extends State<LandingPage>
       // Translate English texts to the target language
       String translatedCombinedTexts =
           await translateText(combinedEnglishTexts, targetLanguageCode);
-      print("Received translated text: $translatedCombinedTexts");
       List<String> individualTranslations =
           translatedCombinedTexts.split("999666");
 
@@ -577,283 +577,108 @@ class LandingPageState extends State<LandingPage>
     _bannerAd.load();
   }
 
-  void _initBannerAds() {
-    _bannerAds = [
-      _createBannerAd('ca-app-pub-4652990815059289/6968524603'),
-      _createBannerAd('ca-app-pub-4652990815059289/6968524604'),
-      // Add more ad unit IDs as needed
-    ];
+  Widget _buildPrizePoolCounter(bool keyboardOpen) {
+    double bottomPosition =
+        keyboardOpen ? 120 : 20; // Adjust position based on keyboard visibility
 
-    _adTimer = Timer.periodic(Duration(seconds: 30), (timer) {
-      if (_currentAdIndex >= _bannerAds.length) {
-        _currentAdIndex = 0;
-      }
-
-      _bannerAds[_currentAdIndex].load(); // Just call load() without 'if'
-
-      _currentAdIndex++;
-    });
-  }
-
-  BannerAd _createBannerAd(String adUnitId) {
-    return BannerAd(
-      adUnitId: adUnitId,
-      size: AdSize.banner,
-      request: const AdRequest(),
-      listener: BannerAdListener(
-        onAdLoaded: (_) {
-          // No need to call setState here, as the ad will be displayed by the timer
-        },
-        onAdFailedToLoad: (ad, error) {
-          if (kDebugMode) {
-            print('Ad failed to load: $error');
-          }
-          ad.dispose();
-        },
-      ),
-    )..load();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    var screenSize = MediaQuery.of(context).size;
-
-    Color containerColor;
-    // Determine the color based on the animation type
-    switch (randomAnimationType) {
-      case 1:
-        containerColor = colorSequence[_currentColorIndex];
-      case 3:
-        // For animation types 1 and 3, use the color sequence
-        containerColor = colorSequence[_currentColorIndex];
-        break;
-      case 2:
-        containerColor = colorSequence[_currentColorIndex];
-      case 4:
-        // For animation types 2 and 4, use the current color (black or white)
-        containerColor = _currentColor;
-        break;
-      default:
-        containerColor = Colors.transparent; // Default color
-    }
-
-    Widget prizePoolCounter = Positioned(
-      bottom: 20,
+    return Positioned(
+      bottom: bottomPosition,
       left: 0,
       right: 0,
       child: Center(
         child: LayoutBuilder(
           builder: (context, constraints) {
             // Calculate the dimensions for the pill
-            double textWidth = constraints.maxWidth;
             double textHeight = 24; // Assuming this is the text height
             double pillWidth = 200; // textWidth + textHeight;
             double pillHeight = textHeight + textHeight;
 
-            return Container(
-              width: pillWidth,
-              height: pillHeight,
-              decoration: BoxDecoration(
-                color: Color.fromARGB(
-                    128, 255, 255, 255), // Set the pill background to grey
-                borderRadius:
-                    BorderRadius.circular(pillHeight / 2), // Pill shape
-              ),
-              alignment: Alignment.center,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  // Outline
-                  AnimatedFlipCounter(
-                    duration: Duration(milliseconds: 500),
-                    value: _prizePoolAmount, // Replace with your dynamic value
-                    textStyle: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: const Color.fromARGB(
-                          0, 255, 255, 255), // White color for the outline
-                      fontFamily: 'Digital-7',
-                      shadows: [
-                        Shadow(
-                          // Bottom-left shadow
-                          offset: Offset(-1.5, -1.5),
+            return Column(
+              // Wrap the existing Container in a Column
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  "Current Reward:", // Add the text here
+                  style: const TextStyle(
+                    fontSize: 16, // Adjust the font size as needed
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white, // Adjust the color as needed
+                  ),
+                ),
+                SizedBox(height: 8), // Add spacing between text and pill
+                Container(
+                  width: pillWidth,
+                  height: pillHeight,
+                  decoration: BoxDecoration(
+                    color: const Color.fromARGB(128, 255, 255, 255),
+                    borderRadius: BorderRadius.circular(pillHeight / 2),
+                  ),
+                  alignment: Alignment.center,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // Outline
+                      AnimatedFlipCounter(
+                        duration: const Duration(milliseconds: 500),
+                        value: _prizePoolAmount,
+                        textStyle: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
                           color: Color.fromARGB(0, 255, 255, 255),
+                          fontFamily: 'Digital-7',
+                          shadows: [
+                            Shadow(
+                                offset: Offset(-1.5, -1.5),
+                                color: Color.fromARGB(0, 255, 255, 255)),
+                            Shadow(
+                                offset: Offset(1.5, 1.5),
+                                color: Color.fromARGB(0, 255, 255, 255)),
+                          ],
                         ),
-                        Shadow(
-                          // Top-right shadow
-                          offset: Offset(1.5, 1.5),
-                          color: const Color.fromARGB(0, 255, 255, 255),
+                        prefix: "\$",
+                      ),
+                      // Main Text
+                      AnimatedFlipCounter(
+                        duration: const Duration(milliseconds: 500),
+                        value: _prizePoolAmount,
+                        textStyle: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green,
+                          fontFamily: 'Digital-7',
                         ),
-                      ],
-                    ),
-                    prefix: "\$",
+                        prefix: "\$",
+                      ),
+                    ],
                   ),
-                  // Main Text
-                  AnimatedFlipCounter(
-                    duration: Duration(milliseconds: 500),
-                    value: _prizePoolAmount, // Replace with your dynamic value
-                    textStyle: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green,
-                      fontFamily: 'Digital-7',
-                    ),
-                    prefix: "\$",
-                  ),
-                ],
-              ),
+                ),
+              ],
             );
           },
         ),
       ),
     );
-
-    // Calculate maxBlastForce based on screen width, with a maximum limit
-    double calculatedBlastForce = screenSize.width / 1; // Example calculation
-    double maxAllowedBlastForce = 2000; // Set your maximum limit here
-    double maxBlastForce = math.min(calculatedBlastForce, maxAllowedBlastForce);
-
-    return Scaffold(
-      drawer: SideMenuDrawer(
-        translatedTexts: translatedTexts,
-        containerColor: containerColor,
-      ),
-      body: Stack(
-        children: [
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 500),
-            width: screenSize.width,
-            height: screenSize.height,
-            color: containerColor,
-            // Other properties...
-          ),
-
-          // TADY MAME HAFO PROBLEMU, CHTELO BY TO CUSTOM ANIMATION CONTROLLER
-          prizePoolCounter, // Add the prize pool counter here
-          Align(
-            alignment: Alignment.topRight,
-            child: ConfettiWidget(
-              confettiController: _confettiController,
-              blastDirectionality: BlastDirectionality.directional,
-              blastDirection: -math.pi / 1, // For straight-down particles
-              particleDrag: 0.05, // Drag of the particles
-              minBlastForce: 1, // Minimum blast force
-              maxBlastForce:
-                  maxBlastForce, // Dynamically calculated with a limit
-              emissionFrequency: 0.05, // Frequency of emission (within 0 to 1)
-              numberOfParticles: 13, // Number of particles
-              gravity: 0.01, // Gravity effect on particles
-              colors: const [Colors.green], // Color of particles
-            ),
-          ),
-
-          // Positioned IconButton wrapped in a Builder to open the drawer
-          Positioned(
-            top: 20,
-            left: 20,
-            child: Builder(
-              builder: (context) => IconButton(
-                icon: Icon(Icons.menu, size: 30.0),
-                onPressed: () {
-                  // Open the drawer
-                  Scaffold.of(context).openDrawer();
-                },
-              ),
-            ),
-          ),
-          // Main content in a Column
-          Positioned(
-            top: 20,
-            right: 20,
-            child:
-                _buildLanguageSelector(), // Language selector at the top left corner
-          ),
-          Column(
-            children: [
-              // Show the banner ad if ready, otherwise show the placeholder
-              if (_isBannerAdReady)
-                SizedBox(
-                  width: _bannerAd.size.width.toDouble(),
-                  height: _bannerAd.size.height.toDouble(),
-                  child: AdWidget(ad: _bannerAd),
-                )
-              else
-                _bannerAdPlaceholder(),
-
-              Expanded(
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text(
-                        translatedTexts[0], // Use translated text
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Color(0xFF0D251F),
-                          fontSize: 40,
-                          fontFamily: 'Inter',
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      SizedBox(height: screenSize.height * 0.1),
-                      _buildNumberInput(
-                        screenSize,
-                        translatedTexts[1],
-                      ),
-                      SizedBox(height: screenSize.height * 0.1),
-                      _buildGoButton(
-                        screenSize,
-                        translatedTexts[2],
-                      ),
-                      SizedBox(height: screenSize.height * 0.1),
-                      GestureDetector(
-                        onTap: startTimer,
-                        child: Text(
-                          _timerStarted
-                              ? '${translatedTexts[4]} ${_remainingTime ~/ 60}:${(_remainingTime % 60).toString().padLeft(2, '0')}'
-                              : translatedTexts[
-                                  3], // Assuming translatedText4 corresponds to index 3 in translatedTexts
-
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontFamily: 'Roboto',
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-          _showTutorial ? _buildTutorialOverlay() : const SizedBox.shrink(),
-        ],
-      ),
-    );
   }
 
-  Widget _bannerAdPlaceholder() {
-    return Container(
-      width: _bannerAd.size.width.toDouble(),
-      height: _bannerAd.size.height.toDouble(),
-      decoration: BoxDecoration(
-        color: Colors.grey[300], // Light grey color
-        border: Border.all(color: Colors.grey),
-      ),
-      child: Center(
-        child: Text(
-          'Ad Placeholder',
-          style: TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-    );
+  Color _determineContainerColor() {
+    switch (randomAnimationType) {
+      case 1:
+      case 3:
+        // For animation types 1 and 3, use the color sequence
+        return colorSequence[_currentColorIndex];
+      case 2:
+      case 4:
+        // For animation types 2 and 4, use the current color (black or white)
+        return _currentColor;
+      default:
+        // Default color
+        return Colors.transparent;
+    }
+  }
+
+  Widget _createAdWidget() {
+    return AdWidget(ad: _bannerAd);
   }
 
   Widget _buildTutorialOverlay() {
@@ -875,36 +700,59 @@ class LandingPageState extends State<LandingPage>
             const Offset(-200.0, 80.0); // Adjust these values as needed
       }
 
-      return Positioned(
-        left: position.dx + customOffset.dx,
-        top: position.dy + customOffset.dy,
-        child: GestureDetector(
-          onTap: _nextTutorialStep,
-          child: Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: const [
-                BoxShadow(color: Colors.black26, blurRadius: 4, spreadRadius: 2)
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Tutorial Step $_tutorialStep',
-                  style: const TextStyle(color: Colors.black, fontSize: 16),
+      // Define a constant offset to push the text down
+      const Offset textOffset = Offset(0.0, 75.0); // Adjust the vertical offset
+
+      return Stack(
+        children: [
+          Positioned(
+            left: position.dx + customOffset.dx,
+            top: position.dy + customOffset.dy,
+            child: GestureDetector(
+              onTap: _nextTutorialStep,
+              child: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: const [
+                    BoxShadow(
+                        color: Colors.black26, blurRadius: 4, spreadRadius: 2),
+                  ],
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  currentStep.description, // Display the description
-                  style: const TextStyle(color: Colors.black87),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Tutorial Step $_tutorialStep',
+                      style: const TextStyle(color: Colors.black, fontSize: 16),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      currentStep.description, // Display the description
+                      style: const TextStyle(color: Colors.black87),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
-        ),
+          Positioned(
+            left: position.dx +
+                customOffset.dx +
+                textOffset.dx, // Adjust the left position
+            top: position.dy +
+                customOffset.dy +
+                textOffset.dy, // Adjust the top position
+            child: Text(
+              'Tap here ⏩', // Add instruction to click
+              style: const TextStyle(
+                color: Colors.black,
+                fontSize: 12, // Adjust the font size as needed
+              ),
+            ),
+          ),
+        ],
       );
     } else {
       return const SizedBox.shrink();
@@ -946,18 +794,159 @@ class LandingPageState extends State<LandingPage>
     );
   }
 
-  Widget _buildGoButton(Size screenSize, String buttonText) {
+  @override
+  Widget build(BuildContext context) {
+    var screenSize = MediaQuery.of(context).size;
+    var isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
+    Color containerColor =
+        _determineContainerColor(); // Use the container color determining method
+
+    return Scaffold(
+      drawer: SideMenuDrawer(
+        translatedTexts: translatedTexts,
+        containerColor: containerColor,
+      ),
+      body: Column(children: [
+        // Display the banner ad at the top if it's ready
+        if (_isBannerAdReady)
+          SizedBox(
+            width: _bannerAd.size.width.toDouble(),
+            height: _bannerAd.size.height.toDouble(),
+            child: AdWidget(ad: _bannerAd),
+          ),
+
+        // The rest of the content is in an Expanded widget
+        Expanded(
+          child: Stack(
+            children: [
+              // Animated background container with opacity transition
+              AnimatedOpacity(
+                duration: const Duration(milliseconds: 500),
+                opacity: _isBannerAdReady ? 1.0 : 0.1,
+                child: Container(
+                  width: screenSize.width,
+                  height: screenSize.height,
+                  color: containerColor,
+                ),
+              ),
+
+              // Only show the prize pool counter if the keyboard is not open
+              if (!isKeyboardOpen) _buildPrizePoolCounter(isKeyboardOpen),
+
+              Positioned(
+                top: 20,
+                left: 20,
+                child: Builder(
+                  builder: (context) => IconButton(
+                    icon: const Icon(Icons.menu, size: 30.0),
+                    onPressed: () => Scaffold.of(context).openDrawer(),
+                  ),
+                ),
+              ),
+
+              Positioned(
+                top: 20,
+                right: 20,
+                child: _buildLanguageSelector(),
+              ),
+              Column(
+                children: [
+                  Expanded(
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          if (!isKeyboardOpen)
+                            Text(
+                              translatedTexts[0], // Use translated text
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 40,
+                                fontFamily: 'Inter',
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          SizedBox(height: screenSize.height * 0.15),
+                          _buildNumberInput(
+                            screenSize,
+                            translatedTexts[1],
+                          ),
+                          SizedBox(height: screenSize.height * 0.1),
+                          _buildGoButton(
+                            screenSize,
+                            translatedTexts[2],
+                            isButtonLocked,
+                          ), // Pass the button lock status
+                          SizedBox(height: screenSize.height * 0.025),
+                          GestureDetector(
+                            onTap: startTimer,
+                            child: Text(
+                              _timerStarted
+                                  ? '${translatedTexts[4]} ${_remainingTime ~/ 60}:${(_remainingTime % 60).toString().padLeft(2, '0')}'
+                                  : translatedTexts[
+                                      3], // Assuming translatedText4 corresponds to index 3 in translatedTexts
+
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontFamily: 'Roboto',
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: screenSize.height * 0.1),
+                          // Use ListView for marquee effect
+                          Container(
+                            width: double.infinity,
+                            height: 40, // Adjust the height as needed
+                            color: Colors.transparent, // Background color
+                            child: MarqueeText(
+                              text: '⚠️App still in the development!         ' *
+                                  5, // Repeat the text to make it scroll
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              _showTutorial ? _buildTutorialOverlay() : const SizedBox.shrink(),
+            ],
+          ),
+        )
+      ]),
+    );
+  }
+
+  Widget _buildGoButton(Size screenSize, String buttonText, bool isLocked) {
+    // Define the default and loading button colors
+    final defaultColor = Colors.blue; // Change to your desired default color
+    final loadingColor = Colors.grey; // Change to your desired loading color
+
+    // Determine the button color based on the lock state
+    final buttonColor = isLocked ? loadingColor : defaultColor;
+
     return GestureDetector(
       onTap: () {
-        if (!_isWaitingForResponse && !_timerStarted) {
+        if (!_isWaitingForResponse && !_timerStarted && !isLocked) {
+          // Check if the button is not locked
           submitGuess();
         }
       },
       child: Container(
         key: key2, // Assign the GlobalKey here
         padding: const EdgeInsets.all(20),
-        decoration: const BoxDecoration(
-          boxShadow: [
+        decoration: BoxDecoration(
+          boxShadow: const [
             BoxShadow(
               color: Color(0x3F000000),
               blurRadius: 4,
@@ -965,6 +954,8 @@ class LandingPageState extends State<LandingPage>
               spreadRadius: 0,
             ),
           ],
+          // Use the determined button color
+          color: buttonColor,
         ),
         child: _isWaitingForResponse
             ? const CircularProgressIndicator()
@@ -983,6 +974,7 @@ class LandingPageState extends State<LandingPage>
   }
 
   Future<void> submitGuess() async {
+    // Fetch Ngrok data
     NgrokManager.fetchNgrokData();
     String guessStr = _numberController.text; // Guess as a string
 
@@ -1027,6 +1019,12 @@ class LandingPageState extends State<LandingPage>
             _isWaitingForResponse = false; // Stop waiting stage
             // Show result to user (win/lose)
             _showResultDialog(isCorrect);
+
+            // Lock the "Go" button for the next 10 minutes
+            isButtonLocked = true;
+
+            // Start the 10-minute timer
+            startTimer();
           });
         } else {
           // Handle non-200 responses
@@ -1078,8 +1076,7 @@ class LandingPageState extends State<LandingPage>
         // Start checking for server availability
         checkServerAvailability();
 
-        return WillPopScope(
-          onWillPop: () async => false, // Disable closing by back button
+        return PopScope(
           child: StatefulBuilder(
             builder: (context, setState) {
               return Dialog(
@@ -1153,8 +1150,7 @@ class LandingPageState extends State<LandingPage>
       context: context,
       barrierDismissible: false, // Disable closing by tapping outside
       builder: (BuildContext context) {
-        return WillPopScope(
-          onWillPop: () async => false, // Disable closing by back button
+        return PopScope(
           child: isCorrect ? _buildWinOverlay() : _buildLoseOverlay(),
         );
       },

@@ -12,10 +12,10 @@ class SideMenuDrawer extends StatefulWidget {
   });
 
   @override
-  SideMenuDrawerState createState() => _ideMenuDrawerState();
+  SideMenuDrawerState createState() => SideMenuDrawerState();
 }
 
-class _SideMenuDrawerState extends State<SideMenuDrawer> {
+class SideMenuDrawerState extends State<SideMenuDrawer> {
   @override
   Widget build(BuildContext context) {
     return Drawer(
@@ -32,38 +32,38 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
                 Text(
                   widget.translatedTexts[
                       10], // Using a translated text for the title
-                  style: TextStyle(color: Colors.white, fontSize: 24),
+                  style: const TextStyle(color: Colors.white, fontSize: 24),
                 ),
-                SizedBox(height: 10),
+                const SizedBox(height: 10),
                 // Using other translated texts for game rules or additional info
                 Text(
                   widget.translatedTexts[11], // 'Game Rule 1' or equivalent
-                  style: TextStyle(color: Colors.white70, fontSize: 14),
+                  style: const TextStyle(color: Colors.white70, fontSize: 14),
                 ),
                 Text(
                   widget.translatedTexts[12], // 'Game Rule 2' or equivalent
-                  style: TextStyle(color: Colors.white70, fontSize: 14),
+                  style: const TextStyle(color: Colors.white70, fontSize: 14),
                 ),
                 // Add more texts as needed...
               ],
             ),
           ),
           ListTile(
-            leading: Icon(Icons.message),
+            leading: const Icon(Icons.message),
             title: Text(widget.translatedTexts[13]), // 'Messages' or equivalent
             onTap: () {
               // Handle the tap
             },
           ),
           ListTile(
-            leading: Icon(Icons.account_circle),
+            leading: const Icon(Icons.account_circle),
             title: Text(widget.translatedTexts[14]), // 'Profile' or equivalent
             onTap: () {
               // Handle the tap
             },
           ),
           ListTile(
-            leading: Icon(Icons.settings),
+            leading: const Icon(Icons.settings),
             title: Text(widget.translatedTexts[14]), // 'Settings' or equivalent
             onTap: () {
               // Handle the tap

@@ -1,5 +1,5 @@
 name: zmoney
-description: A new Flutter project.
+description: How Much? Number Guessing Game
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
 version: 4.0.0+6
@@ -24,6 +24,7 @@ dependencies:
   animated_flip_counter: ^0.2.6
   marquee: ^2.2.3
   firebase_core: ^2.24.2
+  oauth2: ^2.0.2
   
 
 dev_dependencies:

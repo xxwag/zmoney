@@ -12,6 +12,8 @@ import 'package:flutter/services.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  clearSharedPreferences();
+
   String envFileName = ".env";
   await dotenv.load(fileName: envFileName);
 
@@ -65,6 +67,10 @@ class PlayGamesService {
   Future<bool> isAuthenticated() async {
     final bool isAuthenticated = await platform.invokeMethod('isAuthenticated');
     return isAuthenticated;
+  }
+
+  Future<void> requestConsent() async {
+    await platform.invokeMethod('requestConsent');
   }
 
   Future<String> getPlayerId() async {

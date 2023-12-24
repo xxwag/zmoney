@@ -5,10 +5,10 @@ class FlipAnimationWidget extends StatefulWidget {
   const FlipAnimationWidget({super.key, required this.digit});
 
   @override
-  _FlipAnimationWidgetState createState() => _FlipAnimationWidgetState();
+  FlipAnimationWidgetState createState() => FlipAnimationWidgetState();
 }
 
-class _FlipAnimationWidgetState extends State<FlipAnimationWidget>
+class FlipAnimationWidgetState extends State<FlipAnimationWidget>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
