@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -17,7 +18,9 @@ class NgrokManager {
   }
 
   static Future<void> fetchNgrokData() async {
-    print("fetching ngrok data");
+    if (kDebugMode) {
+      print("fetching ngrok data");
+    }
     const apiUrl = 'https://api.ngrok.com/tunnels';
     try {
       final String? authToken = await _getNgrokToken();
