@@ -38,6 +38,13 @@
             {
               "client_id": "446412900874-ifkm836l5ftprj362groq3q3gd5brq3c.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "446412900874-00mjbe0crhbs1komf43pkfjhla1vfckf.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.zmoney.RunnerTests"
+              }
             }
           ]
         }

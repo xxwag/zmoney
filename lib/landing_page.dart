@@ -10,9 +10,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:marquee/marquee.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:zmoney/animation_widget.dart';
 import 'package:zmoney/marquee.dart';
 import 'package:zmoney/ngrok.dart';
 import 'package:animated_flip_counter/animated_flip_counter.dart';
@@ -29,6 +27,7 @@ class LandingPage extends StatefulWidget {
 class LandingPageState extends State<LandingPage>
     with TickerProviderStateMixin {
   Timer? _timer;
+  DateTime? lastPressed;
   int _remainingTime = 600;
   late bool _timerStarted = false;
   late BannerAd _bannerAd;
@@ -74,9 +73,6 @@ class LandingPageState extends State<LandingPage>
   bool isButtonLocked = false; // Add this variable to your widget state
 
   List<TutorialStep> tutorialSteps = [];
-// Remove the unused _adTimer field
-// Timer _adTimer;
-// Initialize the _adTimer field with a value
 
   Color _currentColor = Colors.black; // Default color, can be black or white
 
@@ -160,6 +156,22 @@ class LandingPageState extends State<LandingPage>
     // Check if the tutorial has been completed previously
     _checkTutorialCompletion();
     _initBannerAd();
+  }
+
+  Future<bool> onWillPop() async {
+    final now = DateTime.now();
+    if (lastPressed == null ||
+        now.difference(lastPressed!) > Duration(seconds: 2)) {
+      lastPressed = now;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Press back again to exit"),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return Future.value(false);
+    }
+    return Future.value(true);
   }
 
   void _restartTutorialIfNeeded() {
@@ -560,7 +572,8 @@ class LandingPageState extends State<LandingPage>
 
   void _initBannerAd() {
     _bannerAd = BannerAd(
-      adUnitId: 'ca-app-pub-4652990815059289/6968524603', // Test ad unit ID
+      adUnitId:
+          'ca-app-pub-3940256099942544/6300978111', // ca-app-pub-3940256099942544/6300978111 Banner Test ad unit ID
       size: AdSize.banner,
       request: const AdRequest(),
       listener: BannerAdListener(
@@ -579,7 +592,7 @@ class LandingPageState extends State<LandingPage>
 
   Widget _buildPrizePoolCounter(bool keyboardOpen) {
     double bottomPosition =
-        keyboardOpen ? 120 : 20; // Adjust position based on keyboard visibility
+        keyboardOpen ? 100 : 20; // Adjust position based on keyboard visibility
 
     return Positioned(
       bottom: bottomPosition,
@@ -598,15 +611,15 @@ class LandingPageState extends State<LandingPage>
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Text(
+                const Text(
                   "Current Reward:", // Add the text here
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16, // Adjust the font size as needed
                     fontWeight: FontWeight.bold,
                     color: Colors.white, // Adjust the color as needed
                   ),
                 ),
-                SizedBox(height: 8), // Add spacing between text and pill
+                const SizedBox(height: 8), // Add spacing between text and pill
                 Container(
                   width: pillWidth,
                   height: pillHeight,
@@ -677,10 +690,6 @@ class LandingPageState extends State<LandingPage>
     }
   }
 
-  Widget _createAdWidget() {
-    return AdWidget(ad: _bannerAd);
-  }
-
   Widget _buildTutorialOverlay() {
     if (_tutorialStep >= tutorialSteps.length) {
       return const SizedBox.shrink();
@@ -744,9 +753,9 @@ class LandingPageState extends State<LandingPage>
             top: position.dy +
                 customOffset.dy +
                 textOffset.dy, // Adjust the top position
-            child: Text(
+            child: const Text(
               'Tap here ⏩', // Add instruction to click
-              style: const TextStyle(
+              style: TextStyle(
                 color: Colors.black,
                 fontSize: 12, // Adjust the font size as needed
               ),
@@ -801,136 +810,164 @@ class LandingPageState extends State<LandingPage>
     Color containerColor =
         _determineContainerColor(); // Use the container color determining method
 
-    return Scaffold(
-      drawer: SideMenuDrawer(
-        translatedTexts: translatedTexts,
-        containerColor: containerColor,
-      ),
-      body: Column(children: [
-        // Display the banner ad at the top if it's ready
-        if (_isBannerAdReady)
-          SizedBox(
-            width: _bannerAd.size.width.toDouble(),
-            height: _bannerAd.size.height.toDouble(),
-            child: AdWidget(ad: _bannerAd),
+    // Calculate maxBlastForce based on screen width, with a maximum limit
+    double calculatedBlastForce = screenSize.width / 1; // Example calculation
+    double maxAllowedBlastForce = 1800; // Set your maximum limit here
+    double maxBlastForce = math.min(calculatedBlastForce, maxAllowedBlastForce);
+
+    return WillPopScope(
+        onWillPop: onWillPop,
+        child: Scaffold(
+          drawer: SideMenuDrawer(
+            translatedTexts: translatedTexts,
+            containerColor: containerColor,
           ),
-
-        // The rest of the content is in an Expanded widget
-        Expanded(
-          child: Stack(
-            children: [
-              // Animated background container with opacity transition
-              AnimatedOpacity(
-                duration: const Duration(milliseconds: 500),
-                opacity: _isBannerAdReady ? 1.0 : 0.1,
-                child: Container(
-                  width: screenSize.width,
-                  height: screenSize.height,
-                  color: containerColor,
-                ),
-              ),
-
-              // Only show the prize pool counter if the keyboard is not open
-              if (!isKeyboardOpen) _buildPrizePoolCounter(isKeyboardOpen),
-
-              Positioned(
-                top: 20,
-                left: 20,
-                child: Builder(
-                  builder: (context) => IconButton(
-                    icon: const Icon(Icons.menu, size: 30.0),
-                    onPressed: () => Scaffold.of(context).openDrawer(),
+          body: Column(children: [
+            if (_isBannerAdReady)
+              AnimatedContainer(
+                duration: const Duration(
+                    seconds: 2), // Duration of the color transition
+                color:
+                    containerColor, // This color will animate when containerColor changes
+                child: SafeArea(
+                  top: true, // Only apply padding at the top
+                  child: SizedBox(
+                    width: screenSize.width.toDouble(),
+                    height: _bannerAd.size.height.toDouble(),
+                    child: AdWidget(ad: _bannerAd),
                   ),
                 ),
               ),
 
-              Positioned(
-                top: 20,
-                right: 20,
-                child: _buildLanguageSelector(),
-              ),
-              Column(
+            // The rest of the content is in an Expanded widget
+            Expanded(
+              child: Stack(
                 children: [
-                  Expanded(
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          if (!isKeyboardOpen)
-                            Text(
-                              translatedTexts[0], // Use translated text
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 40,
-                                fontFamily: 'Inter',
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          SizedBox(height: screenSize.height * 0.15),
-                          _buildNumberInput(
-                            screenSize,
-                            translatedTexts[1],
-                          ),
-                          SizedBox(height: screenSize.height * 0.1),
-                          _buildGoButton(
-                            screenSize,
-                            translatedTexts[2],
-                            isButtonLocked,
-                          ), // Pass the button lock status
-                          SizedBox(height: screenSize.height * 0.025),
-                          GestureDetector(
-                            onTap: startTimer,
-                            child: Text(
-                              _timerStarted
-                                  ? '${translatedTexts[4]} ${_remainingTime ~/ 60}:${(_remainingTime % 60).toString().padLeft(2, '0')}'
-                                  : translatedTexts[
-                                      3], // Assuming translatedText4 corresponds to index 3 in translatedTexts
+                  // Animated background container
+                  AnimatedContainer(
+                    duration: const Duration(seconds: 2),
+                    color: containerColor,
+                    width: screenSize.width,
+                    height: screenSize.height,
+                  ),
 
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontFamily: 'Roboto',
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: screenSize.height * 0.1),
-                          // Use ListView for marquee effect
-                          Container(
-                            width: double.infinity,
-                            height: 40, // Adjust the height as needed
-                            color: Colors.transparent, // Background color
-                            child: MarqueeText(
-                              text: '⚠️App still in the development!         ' *
-                                  5, // Repeat the text to make it scroll
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
+                  // Confetti Widget
+                  Align(
+                    alignment: Alignment.topRight,
+                    child: ConfettiWidget(
+                      confettiController: _confettiController,
+                      blastDirectionality: BlastDirectionality.explosive,
+                      blastDirection: -math.pi / 1,
+                      particleDrag: 0.05,
+                      emissionFrequency: 0.05,
+                      numberOfParticles: 13,
+                      gravity: 0.01,
+                      colors: const [Colors.green],
+                      minBlastForce: 1,
+                      maxBlastForce:
+                          maxBlastForce, // Ensure this is defined in your state
+                    ),
+                  ),
+
+                  Positioned(
+                    top: 20,
+                    left: 20,
+                    child: Builder(
+                      builder: (context) => IconButton(
+                        icon: const Icon(Icons.menu, size: 30.0),
+                        onPressed: () => Scaffold.of(context).openDrawer(),
                       ),
                     ),
                   ),
+
+                  Positioned(
+                    top: 20,
+                    right: 20,
+                    child: _buildLanguageSelector(),
+                  ),
+                  Column(
+                    children: [
+                      Expanded(
+                        child: Center(
+                          child: SingleChildScrollView(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                SizedBox(height: screenSize.height * 0.05),
+                                if (!isKeyboardOpen)
+                                  Text(
+                                    translatedTexts[0], // Use translated text
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 40,
+                                      fontFamily: 'Inter',
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                SizedBox(height: screenSize.height * 0.1),
+                                _buildNumberInput(
+                                    screenSize, translatedTexts[1]),
+                                SizedBox(height: screenSize.height * 0.1),
+                                _buildGoButton(screenSize, translatedTexts[2],
+                                    isButtonLocked),
+                                SizedBox(height: screenSize.height * 0.025),
+                                Text(
+                                  _timerStarted
+                                      ? '${translatedTexts[4]} ${_remainingTime ~/ 60}:${(_remainingTime % 60).toString().padLeft(2, '0')}'
+                                      : translatedTexts[
+                                          3], // Assuming translatedText4 corresponds to index 3 in translatedTexts
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 20,
+                                    fontFamily: 'Roboto',
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  // Marquee Text Positioned
+                  if (!isKeyboardOpen)
+                    Positioned(
+                      bottom: -10, // Adjust as needed
+                      child: SizedBox(
+                        width: screenSize.width,
+                        height: 40, // Adjust the height as needed
+                        child: MarqueeText(
+                          text: '⚠️App still in the development!         ' * 20,
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.5), // 50% opacity
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  if (!isKeyboardOpen)
+                    // Only show the prize pool counter if the keyboard is not open
+                    _buildPrizePoolCounter(isKeyboardOpen),
+
+                  _showTutorial
+                      ? _buildTutorialOverlay()
+                      : const SizedBox.shrink(),
                 ],
               ),
-              _showTutorial ? _buildTutorialOverlay() : const SizedBox.shrink(),
-            ],
-          ),
-        )
-      ]),
-    );
+            )
+          ]),
+        ));
   }
 
   Widget _buildGoButton(Size screenSize, String buttonText, bool isLocked) {
     // Define the default and loading button colors
-    final defaultColor = Colors.blue; // Change to your desired default color
-    final loadingColor = Colors.grey; // Change to your desired loading color
+    const defaultColor = Colors.blue; // Change to your desired default color
+    const loadingColor = Colors.grey; // Change to your desired loading color
 
     // Determine the button color based on the lock state
     final buttonColor = isLocked ? loadingColor : defaultColor;

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
@@ -21,22 +22,18 @@ Future<void> main() async {
   await secureStorage.write(
       key: 'ngrokToken', value: dotenv.env['NGROK_TOKEN']);
 
-  // Conditional initialization for Android and iOS
   if (Platform.isAndroid || Platform.isIOS) {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
 
-    // Initialize Google Mobile Ads
     MobileAds.instance.initialize();
 
-    // Initialize Play Games Services for Android
     if (Platform.isAndroid) {
       final PlayGamesService playGamesService = PlayGamesService();
       bool isAuthenticated = await playGamesService.isAuthenticated();
       if (isAuthenticated) {
         // If authenticated, get Player ID or perform other actions
-        // Use playerId as needed
       }
     }
   }
@@ -49,14 +46,40 @@ Future<void> clearSharedPreferences() async {
   await prefs.clear();
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
   @override
+  _MyAppState createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  DateTime? lastPressed;
+
+  Future<bool> onWillPop() async {
+    final now = DateTime.now();
+    if (lastPressed == null ||
+        now.difference(lastPressed!) > Duration(seconds: 2)) {
+      lastPressed = now;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Press back again to exit"),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return false;
+    }
+    return true;
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       title: 'How Much? - The App',
-      home: WelcomeScreen(),
+      home: WillPopScope(
+        onWillPop: onWillPop,
+        child: const WelcomeScreen(),
+      ),
     );
   }
 }

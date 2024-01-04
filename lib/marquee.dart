@@ -8,7 +8,8 @@ class MarqueeText extends StatefulWidget {
   final double blankSpace;
   final double velocity;
 
-  MarqueeText({
+  const MarqueeText({
+    super.key,
     required this.text,
     this.style,
     this.scrollAxis = Axis.horizontal,
@@ -18,10 +19,10 @@ class MarqueeText extends StatefulWidget {
   });
 
   @override
-  _MarqueeTextState createState() => _MarqueeTextState();
+  MarqueeTextState createState() => MarqueeTextState();
 }
 
-class _MarqueeTextState extends State<MarqueeText> {
+class MarqueeTextState extends State<MarqueeText> {
   final ScrollController _scrollController = ScrollController();
 
   @override
@@ -33,7 +34,7 @@ class _MarqueeTextState extends State<MarqueeText> {
   void _scroll() async {
     while (true) {
       await Future.delayed(
-          Duration(milliseconds: 100)); // Adjust the speed as needed
+          const Duration(milliseconds: 100)); // Adjust the speed as needed
       if (_scrollController.hasClients) {
         double maxScroll = _scrollController.position.maxScrollExtent;
         if (_scrollController.offset >= maxScroll) {
@@ -41,8 +42,8 @@ class _MarqueeTextState extends State<MarqueeText> {
         } else {
           _scrollController.animateTo(
             _scrollController.offset + widget.blankSpace,
-            duration:
-                Duration(milliseconds: 1000), // Adjust the duration as needed
+            duration: const Duration(
+                milliseconds: 1000), // Adjust the duration as needed
             curve: Curves.linear,
           );
         }
