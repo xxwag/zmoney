@@ -1,7 +1,7 @@
 package com.gg.zmoney
 
 import android.os.Bundle
-import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+
 import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.games.PlayGamesSdk
 import com.google.android.ump.ConsentInformation
@@ -19,8 +19,11 @@ class MainActivity: FlutterActivity() {
     private val TAG = "MainActivity" // Define your TAG here
 
 
+
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
-        installSplashScreen()
+        
         super.onCreate(savedInstanceState)
 
         MobileAds.initialize(this) {}

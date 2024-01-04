@@ -56,7 +56,6 @@ class WelcomeScreenState extends State<WelcomeScreen> {
 
       setState(() async {
         currentUser = userCredential.user;
-        showSkipButton = false;
 
         // Store user information in SharedPreferences
         final prefs = await SharedPreferences.getInstance();
