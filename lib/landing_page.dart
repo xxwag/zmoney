@@ -572,8 +572,7 @@ class LandingPageState extends State<LandingPage>
 
   void _initBannerAd() {
     _bannerAd = BannerAd(
-      adUnitId:
-          'ca-app-pub-3940256099942544/6300978111', // ca-app-pub-3940256099942544/6300978111 Banner Test ad unit ID
+      adUnitId: 'ca-app-pub-4652990815059289/6968524603',
       size: AdSize.banner,
       request: const AdRequest(),
       listener: BannerAdListener(
@@ -587,7 +586,7 @@ class LandingPageState extends State<LandingPage>
       ),
     );
 
-    _bannerAd.load();
+    _bannerAd?.load();
   }
 
   Widget _buildPrizePoolCounter(bool keyboardOpen) {

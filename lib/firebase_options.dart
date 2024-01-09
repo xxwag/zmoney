@@ -70,7 +70,7 @@ class DefaultFirebaseOptions {
     projectId: 'what-e7630',
     databaseURL: 'https://what-e7630-default-rtdb.europe-west1.firebasedatabase.app',
     storageBucket: 'what-e7630.appspot.com',
-    androidClientId: '446412900874-s0sn21mq8jm4ugbm780sfrfo31sro8hj.apps.googleusercontent.com',
+    androidClientId: '446412900874-alucfv888p73jk9eeqnbudlc0vnrtcl7.apps.googleusercontent.com',
     iosClientId: '446412900874-46um0p0g5vhj1jlfe5hn1lnchqmqpg4l.apps.googleusercontent.com',
     iosBundleId: 'com.example.zmoney',
   );
@@ -82,7 +82,7 @@ class DefaultFirebaseOptions {
     projectId: 'what-e7630',
     databaseURL: 'https://what-e7630-default-rtdb.europe-west1.firebasedatabase.app',
     storageBucket: 'what-e7630.appspot.com',
-    androidClientId: '446412900874-s0sn21mq8jm4ugbm780sfrfo31sro8hj.apps.googleusercontent.com',
+    androidClientId: '446412900874-alucfv888p73jk9eeqnbudlc0vnrtcl7.apps.googleusercontent.com',
     iosClientId: '446412900874-00mjbe0crhbs1komf43pkfjhla1vfckf.apps.googleusercontent.com',
     iosBundleId: 'com.example.zmoney.RunnerTests',
   );
