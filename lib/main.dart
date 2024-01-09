@@ -7,13 +7,14 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:zmoney/welcome_screen.dart';
+
 import 'firebase_options.dart';
 import 'package:flutter/services.dart';
 
-Future<void> main() async {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  clearSharedPreferences();
+  await clearSharedPreferences();
 
   String envFileName = ".env";
   await dotenv.load(fileName: envFileName);
@@ -27,15 +28,9 @@ Future<void> main() async {
       options: DefaultFirebaseOptions.currentPlatform,
     );
 
-    MobileAds.instance.initialize();
+    await PlayGamesService().signIn();
 
-    if (Platform.isAndroid) {
-      final PlayGamesService playGamesService = PlayGamesService();
-      bool isAuthenticated = await playGamesService.isAuthenticated();
-      if (isAuthenticated) {
-        // If authenticated, get Player ID or perform other actions
-      }
-    }
+    await MobileAds.instance.initialize();
   }
 
   runApp(const MyApp());
@@ -46,39 +41,27 @@ Future<void> clearSharedPreferences() async {
   await prefs.clear();
 }
 
-class MyApp extends StatefulWidget {
+class MyApp extends StatelessWidget {
   const MyApp({super.key});
-
-  @override
-  _MyAppState createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
-  DateTime? lastPressed;
-
-  Future<bool> onWillPop() async {
-    final now = DateTime.now();
-    if (lastPressed == null ||
-        now.difference(lastPressed!) > Duration(seconds: 2)) {
-      lastPressed = now;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Press back again to exit"),
-          duration: Duration(seconds: 2),
-        ),
-      );
-      return false;
-    }
-    return true;
-  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'How Much? - The App',
-      home: WillPopScope(
-        onWillPop: onWillPop,
-        child: const WelcomeScreen(),
+      home: FutureBuilder<bool>(
+        future: PlayGamesService().isAuthenticated(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.done) {
+            if (snapshot.data == true) {
+              // Proceed to the main screen of the app
+              return const WelcomeScreen();
+            } else {
+              // Show a sign-in screen or a message
+              return const SignInScreen(); // Create this widget as per your needs
+            }
+          }
+          return const LoadingScreen(); // Show a loading screen while checking
+        },
       ),
     );
   }
@@ -92,12 +75,47 @@ class PlayGamesService {
     return isAuthenticated;
   }
 
-  Future<void> requestConsent() async {
-    await platform.invokeMethod('requestConsent');
+  Future<void> signIn() async {
+    await platform.invokeMethod('signIn');
   }
+}
 
-  Future<String> getPlayerId() async {
-    final String playerId = await platform.invokeMethod('getPlayerId');
-    return playerId;
+class SignInScreen extends StatelessWidget {
+  const SignInScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Sign In Required'),
+      ),
+      body: Center(
+        child: ElevatedButton(
+          onPressed: () async {
+            await PlayGamesService().signIn();
+            Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (context) => const WelcomeScreen()));
+          },
+          child: const Text('Sign in to Continue'),
+        ),
+      ),
+    );
+  }
+}
+
+class LoadingScreen extends StatelessWidget {
+  const LoadingScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    // Build your loading screen here
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Loading...'),
+      ),
+      body: const Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
   }
 }
