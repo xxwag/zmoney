@@ -847,13 +847,8 @@ class LandingPageState extends State<LandingPage>
                     // Only show the prize pool counter if the keyboard is not open
                     _buildPrizePoolCounter(isKeyboardOpen),
 
-<<<<<<< HEAD
-                  tutorialManager.isTutorialActive
-                      ? tutorialManager.buildTutorialOverlay()
-=======
-                  tutorialManager?.isTutorialActive ?? false
-                      ? tutorialManager!.buildTutorialOverlay()
->>>>>>> parent of d8c0d3e (test commit 1)
+                  _showTutorial
+                      ? _buildTutorialOverlay()
                       : const SizedBox.shrink(),
                 ],
               ),
