@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -71,16 +72,24 @@ class PlayGamesService {
   static const platform = MethodChannel('com.gg.zmoney/play_games');
 
   Future<bool> isAuthenticated() async {
-    print('Checking if user is authenticated...');
+    if (kDebugMode) {
+      print('Checking if user is authenticated...');
+    }
     final bool isAuthenticated = await platform.invokeMethod('isAuthenticated');
-    print('User authentication status: $isAuthenticated');
+    if (kDebugMode) {
+      print('User authentication status: $isAuthenticated');
+    }
     return isAuthenticated;
   }
 
   Future<void> signIn() async {
-    print('Attempting to sign in...');
+    if (kDebugMode) {
+      print('Attempting to sign in...');
+    }
     await platform.invokeMethod('signIn');
-    print('Sign in process initiated');
+    if (kDebugMode) {
+      print('Sign in process initiated');
+    }
   }
 }
 
@@ -94,15 +103,35 @@ class SignInScreen extends StatelessWidget {
         title: const Text('Sign In Required'),
       ),
       body: Center(
-        child: ElevatedButton(
-          onPressed: () async {
-            print('Sign in button pressed');
-            await PlayGamesService().signIn();
-            print('Navigating to WelcomeScreen after sign in');
-            Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (context) => const WelcomeScreen()));
-          },
-          child: const Text('Sign in to Continue'),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            ElevatedButton(
+              onPressed: () async {
+                if (kDebugMode) {
+                  print('Sign in button pressed');
+                }
+                await PlayGamesService().signIn();
+                if (kDebugMode) {
+                  print('Navigating to WelcomeScreen after sign in');
+                }
+                Navigator.of(context).pushReplacement(MaterialPageRoute(
+                    builder: (context) => const WelcomeScreen()));
+              },
+              child: const Text('Sign in to Continue'),
+            ),
+            const SizedBox(height: 20), // Adds some space between the buttons
+            ElevatedButton(
+              onPressed: () {
+                if (kDebugMode) {
+                  print('Skip sign in button pressed');
+                }
+                Navigator.of(context).pushReplacement(MaterialPageRoute(
+                    builder: (context) => const WelcomeScreen()));
+              },
+              child: const Text('Skip Sign In'),
+            ),
+          ],
         ),
       ),
     );
