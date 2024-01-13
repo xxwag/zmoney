@@ -5,7 +5,6 @@ import 'dart:math' as math; // Import the math library
 import 'dart:math';
 import 'package:http/http.dart' as http;
 
-//import 'package:zmoney/tutorial_overlay.dart';
 import 'package:confetti/confetti.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -16,6 +15,7 @@ import 'package:zmoney/marquee.dart';
 import 'package:zmoney/ngrok.dart';
 import 'package:animated_flip_counter/animated_flip_counter.dart';
 import 'package:zmoney/side_menu.dart';
+import 'package:zmoney/tutorial_steps.dart';
 // Import the necessary library
 
 class LandingPage extends StatefulWidget {
@@ -32,14 +32,16 @@ class LandingPageState extends State<LandingPage>
   int _remainingTime = 600;
   late bool _timerStarted = false;
   late BannerAd _bannerAd;
+
   bool _isBannerAdReady = false;
   bool _showTutorial = true; // State to manage tutorial visibility
   bool _showPartyAnimation = true; // State for party animation
   final TextEditingController _numberController = TextEditingController();
+  late TutorialManager tutorialManager;
 
   bool _isWaitingForResponse = false;
 
-  int _tutorialStep = 0; // To keep track of tutorial steps
+// To keep track of tutorial steps
   late ConfettiController _confettiController; // ConfettiController
   int randomAnimationType = 1; // Default to 1 or any valid animation type
   // GlobalKeys for target widgets
@@ -119,40 +121,18 @@ class LandingPageState extends State<LandingPage>
 
     // TADY SE MUSI DODELAT TUTORIAL STEPY, KAZDEJ JE NAVAZANEJ NA KEY (key1, key2) KTERYM SE MUSI OZNACIT ELEMENT WIDGETU
     // VIz. DOLE TUTORIAL STEP CLASS
+    // Delayed call to adjust tutorial steps if necessary
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Future.delayed(const Duration(seconds: 0), () {
-        // Adjust the duration as needed
-        if (mounted) {
-          setState(() {
-            _showTutorial = true;
-            tutorialSteps = [
-              TutorialStep(
-                widget:
-                    _tutorialStepWidget("Select your preferred language here."),
-                targetKey: keyLanguageSelector,
-                direction: TooltipDirection.top,
-                description:
-                    "This dropdown allows you to choose your language.",
-              ),
-              TutorialStep(
-                widget: _tutorialStepWidget(translatedTexts[7]),
-                targetKey: key1,
-                direction: TooltipDirection.bottom,
-                description: translatedTexts[8], // Add description
-              ),
-              TutorialStep(
-                widget: _tutorialStepWidget(translatedTexts[6]),
-                targetKey: key2,
-                direction: TooltipDirection.top,
-                description: translatedTexts[5], // Add description
-              ),
-
-              // Additional steps...
-            ];
-          });
-        }
-      });
+      if (mounted) {
+        setState(() {
+          tutorialManager = TutorialManager(
+            translatedTexts: translatedTexts,
+            keys: [keyLanguageSelector, key1, key2],
+          );
+        });
+      }
     });
+
     togglePartyAnimation();
     // Check if the tutorial has been completed previously
     _checkTutorialCompletion();
@@ -162,10 +142,10 @@ class LandingPageState extends State<LandingPage>
   Future<bool> onWillPop() async {
     final now = DateTime.now();
     if (lastPressed == null ||
-        now.difference(lastPressed!) > Duration(seconds: 2)) {
+        now.difference(lastPressed!) > const Duration(seconds: 2)) {
       lastPressed = now;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text("Press back again to exit"),
           duration: Duration(seconds: 2),
         ),
@@ -177,26 +157,12 @@ class LandingPageState extends State<LandingPage>
 
   void _restartTutorialIfNeeded() {
     if (_showTutorial) {
-      // Reset tutorial steps with updated translations
-      tutorialSteps = [
-        TutorialStep(
-          widget: _tutorialStepWidget(translatedTexts[7]),
-          targetKey: key1,
-          direction: TooltipDirection.bottom,
-          description: translatedTexts[8],
-        ),
-        TutorialStep(
-          widget: _tutorialStepWidget(translatedTexts[6]),
-          targetKey: key2,
-          direction: TooltipDirection.top,
-          description: translatedTexts[5],
-        ),
-        // Additional steps...
-      ];
+      // Call a method on the TutorialManager to reset and initialize the steps
+      tutorialManager.initializeTutorialSteps(translatedTexts, [key1, key2]);
 
       // Reset tutorial step and make tutorial visible
       setState(() {
-        _tutorialStep = 0;
+        tutorialManager.currentStep = 0;
         _showTutorial = true;
       });
     }
@@ -495,6 +461,11 @@ class LandingPageState extends State<LandingPage>
     // Update state with new translations
     setState(() {
       translatedTexts = updatedTranslations;
+      // Initialize or update tutorialManager here
+      tutorialManager = TutorialManager(
+        translatedTexts: translatedTexts,
+        keys: [keyLanguageSelector, key1, key2],
+      );
     });
     _restartTutorialIfNeeded();
   }
@@ -587,7 +558,7 @@ class LandingPageState extends State<LandingPage>
       ),
     );
 
-    _bannerAd?.load();
+    _bannerAd.load();
   }
 
   Widget _buildPrizePoolCounter(bool keyboardOpen) {
@@ -687,84 +658,6 @@ class LandingPageState extends State<LandingPage>
       default:
         // Default color
         return Colors.transparent;
-    }
-  }
-
-  Widget _buildTutorialOverlay() {
-    if (_tutorialStep >= tutorialSteps.length) {
-      return const SizedBox.shrink();
-    }
-
-    final currentStep = tutorialSteps[_tutorialStep];
-    final keyContext = currentStep.targetKey.currentContext;
-
-    if (keyContext != null) {
-      final RenderBox renderBox = keyContext.findRenderObject() as RenderBox;
-      final position = renderBox.localToGlobal(Offset.zero);
-
-      // Define a custom offset
-      Offset customOffset = Offset.zero;
-      if (currentStep.targetKey == keyLanguageSelector) {
-        customOffset =
-            const Offset(-200.0, 80.0); // Adjust these values as needed
-      }
-
-      // Define a constant offset to push the text down
-      const Offset textOffset = Offset(0.0, 75.0); // Adjust the vertical offset
-
-      return Stack(
-        children: [
-          Positioned(
-            left: position.dx + customOffset.dx,
-            top: position.dy + customOffset.dy,
-            child: GestureDetector(
-              onTap: _nextTutorialStep,
-              child: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: const [
-                    BoxShadow(
-                        color: Colors.black26, blurRadius: 4, spreadRadius: 2),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Tutorial Step $_tutorialStep',
-                      style: const TextStyle(color: Colors.black, fontSize: 16),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      currentStep.description, // Display the description
-                      style: const TextStyle(color: Colors.black87),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            left: position.dx +
-                customOffset.dx +
-                textOffset.dx, // Adjust the left position
-            top: position.dy +
-                customOffset.dy +
-                textOffset.dy, // Adjust the top position
-            child: const Text(
-              'Tap here ⏩', // Add instruction to click
-              style: TextStyle(
-                color: Colors.black,
-                fontSize: 12, // Adjust the font size as needed
-              ),
-            ),
-          ),
-        ],
-      );
-    } else {
-      return const SizedBox.shrink();
     }
   }
 
@@ -954,8 +847,13 @@ class LandingPageState extends State<LandingPage>
                     // Only show the prize pool counter if the keyboard is not open
                     _buildPrizePoolCounter(isKeyboardOpen),
 
-                  _showTutorial
-                      ? _buildTutorialOverlay()
+<<<<<<< HEAD
+                  tutorialManager.isTutorialActive
+                      ? tutorialManager.buildTutorialOverlay()
+=======
+                  tutorialManager?.isTutorialActive ?? false
+                      ? tutorialManager!.buildTutorialOverlay()
+>>>>>>> parent of d8c0d3e (test commit 1)
                       : const SizedBox.shrink(),
                 ],
               ),
@@ -1302,53 +1200,4 @@ class LandingPageState extends State<LandingPage>
       setState(() => _showTutorial = false);
     }
   }
-
-  void _completeTutorial() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('tutorialCompleted', true);
-  }
-
-  void _nextTutorialStep() {
-    if (_tutorialStep < tutorialSteps.length - 1) {
-      setState(() => _tutorialStep++);
-    } else {
-      _completeTutorial();
-      setState(() {
-        _tutorialStep = 0;
-        _showTutorial = false;
-      });
-    }
-  }
-
-  static Widget _tutorialStepWidget(String text) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      margin: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Text(
-        text,
-        style: const TextStyle(color: Colors.black),
-        textAlign: TextAlign.center,
-      ),
-    );
-  }
 }
-
-class TutorialStep {
-  final Widget widget;
-  final GlobalKey targetKey;
-  final TooltipDirection direction;
-  final String description; // Add this line
-
-  TutorialStep({
-    required this.widget,
-    required this.targetKey,
-    required this.direction,
-    required this.description, // Add this line
-  });
-}
-
-enum TooltipDirection { top, right, bottom, left }
