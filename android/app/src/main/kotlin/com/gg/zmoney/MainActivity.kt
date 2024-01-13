@@ -22,7 +22,7 @@ class MainActivity : FlutterActivity() {
     private lateinit var consentInformation: ConsentInformation
     private val TAG = "MainActivity"
     private lateinit var firebaseAnalytics: FirebaseAnalytics
-    lateinit var mAdView: AdView
+    
     private lateinit var gamesSignInClient: GamesSignInClient
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -68,6 +68,7 @@ class MainActivity : FlutterActivity() {
     private fun signIn(result: MethodChannel.Result) {
         gamesSignInClient.signIn().addOnCompleteListener { task ->
             val wasSuccessful = task.isSuccessful
+            Log.d(TAG, "signIn: ${task.isSuccessful}")
             result.success(wasSuccessful)
             // Additional logic based on sign-in success or failure
         }

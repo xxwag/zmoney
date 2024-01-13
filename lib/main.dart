@@ -71,12 +71,16 @@ class PlayGamesService {
   static const platform = MethodChannel('com.gg.zmoney/play_games');
 
   Future<bool> isAuthenticated() async {
+    print('Checking if user is authenticated...');
     final bool isAuthenticated = await platform.invokeMethod('isAuthenticated');
+    print('User authentication status: $isAuthenticated');
     return isAuthenticated;
   }
 
   Future<void> signIn() async {
+    print('Attempting to sign in...');
     await platform.invokeMethod('signIn');
+    print('Sign in process initiated');
   }
 }
 
@@ -92,7 +96,9 @@ class SignInScreen extends StatelessWidget {
       body: Center(
         child: ElevatedButton(
           onPressed: () async {
+            print('Sign in button pressed');
             await PlayGamesService().signIn();
+            print('Navigating to WelcomeScreen after sign in');
             Navigator.of(context).pushReplacement(
                 MaterialPageRoute(builder: (context) => const WelcomeScreen()));
           },
