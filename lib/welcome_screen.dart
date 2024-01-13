@@ -108,7 +108,9 @@ class WelcomeScreenState extends State<WelcomeScreen> {
   Future<void> _signInWithOAuth2() async {
     try {
       // Debug print to indicate the start of the OAuth2 process
-      print("Starting OAuth2 sign-in process");
+      if (kDebugMode) {
+        print("Starting OAuth2 sign-in process");
+      }
 
       final authorizationEndpoint =
           Uri.parse('http://example.com/oauth2/authorization');
@@ -122,30 +124,42 @@ class WelcomeScreenState extends State<WelcomeScreen> {
       final credentialsFile = File('${directory.path}/credentials.json');
 
       var exists = await credentialsFile.exists();
-      print("Credentials file exists: $exists");
+      if (kDebugMode) {
+        print("Credentials file exists: $exists");
+      }
 
       if (exists) {
         var credentials =
             oauth2.Credentials.fromJson(await credentialsFile.readAsString());
         client =
             oauth2.Client(credentials, identifier: identifier, secret: secret);
-        print("OAuth2 client created from existing credentials");
+        if (kDebugMode) {
+          print("OAuth2 client created from existing credentials");
+        }
       } else {
         // Logic to handle OAuth2 authorization flow
-        print(
-            "No existing credentials found, need to start authorization flow");
+        if (kDebugMode) {
+          print(
+              "No existing credentials found, need to start authorization flow");
+        }
         // Implement the logic to complete the authorization flow
       }
 
       if (client != null) {
-        print("OAuth2 client is available, saving credentials");
+        if (kDebugMode) {
+          print("OAuth2 client is available, saving credentials");
+        }
         await credentialsFile.writeAsString(client!.credentials.toJson());
       } else {
-        print("OAuth2 client is null, unable to save credentials");
+        if (kDebugMode) {
+          print("OAuth2 client is null, unable to save credentials");
+        }
       }
     } catch (e) {
       // Log the error
-      print('Error during OAuth2 Sign-In: $e');
+      if (kDebugMode) {
+        print('Error during OAuth2 Sign-In: $e');
+      }
     }
   }
 
