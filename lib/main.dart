@@ -71,12 +71,16 @@ class PlayGamesService {
   static const platform = MethodChannel('com.gg.zmoney/play_games');
 
   Future<bool> isAuthenticated() async {
+    print('Checking if user is authenticated...');
     final bool isAuthenticated = await platform.invokeMethod('isAuthenticated');
+    print('User authentication status: $isAuthenticated');
     return isAuthenticated;
   }
 
   Future<void> signIn() async {
+    print('Attempting to sign in...');
     await platform.invokeMethod('signIn');
+    print('Sign in process initiated');
   }
 }
 
@@ -85,22 +89,38 @@ class SignInScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Sign In Required'),
+  return Scaffold(
+    appBar: AppBar(
+      title: const Text('Sign In Required'),
+    ),
+    body: Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          ElevatedButton(
+            onPressed: () async {
+              print('Sign in button pressed');
+              await PlayGamesService().signIn();
+              print('Navigating to WelcomeScreen after sign in');
+              Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (context) => const WelcomeScreen()));
+            },
+            child: const Text('Sign in to Continue'),
+          ),
+          const SizedBox(height: 20), // Adds some space between the buttons
+          ElevatedButton(
+            onPressed: () {
+              print('Skip sign in button pressed');
+              Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (context) => const WelcomeScreen()));
+            },
+            child: const Text('Skip Sign In'),
+          ),
+        ],
       ),
-      body: Center(
-        child: ElevatedButton(
-          onPressed: () async {
-            await PlayGamesService().signIn();
-            Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (context) => const WelcomeScreen()));
-          },
-          child: const Text('Sign in to Continue'),
-        ),
-      ),
-    );
-  }
+    ),
+  );
+}
 }
 
 class LoadingScreen extends StatelessWidget {
