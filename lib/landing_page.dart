@@ -32,7 +32,10 @@ class LandingPageState extends State<LandingPage>
   int _remainingTime = 600;
   late bool _timerStarted = false;
   late BannerAd _bannerAd;
-
+  late RewardedAd _rewardedAd;
+  bool _isRewardedAdReady = false;
+// Add a new boolean to track if the timer has finished.
+  bool _timerFinished = false;
   bool _isBannerAdReady = false;
   bool _showTutorial = true; // State to manage tutorial visibility
   bool _showPartyAnimation = true; // State for party animation
@@ -74,8 +77,9 @@ class LandingPageState extends State<LandingPage>
 
   bool _isGoButtonLocked = false; // To track the Go button lock state
   bool isButtonLocked = false; // Add this variable to your widget state
-
+  bool _isTextVisible = true;
   List<TutorialStep> tutorialSteps = [];
+  bool _isGreenText = true; // Define _isGreenText as a boolean variable
 
   Color _currentColor = Colors.black; // Default color, can be black or white
 
@@ -121,22 +125,76 @@ class LandingPageState extends State<LandingPage>
 
     // TADY SE MUSI DODELAT TUTORIAL STEPY, KAZDEJ JE NAVAZANEJ NA KEY (key1, key2) KTERYM SE MUSI OZNACIT ELEMENT WIDGETU
     // VIz. DOLE TUTORIAL STEP CLASS
-    // Delayed call to adjust tutorial steps if necessary
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        setState(() {
-          tutorialManager = TutorialManager(
-            translatedTexts: translatedTexts,
-            keys: [keyLanguageSelector, key1, key2],
-          );
-        });
-      }
+
+    setState(() {
+      tutorialManager = TutorialManager(
+        translatedTexts: translatedTexts,
+        keys: [keyLanguageSelector, key1, key2],
+      );
     });
 
     togglePartyAnimation();
     // Check if the tutorial has been completed previously
     _checkTutorialCompletion();
     _initBannerAd();
+    _loadRewardedAd();
+    _startBlinkingEffect();
+  }
+
+  void _startBlinkingEffect() {
+    Future.doWhile(() async {
+      await Future.delayed(Duration(seconds: 1)); // Set blinking speed
+      setState(() {
+        _isTextVisible = !_isTextVisible;
+      });
+      return true; // Return true to continue blinking indefinitely
+    });
+  }
+
+  void _loadRewardedAd() {
+    RewardedAd.load(
+      adUnitId: 'ca-app-pub-3940256099942544/5224354917',
+      request: AdRequest(),
+      rewardedAdLoadCallback: RewardedAdLoadCallback(
+        onAdLoaded: (RewardedAd ad) {
+          this._rewardedAd = ad;
+          _isRewardedAdReady = true;
+        },
+        onAdFailedToLoad: (LoadAdError error) {
+          print('RewardedAd failed to load: $error');
+          _isRewardedAdReady = false;
+        },
+      ),
+    );
+  }
+
+  void _showRewardedAd() {
+    if (_isRewardedAdReady) {
+      _rewardedAd.show(
+        onUserEarnedReward: (AdWithoutView ad, RewardItem reward) {
+          // User has earned the reward, call skipTimer
+
+          _timerFinished = true;
+          _timerStarted = false;
+          _isGoButtonLocked = false;
+          isButtonLocked = false; // Unlock the Go button here as well
+        },
+      );
+      _rewardedAd.fullScreenContentCallback = FullScreenContentCallback(
+        onAdDismissedFullScreenContent: (AdWithoutView ad) {
+          ad.dispose();
+          _loadRewardedAd(); // Load a new ad for next time
+        },
+        onAdFailedToShowFullScreenContent: (AdWithoutView ad, AdError error) {
+          print('Failed to show rewarded ad: $error');
+          ad.dispose();
+          _loadRewardedAd(); // Load a new ad for next time
+        },
+      );
+    } else {
+      print('Rewarded ad is not ready yet');
+      // Optionally, handle the case when the ad is not ready
+    }
   }
 
   Future<bool> onWillPop() async {
@@ -326,35 +384,6 @@ class LandingPageState extends State<LandingPage>
         _confettiController.stop();
       }
     });
-  }
-
-  void startTimer() {
-    if (_timer != null) {
-      _timer!.cancel(); // Cancel any existing timer
-    }
-
-    if (!_isGoButtonLocked) {
-      // Check if the Go button is not locked
-      setState(() {
-        _timerStarted = true;
-        _remainingTime = 600; // 10 minutes in seconds
-      });
-
-      _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-        if (_remainingTime > 0) {
-          setState(() {
-            _remainingTime--;
-          });
-        } else {
-          _timer!.cancel();
-
-          // Unlock the Go button after the timer expires
-          setState(() {
-            _isGoButtonLocked = false;
-          });
-        }
-      });
-    }
   }
 
   Future<String> combineEnglishTextsForTranslation(
@@ -809,8 +838,7 @@ class LandingPageState extends State<LandingPage>
                                 Text(
                                   _timerStarted
                                       ? '${translatedTexts[4]} ${_remainingTime ~/ 60}:${(_remainingTime % 60).toString().padLeft(2, '0')}'
-                                      : translatedTexts[
-                                          3], // Assuming translatedText4 corresponds to index 3 in translatedTexts
+                                      : translatedTexts[3],
                                   textAlign: TextAlign.center,
                                   style: const TextStyle(
                                     color: Colors.white,
@@ -819,6 +847,30 @@ class LandingPageState extends State<LandingPage>
                                     fontWeight: FontWeight.w700,
                                   ),
                                 ),
+                                // Modified Skip Button to show Rewarded Ad
+                                if (_timerStarted)
+                                  TextButton(
+                                    onPressed: _showRewardedAd,
+                                    child: AnimatedSwitcher(
+                                      duration: Duration(
+                                          milliseconds:
+                                              500), // Speed of fade effect
+                                      child: _isTextVisible
+                                          ? Text(
+                                              "Watch ad to guess again right now!",
+                                              key:
+                                                  UniqueKey(), // Important for unique identification
+                                              style: TextStyle(
+                                                color: _isGreenText
+                                                    ? Colors.green
+                                                    : Colors.white,
+                                                fontSize: 18,
+                                              ),
+                                            )
+                                          : SizedBox
+                                              .shrink(), // Empty widget for blinking effect
+                                    ),
+                                  ),
                               ],
                             ),
                           ),
@@ -867,9 +919,16 @@ class LandingPageState extends State<LandingPage>
 
     return GestureDetector(
       onTap: () {
-        if (!_isWaitingForResponse && !_timerStarted && !isLocked) {
-          // Check if the button is not locked
+        if (!isLocked && !_isWaitingForResponse && !_timerStarted) {
           submitGuess();
+        } else if (isLocked && _timerFinished) {
+          // Optionally handle a tap when the button is locked but the timer finished
+          setState(() {
+            _timerFinished = false; // Reset timer finished state
+          });
+        } else if (isLocked) {
+          // If button is locked, skip the timer
+          skipTimer();
         }
       },
       child: Container(
@@ -890,17 +949,66 @@ class LandingPageState extends State<LandingPage>
         child: _isWaitingForResponse
             ? const CircularProgressIndicator()
             : Text(
-                buttonText, // Use the translated text
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 40,
-                  fontFamily: 'Inter',
-                  fontWeight: FontWeight.w700,
+                isLocked ? "Locked" : buttonText, // Show "Locked" or "Ready"
+                style: TextStyle(
+                  fontSize: 20.0, // Font size
+                  fontWeight: FontWeight.bold, // Bold font
+                  color: Colors.black, // Text color
+
+                  letterSpacing: 1.2, // Letter spacing
+
+                  // Add other styling attributes as needed
                 ),
               ),
       ),
     );
+  }
+
+  void skipTimer() {
+    if (_timerStarted && _remainingTime > 0) {
+      setState(() {
+        _remainingTime -= 120; // Decrease the timer by 2 minutes
+        if (_remainingTime <= 0) {
+          _timer?.cancel();
+          _remainingTime = 0;
+          _timerFinished = true;
+          _timerStarted = false;
+          _isGoButtonLocked = false;
+          isButtonLocked = false; // Unlock the Go button here as well
+        }
+      });
+    }
+  }
+
+  void startTimer() {
+    if (_timer != null) {
+      _timer!.cancel(); // Cancel any existing timer
+    }
+
+    if (!_isGoButtonLocked) {
+      setState(() {
+        _timerStarted = true;
+        _remainingTime = 600; // 10 minutes in seconds
+        _timerFinished = false; // Reset the timer finished flag
+      });
+
+      _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        if (_remainingTime > 0) {
+          setState(() {
+            _remainingTime--;
+          });
+        } else {
+          _timer!.cancel();
+
+          // Set the flag to true when the timer finishes
+          setState(() {
+            _timerFinished = true;
+            _isGoButtonLocked = false; // Unlock the Go button
+            isButtonLocked = false; // Unlock the Go button
+          });
+        }
+      });
+    }
   }
 
   Future<void> submitGuess() async {
@@ -913,6 +1021,7 @@ class LandingPageState extends State<LandingPage>
         !_timerStarted) {
       setState(() {
         _isWaitingForResponse = true; // Start waiting stage
+        isButtonLocked = true; // Lock
       });
 
       // Convert string to integer
@@ -939,6 +1048,9 @@ class LandingPageState extends State<LandingPage>
         // Debug prints for response
 
         if (response.statusCode == 200) {
+          // Close the keyboard
+          FocusScope.of(context).unfocus();
+
           var result = json.decode(response.body);
           bool isCorrect = result['correct'];
 
@@ -947,12 +1059,13 @@ class LandingPageState extends State<LandingPage>
           // Handle the result
           setState(() {
             _isWaitingForResponse = false; // Stop waiting stage
+            isButtonLocked = true; // Lock
             // Show result to user (win/lose)
             _showResultDialog(isCorrect);
 
             // Lock the "Go" button for the next 10 minutes
             isButtonLocked = true;
-
+            _remainingTime = 600; // Set timer duration (e.g., 10 minutes)
             // Start the 10-minute timer
             startTimer();
           });
