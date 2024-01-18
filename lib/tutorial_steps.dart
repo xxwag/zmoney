@@ -32,7 +32,7 @@ class TutorialManager {
       List<String> translatedTexts, List<GlobalKey> keys) {
 // Ensure that the translatedTexts and keys are valid before
 
-    if (translatedTexts.length >= 2 && keys.length >= 2) {
+    if (translatedTexts.length>= 2){ //&& keys.length >= 2) {
       tutorialSteps = [
         TutorialStep(
           widget: _tutorialStepWidget(translatedTexts[7]),
@@ -43,7 +43,7 @@ class TutorialManager {
         TutorialStep(
           widget: _tutorialStepWidget(translatedTexts[6]),
           targetKey: keys[1],
-          direction: TooltipDirection.top,
+          direction: TooltipDirection.bottom,
           description: translatedTexts[5],
         ),
 // Add more steps as needed...
