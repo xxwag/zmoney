@@ -48,6 +48,8 @@ class LandingPageState extends State<LandingPage>
   late ConfettiController _confettiController; // ConfettiController
   int randomAnimationType = 1; // Default to 1 or any valid animation type
   // GlobalKeys for target widgets
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
   GlobalKey key1 = GlobalKey();
   GlobalKey key2 = GlobalKey();
   GlobalKey keyLanguageSelector = GlobalKey();
@@ -63,7 +65,7 @@ class LandingPageState extends State<LandingPage>
   String translatedText4 = 'Ready';
   String translatedText5 = 'The next try will be available in:';
   String translatedText6 = 'This is the Go button. Tap here to start.';
-  String translatedText7 = 'Tap the Go button to start your journey!';
+  String translatedText7 = 'Tap the Go button to start playing!';
   String translatedText8 = 'Here you can enter numbers.';
   String translatedText9 = 'Enter numbers in this field.';
   String translatedText10 = 'Select your language';
@@ -75,11 +77,11 @@ class LandingPageState extends State<LandingPage>
 
   double _prizePoolAmount = 100000; // Starting amount
 
-  bool _isGoButtonLocked = false; // To track the Go button lock state
+// To track the Go button lock state
   bool isButtonLocked = false; // Add this variable to your widget state
   bool _isTextVisible = true;
   List<TutorialStep> tutorialSteps = [];
-  bool _isGreenText = true; // Define _isGreenText as a boolean variable
+  final bool _isGreenText = true; // Define _isGreenText as a boolean variable
 
   Color _currentColor = Colors.black; // Default color, can be black or white
 
@@ -123,6 +125,14 @@ class LandingPageState extends State<LandingPage>
         ConfettiController(duration: const Duration(seconds: 10));
     _confettiController.play();
 
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      FocusScope.of(context).unfocus();
+      FocusScope.of(_scaffoldKey.currentContext!).unfocus();
+      if (FocusScope.of(context).hasFocus) {
+        FocusScope.of(context).unfocus();
+      }
+    });
+
     // TADY SE MUSI DODELAT TUTORIAL STEPY, KAZDEJ JE NAVAZANEJ NA KEY (key1, key2) KTERYM SE MUSI OZNACIT ELEMENT WIDGETU
     // VIz. DOLE TUTORIAL STEP CLASS
 
@@ -143,7 +153,7 @@ class LandingPageState extends State<LandingPage>
 
   void _startBlinkingEffect() {
     Future.doWhile(() async {
-      await Future.delayed(Duration(seconds: 1)); // Set blinking speed
+      await Future.delayed(const Duration(seconds: 1)); // Set blinking speed
       setState(() {
         _isTextVisible = !_isTextVisible;
       });
@@ -153,19 +163,35 @@ class LandingPageState extends State<LandingPage>
 
   void _loadRewardedAd() {
     RewardedAd.load(
-      adUnitId: 'ca-app-pub-3940256099942544/5224354917',
+      adUnitId:
+          'ca-app-pub-4652990815059289/8386402654', // test ca-app-pub-3940256099942544/5224354917
+      // ignore: prefer_const_constructors
       request: AdRequest(),
       rewardedAdLoadCallback: RewardedAdLoadCallback(
         onAdLoaded: (RewardedAd ad) {
+          // ignore: unnecessary_this
           this._rewardedAd = ad;
           _isRewardedAdReady = true;
         },
         onAdFailedToLoad: (LoadAdError error) {
-          print('RewardedAd failed to load: $error');
+          if (kDebugMode) {
+            print('RewardedAd failed to load: $error');
+          }
           _isRewardedAdReady = false;
         },
       ),
     );
+  }
+
+  // Function to handle the press of the ad button
+  void _onPressAdButton() {
+    // Close the keyboard
+    FocusScope.of(context).unfocus();
+
+    // After a brief delay to ensure the keyboard is closed, show the rewarded ad
+    Future.delayed(const Duration(milliseconds: 300), () {
+      _showRewardedAd();
+    });
   }
 
   void _showRewardedAd() {
@@ -176,7 +202,6 @@ class LandingPageState extends State<LandingPage>
 
           _timerFinished = true;
           _timerStarted = false;
-          _isGoButtonLocked = false;
           isButtonLocked = false; // Unlock the Go button here as well
         },
       );
@@ -186,13 +211,17 @@ class LandingPageState extends State<LandingPage>
           _loadRewardedAd(); // Load a new ad for next time
         },
         onAdFailedToShowFullScreenContent: (AdWithoutView ad, AdError error) {
-          print('Failed to show rewarded ad: $error');
+          if (kDebugMode) {
+            print('Failed to show rewarded ad: $error');
+          }
           ad.dispose();
           _loadRewardedAd(); // Load a new ad for next time
         },
       );
     } else {
-      print('Rewarded ad is not ready yet');
+      if (kDebugMode) {
+        print('Rewarded ad is not ready yet');
+      }
       // Optionally, handle the case when the ad is not ready
     }
   }
@@ -503,6 +532,7 @@ class LandingPageState extends State<LandingPage>
   void dispose() {
     _timer?.cancel();
     _bannerAd.dispose();
+    _rewardedAd.dispose();
     _confettiController.dispose();
     super.dispose();
   }
@@ -520,8 +550,8 @@ class LandingPageState extends State<LandingPage>
       'it': 'Italian',
       'ja': 'Japanese',
       'lt': 'Lithuanian',
-      'nb': 'Norwegian Bokmål',
-      'pl': 'Polish',
+      'nb': 'Norwegian',
+      // 'pl': 'Polish',
       'pt': 'Portuguese',
       'ro': 'Romanian',
       'es': 'Spanish',
@@ -713,11 +743,20 @@ class LandingPageState extends State<LandingPage>
           decoration: InputDecoration(
             border: InputBorder.none,
             hintText: hintText, // Use the translated text
+            contentPadding: const EdgeInsets.fromLTRB(10, 12, 10,
+                10), // Adjust padding to center the hint text vertically
+            suffixIcon:
+                _buildGoButton(screenSize, translatedTexts[2], isButtonLocked),
+            suffixIconConstraints: const BoxConstraints(
+                minWidth: 48, minHeight: 22), // Adjust icon size
           ),
-          textAlign: TextAlign.center,
+          textAlign: TextAlign.center, // Horizontally centers the text
           style: const TextStyle(
-            fontSize: 24,
-            fontFamily: 'Inter',
+            fontSize: 23.0, // Font size, adjusted to match _buildGoButton
+            fontWeight: FontWeight.bold, // Bold font
+            color: Colors.black, // Text color
+            letterSpacing: 1.2, // Letter spacing
+            fontFamily: 'Inter', // Keep the same font family
           ),
           onTap: _playConfettiAnimation, // Play confetti on interaction
         ),
@@ -740,6 +779,7 @@ class LandingPageState extends State<LandingPage>
     return WillPopScope(
         onWillPop: onWillPop,
         child: Scaffold(
+          key: _scaffoldKey,
           drawer: SideMenuDrawer(
             translatedTexts: translatedTexts,
             containerColor: containerColor,
@@ -813,11 +853,11 @@ class LandingPageState extends State<LandingPage>
                         child: Center(
                           child: SingleChildScrollView(
                             child: Column(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                SizedBox(height: screenSize.height * 0.05),
-                                if (!isKeyboardOpen)
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  SizedBox(height: screenSize.height * 0.05),
+
                                   Text(
                                     translatedTexts[0], // Use translated text
                                     textAlign: TextAlign.center,
@@ -828,51 +868,53 @@ class LandingPageState extends State<LandingPage>
                                       fontWeight: FontWeight.w800,
                                     ),
                                   ),
-                                SizedBox(height: screenSize.height * 0.1),
-                                _buildNumberInput(
-                                    screenSize, translatedTexts[1]),
-                                SizedBox(height: screenSize.height * 0.1),
-                                _buildGoButton(screenSize, translatedTexts[2],
-                                    isButtonLocked),
-                                SizedBox(height: screenSize.height * 0.025),
-                                Text(
-                                  _timerStarted
-                                      ? '${translatedTexts[4]} ${_remainingTime ~/ 60}:${(_remainingTime % 60).toString().padLeft(2, '0')}'
-                                      : translatedTexts[3],
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 20,
-                                    fontFamily: 'Roboto',
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                // Modified Skip Button to show Rewarded Ad
-                                if (_timerStarted)
-                                  TextButton(
-                                    onPressed: _showRewardedAd,
-                                    child: AnimatedSwitcher(
-                                      duration: Duration(
-                                          milliseconds:
-                                              500), // Speed of fade effect
-                                      child: _isTextVisible
-                                          ? Text(
+                                  SizedBox(height: screenSize.height * 0.1),
+                                  _buildNumberInput(
+                                      screenSize, translatedTexts[1]),
+
+                                  // Modified Skip Button to show Rewarded Ad
+                                  if (_timerStarted && _isRewardedAdReady)
+                                    TextButton(
+                                      onPressed: _onPressAdButton,
+                                      child: AnimatedSwitcher(
+                                        duration: const Duration(
+                                            milliseconds:
+                                                500), // Speed of fade effect
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize
+                                              .min, // To keep the row tight around its children
+                                          children: [
+                                            const Icon(Icons.touch_app,
+                                                color: Colors.lightGreen),
+                                            const SizedBox(
+                                                width:
+                                                    5), // A little spacing between the icon and text
+                                            Text(
                                               "Watch ad to guess again right now!",
                                               key:
                                                   UniqueKey(), // Important for unique identification
                                               style: TextStyle(
                                                 color: _isGreenText
-                                                    ? Colors.green
-                                                    : Colors.white,
+                                                    ? Colors.lightGreenAccent
+                                                    : Colors.lightGreen,
                                                 fontSize: 18,
+                                                shadows: _isGreenText
+                                                    ? [
+                                                        const Shadow(
+                                                          blurRadius: 10.0,
+                                                          color: Colors
+                                                              .lightGreenAccent,
+                                                          offset: Offset(0, 0),
+                                                        ),
+                                                      ]
+                                                    : [],
                                               ),
-                                            )
-                                          : SizedBox
-                                              .shrink(), // Empty widget for blinking effect
+                                            ),
+                                          ],
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                              ],
-                            ),
+                                ]),
                           ),
                         ),
                       ),
@@ -911,8 +953,10 @@ class LandingPageState extends State<LandingPage>
 
   Widget _buildGoButton(Size screenSize, String buttonText, bool isLocked) {
     // Define the default and loading button colors
-    const defaultColor = Colors.blue; // Change to your desired default color
-    const loadingColor = Colors.grey; // Change to your desired loading color
+    const defaultColor =
+        Colors.transparent; // Change to your desired default color
+    const loadingColor =
+        Colors.transparent; // Change to your desired loading color
 
     // Determine the button color based on the lock state
     final buttonColor = isLocked ? loadingColor : defaultColor;
@@ -933,32 +977,45 @@ class LandingPageState extends State<LandingPage>
       },
       child: Container(
         key: key2, // Assign the GlobalKey here
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(0),
+        constraints: const BoxConstraints(
+          maxHeight: 50, // Maximum width of the button
+        ),
         decoration: BoxDecoration(
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x3F000000),
-              blurRadius: 4,
-              offset: Offset(0, 4),
-              spreadRadius: 0,
-            ),
-          ],
           // Use the determined button color
           color: buttonColor,
         ),
         child: _isWaitingForResponse
             ? const CircularProgressIndicator()
-            : Text(
-                isLocked ? "Locked" : buttonText, // Show "Locked" or "Ready"
-                style: TextStyle(
-                  fontSize: 20.0, // Font size
-                  fontWeight: FontWeight.bold, // Bold font
-                  color: Colors.black, // Text color
-
-                  letterSpacing: 1.2, // Letter spacing
-
-                  // Add other styling attributes as needed
-                ),
+            : Row(
+                mainAxisSize: MainAxisSize
+                    .min, // Ensures the Row only takes up necessary space
+                children: [
+                  if (isLocked)
+                    const Icon(
+                      Icons.lock, // Lock icon
+                      color: Colors.black, // Icon color
+                      size: 23.0, // Icon size
+                    ),
+                  if (isLocked)
+                    const SizedBox(
+                        width:
+                            5), // Adds spacing between the icon and text if locked
+                  Text(
+                    _timerStarted
+                        ? '${_remainingTime ~/ 60}:${(_remainingTime % 60).toString().padLeft(2, '0')}'
+                        : isLocked
+                            ? ""
+                            : buttonText, // Show remaining time or buttonText
+                    style: const TextStyle(
+                      fontSize: 23.0, // Font size
+                      fontWeight: FontWeight.bold, // Bold font
+                      color: Colors.black, // Text color
+                      letterSpacing: 1.2, // Letter spacing
+                      // Add other styling attributes as needed
+                    ),
+                  ),
+                ],
               ),
       ),
     );
@@ -973,7 +1030,6 @@ class LandingPageState extends State<LandingPage>
           _remainingTime = 0;
           _timerFinished = true;
           _timerStarted = false;
-          _isGoButtonLocked = false;
           isButtonLocked = false; // Unlock the Go button here as well
         }
       });
@@ -985,44 +1041,70 @@ class LandingPageState extends State<LandingPage>
       _timer!.cancel(); // Cancel any existing timer
     }
 
-    if (!_isGoButtonLocked) {
-      setState(() {
-        _timerStarted = true;
-        _remainingTime = 600; // 10 minutes in seconds
-        _timerFinished = false; // Reset the timer finished flag
-      });
+    setState(() {
+      _timerStarted = true;
+      _remainingTime = 600; // 10 minutes in seconds
+      _timerFinished = false; // Reset the timer finished flag
+// Initially lock the Go button
+    });
 
-      _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-        if (_remainingTime > 0) {
-          setState(() {
-            _remainingTime--;
-          });
-        } else {
-          _timer!.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (Timer timer) {
+      if (_remainingTime > 0) {
+        setState(() {
+          _remainingTime--;
+        });
+      } else {
+        timer.cancel();
+        onTimerEnd(); // Call the method to handle timer end
+      }
+    });
+  }
 
-          // Set the flag to true when the timer finishes
-          setState(() {
-            _timerFinished = true;
-            _isGoButtonLocked = false; // Unlock the Go button
-            isButtonLocked = false; // Unlock the Go button
-          });
-        }
-      });
-    }
+  void onTimerEnd() {
+    setState(() {
+      _timerFinished = true;
+// Unlock the Go button
+      isButtonLocked = false; // Unlock the Go button
+    });
+
+    // Additional actions to be performed when the timer ends
+    // For instance, updating the UI, showing notifications, etc.
+  }
+
+  void _showEmptyTextFieldNotification() {
+    final snackBar = const SnackBar(
+      content: Text("You have to enter some numbers to win💲💲..."),
+      duration: Duration(seconds: 5),
+    );
+
+    // Use ScaffoldMessenger to show the SnackBar.
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
   Future<void> submitGuess() async {
     // Fetch Ngrok data
-    NgrokManager.fetchNgrokData();
+    await NgrokManager.fetchNgrokData(); // Make sure to await the fetch
     String guessStr = _numberController.text; // Guess as a string
 
-    if (guessStr.isNotEmpty &&
-        NgrokManager.ngrokUrl.isNotEmpty &&
-        !_timerStarted) {
+    if (guessStr.isEmpty) {
+      // If the text field is empty, show the notification
+      _showEmptyTextFieldNotification();
+      return; // Exit the function to prevent further processing
+    }
+
+    if (guessStr.isNotEmpty && !_timerStarted) {
       setState(() {
         _isWaitingForResponse = true; // Start waiting stage
-        isButtonLocked = true; // Lock
       });
+
+      // Check if Ngrok URL is empty
+      if (NgrokManager.ngrokUrl.isEmpty) {
+        setState(() {
+          _isWaitingForResponse = false;
+        });
+        _showServerNotRunningDialog();
+        return;
+      }
 
       // Convert string to integer
       int? guessInt = int.tryParse(guessStr);
@@ -1036,8 +1118,6 @@ class LandingPageState extends State<LandingPage>
         return;
       }
 
-      // Debug print for converted guess
-
       try {
         var response = await http.post(
           Uri.parse('${NgrokManager.ngrokUrl}/api/guess'),
@@ -1045,40 +1125,30 @@ class LandingPageState extends State<LandingPage>
           body: jsonEncode({'guess': guessInt}), // Send the integer guess
         );
 
-        // Debug prints for response
-
         if (response.statusCode == 200) {
-          // Close the keyboard
-          FocusScope.of(context).unfocus();
-
+          // Handle valid response
           var result = json.decode(response.body);
           bool isCorrect = result['correct'];
 
-          // Debug print for result
-
-          // Handle the result
+          // Lock the "Go" button and start the timer only after a successful response
           setState(() {
-            _isWaitingForResponse = false; // Stop waiting stage
-            isButtonLocked = true; // Lock
-            // Show result to user (win/lose)
-            _showResultDialog(isCorrect);
-
-            // Lock the "Go" button for the next 10 minutes
+            _isWaitingForResponse = false;
             isButtonLocked = true;
-            _remainingTime = 600; // Set timer duration (e.g., 10 minutes)
-            // Start the 10-minute timer
+            _showResultDialog(isCorrect);
+            _remainingTime = 600;
             startTimer();
           });
         } else {
-          // Handle non-200 responses
+          // For non-200 responses, do not lock the button, allow retry
           setState(() {
-            _isWaitingForResponse = false; // Stop waiting stage
+            _isWaitingForResponse = false;
           });
+          _showServerNotRunningDialog();
         }
       } catch (e) {
         // Handle exception
         setState(() {
-          _isWaitingForResponse = false; // Stop waiting stage
+          _isWaitingForResponse = false;
         });
 
         if (e is SocketException || e is HttpException) {
@@ -1086,57 +1156,78 @@ class LandingPageState extends State<LandingPage>
         }
       }
     } else {
-      _showServerNotRunningDialog();
+      _showEmptyTextFieldNotification();
     }
   }
 
   void _showServerNotRunningDialog() {
     showDialog(
       context: context,
-      barrierDismissible: false, // Disable closing by tapping outside
+      barrierDismissible: false,
       builder: (BuildContext context) {
-        bool isCheckingServer =
-            true; // Local variable to track the checking process
+        bool isCheckingServer = true;
+        String dialogMessage = 'Server might be down ...';
+        Color dialogColor = Colors.blueAccent;
+
         Timer? timer;
 
-        // Function to periodically check server availability
         void checkServerAvailability() {
           timer = Timer.periodic(const Duration(seconds: 5), (Timer t) async {
-            try {
-              final response = await http.get(Uri.parse(NgrokManager.ngrokUrl));
-              if (response.statusCode == 200) {
-                isCheckingServer = false;
-                (context as Element)
-                    .markNeedsBuild(); // Request a rebuild of the dialog
-                t.cancel();
+            bool fetched = await NgrokManager.fetchNgrokData2();
+
+            if (fetched && NgrokManager.ngrokUrl.isNotEmpty) {
+              try {
+                final apiResponse = await http
+                    .get(Uri.parse('${NgrokManager.ngrokUrl}/api/test'));
+
+                if (apiResponse.statusCode == 200) {
+                  // Connection successful
+                  if (context.mounted) {
+                    setState(() {
+                      dialogMessage = 'Connected successfully!';
+                      dialogColor = Colors.green;
+                    });
+
+                    // Wait for a few seconds to show the updated UI
+                    await Future.delayed(const Duration(seconds: 2), () {
+                      setState(() {
+                        isCheckingServer = false;
+                      });
+                    });
+
+                    t.cancel();
+                    Navigator.of(context).pop(true);
+                  }
+                }
+              } catch (e) {
+                // Error during API call, handle if needed
               }
-            } catch (_) {
-              // If there is an error, it means the server is not available yet.
+            } else {
+              // Ngrok URL not fetched or empty
+              t.cancel();
+              Navigator.of(context).pop(false);
             }
           });
         }
 
-        // Start checking for server availability
         checkServerAvailability();
 
-        return PopScope(
+        return WillPopScope(
+          onWillPop: () async => false,
           child: StatefulBuilder(
             builder: (context, setState) {
               return Dialog(
-                backgroundColor:
-                    Colors.transparent, // Make dialog background transparent
+                backgroundColor: Colors.transparent,
                 child: Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.blueAccent
-                        .withOpacity(0.9), // Semi-transparent background
+                    color: dialogColor.withOpacity(0.9),
                     borderRadius: BorderRadius.circular(15),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.blue.shade200,
-                        blurRadius:
-                            20, // Increased for a more pronounced glow effect
-                        spreadRadius: 10, // Adjust spread for the glow size
+                        blurRadius: 20,
+                        spreadRadius: 10,
                       ),
                     ],
                   ),
@@ -1144,10 +1235,9 @@ class LandingPageState extends State<LandingPage>
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       AnimatedCrossFade(
-                        firstChild:
-                            const CircularProgressIndicator(), // Show loading indicator
+                        firstChild: const CircularProgressIndicator(),
                         secondChild: const Icon(Icons.check_circle_outline,
-                            size: 48, color: Colors.white), // Show checkmark
+                            size: 48, color: Colors.white),
                         crossFadeState: isCheckingServer
                             ? CrossFadeState.showFirst
                             : CrossFadeState.showSecond,
@@ -1155,9 +1245,7 @@ class LandingPageState extends State<LandingPage>
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        isCheckingServer
-                            ? 'Checking server availability...'
-                            : 'Server is now available!',
+                        dialogMessage,
                         style: const TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
@@ -1168,9 +1256,8 @@ class LandingPageState extends State<LandingPage>
                         child: const Text('OK',
                             style: TextStyle(color: Colors.white)),
                         onPressed: () {
-                          timer
-                              ?.cancel(); // Stop the timer when dialog is closed
-                          Navigator.of(context).pop(); // Close the dialog
+                          timer?.cancel();
+                          Navigator.of(context).pop();
                         },
                       ),
                     ],

@@ -27,9 +27,10 @@ class MainActivity : FlutterActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        firebaseAnalytics = FirebaseAnalytics.getInstance(this)
 
         // Initialize Play Games SDK
-        PlayGamesSdk.initialize(this)
+        PlayGamesSdk.initialize(this);
         
         // Initialize other services like Firebase, Mobile Ads
         FirebaseApp.initializeApp(this)
@@ -65,34 +66,36 @@ class MainActivity : FlutterActivity() {
         }
     }
 
-    private fun signIn(result: MethodChannel.Result) {
-        gamesSignInClient.signIn().addOnCompleteListener { task ->
-            val wasSuccessful = task.isSuccessful
-            Log.d(TAG, "signIn: ${task.isSuccessful}")
-            result.success(wasSuccessful)
-            // Additional logic based on sign-in success or failure
-        }
-    }
+   private fun signIn(result: MethodChannel.Result) {
+    gamesSignInClient.signIn().addOnCompleteListener { task ->
+        val wasSuccessful = task.isSuccessful
+        Log.d(TAG, "signIn: ${task.isSuccessful}")
+        result.success(wasSuccessful)
 
-    private fun showPlayerInfo() {
-    PlayGames.getPlayersClient(this).currentPlayer.addOnCompleteListener { task ->
-        if (task.isSuccessful) {
-            val player = task.result
-            val displayName = player?.displayName // Player's display name
-            // Update UI with player information
-            Log.d(TAG, "Player Display Name: $displayName")
-        } else {
-            // Handle failure
-            Log.e(TAG, "Failed to retrieve player information")
+        // Log the login event every time the signIn method is called
+        logLoginEvent()
+
+        // Additional logic can be added here for handling sign-in success or failure
+        if (!wasSuccessful) {
+            // Handle sign-in failure as needed
+            Log.e(TAG, "Sign-in failed")
         }
     }
 }
+
+private fun logLoginEvent() {
+    val bundle = Bundle()
+    firebaseAnalytics.logEvent(FirebaseAnalytics.Event.LOGIN, bundle)
+     Log.e(TAG, "Firebase log callback sent properly")
+}
+
+
 
    private fun checkPlayerAuthentication() {
     gamesSignInClient.isAuthenticated().addOnCompleteListener { task ->
         if (task.isSuccessful && task.result?.isAuthenticated == true) {
             // User is signed in, show player info
-            showPlayerInfo()
+            
         } else {
             // User is not signed in, handle accordingly
         }
