@@ -1,15 +1,22 @@
 package com.gg.zmoney
 
+import android.content.Intent
 import android.os.Bundle
-import com.google.android.gms.ads.MobileAds
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount
+import com.google.android.gms.common.api.ApiException
+
+import com.google.android.gms.tasks.Task
 import com.google.android.gms.games.PlayGamesSdk
 import com.google.android.gms.games.PlayGames
 import com.google.android.gms.games.GamesSignInClient
 import com.google.firebase.FirebaseApp
 import com.google.firebase.crashlytics.FirebaseCrashlytics
-import com.google.android.gms.ads.AdRequest
-import com.google.android.gms.ads.AdView
 import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.GoogleAuthProvider
+import com.google.android.gms.ads.MobileAds
 import com.google.android.ump.ConsentInformation
 import com.google.android.ump.ConsentRequestParameters
 import com.google.android.ump.UserMessagingPlatform
@@ -22,7 +29,6 @@ class MainActivity : FlutterActivity() {
     private lateinit var consentInformation: ConsentInformation
     private val TAG = "MainActivity"
     private lateinit var firebaseAnalytics: FirebaseAnalytics
-    
     private lateinit var gamesSignInClient: GamesSignInClient
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -30,8 +36,8 @@ class MainActivity : FlutterActivity() {
         firebaseAnalytics = FirebaseAnalytics.getInstance(this)
 
         // Initialize Play Games SDK
-        PlayGamesSdk.initialize(this);
-        
+        PlayGamesSdk.initialize(this)
+
         // Initialize other services like Firebase, Mobile Ads
         FirebaseApp.initializeApp(this)
         MobileAds.initialize(this) {}
@@ -66,43 +72,103 @@ class MainActivity : FlutterActivity() {
         }
     }
 
-   private fun signIn(result: MethodChannel.Result) {
-    gamesSignInClient.signIn().addOnCompleteListener { task ->
-        val wasSuccessful = task.isSuccessful
-        Log.d(TAG, "signIn: ${task.isSuccessful}")
-        result.success(wasSuccessful)
+    private fun signIn(result: MethodChannel.Result) {
+        gamesSignInClient.signIn().addOnCompleteListener { task ->
+            val wasSuccessful = task.isSuccessful
+            Log.d(TAG, "signIn: ${task.isSuccessful}")
+            result.success(wasSuccessful)
 
-        // Log the login event every time the signIn method is called
-        logLoginEvent()
+            logLoginEvent()
 
-        // Additional logic can be added here for handling sign-in success or failure
-        if (!wasSuccessful) {
-            // Handle sign-in failure as needed
-            Log.e(TAG, "Sign-in failed")
+            if (wasSuccessful) {
+                // Retrieve player ID from Google Play Games
+                getPlayerId()
+
+                // Initiate Google Sign-In to get the email
+                signInWithGoogle()
+            } else {
+                // Handle sign-in failure
+                Log.e(TAG, "Sign-in failed")
+            }
         }
     }
-}
 
-private fun logLoginEvent() {
-    val bundle = Bundle()
-    firebaseAnalytics.logEvent(FirebaseAnalytics.Event.LOGIN, bundle)
-     Log.e(TAG, "Firebase log callback sent properly")
-}
+    private fun signInWithGoogle() {
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestEmail()
+            .build()
 
+        val googleSignInClient = GoogleSignIn.getClient(this, gso)
+        val signInIntent = googleSignInClient.signInIntent
+        startActivityForResult(signInIntent, GOOGLE_SIGN_IN)
+    }
 
+    // Constant for Google Sign-In request code
+    companion object {
+        private const val GOOGLE_SIGN_IN = 1001
+    }
 
-   private fun checkPlayerAuthentication() {
-    gamesSignInClient.isAuthenticated().addOnCompleteListener { task ->
-        if (task.isSuccessful && task.result?.isAuthenticated == true) {
-            // User is signed in, show player info
-            
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode == GOOGLE_SIGN_IN) {
+            val task = GoogleSignIn.getSignedInAccountFromIntent(data)
+            handleSignInResult(task)
+        }
+    }
+
+    private fun handleSignInResult(completedTask: Task<GoogleSignInAccount>) {
+        try {
+            val account = completedTask.getResult(ApiException::class.java)
+            // Google Sign-In was successful, retrieve the email
+            val email = account?.email ?: ""
+
+            // You can now use the email along with the player ID
+            Log.d(TAG, "Google Sign-In email: $email")
+            // Send this info back to Flutter if needed
+        } catch (e: ApiException) {
+            Log.e(TAG, "Google Sign-In failed", e)
+        }
+    }
+
+    private fun getPlayerInfo() {
+    val playersClient = PlayGames.getPlayersClient(this)
+
+    playersClient.currentPlayer.addOnSuccessListener { player ->
+        val playerId = player.playerId
+        Log.d(TAG, "Player ID: $playerId")
+
+        // Retrieve player email using a different approach
+        val account = GoogleSignIn.getLastSignedInAccount(this)
+        val playerEmail = account?.email // Email may be null if not consented
+
+        if (playerEmail != null) {
+            Log.d(TAG, "Player Email: $playerEmail")
         } else {
-            // User is not signed in, handle accordingly
+            Log.e(TAG, "Player Email is null")
         }
+    }.addOnFailureListener { e ->
+        Log.e(TAG, "Failed to get player info", e)
     }
 }
 
-     private fun getPlayerId() {
+    private fun logLoginEvent() {
+        val bundle = Bundle()
+        firebaseAnalytics.logEvent(FirebaseAnalytics.Event.LOGIN, bundle)
+        Log.e(TAG, "Firebase log callback sent properly")
+    }
+
+    private fun checkPlayerAuthentication() {
+        gamesSignInClient.isAuthenticated().addOnCompleteListener { task ->
+            if (task.isSuccessful && task.result?.isAuthenticated == true) {
+                // User is signed in, show player info
+            } else {
+                // User is not signed in, handle accordingly
+            }
+        }
+    }
+
+    private fun getPlayerId() {
         PlayGames.getPlayersClient(this).currentPlayer.addOnCompleteListener { task ->
             if (task.isSuccessful) {
                 val playerId = task.result?.playerId
@@ -121,15 +187,15 @@ private fun logLoginEvent() {
         consentInformation.requestConsentInfoUpdate(
             this,
             params,
-            { 
+            {
                 if (consentInformation.consentStatus == ConsentInformation.ConsentStatus.REQUIRED) {
                     UserMessagingPlatform.loadConsentForm(
                         this,
-                        { consentForm -> 
+                        { consentForm ->
                             consentForm.show(this) { /* Handle form dismiss */ }
                             Log.d(TAG, "Consent status is REQUIRED. Showing consent form.")
                         },
-                        { formError -> 
+                        { formError ->
                             /* Handle form error */
                             Log.e(TAG, "Error loading consent form: $formError")
                         }
@@ -138,7 +204,7 @@ private fun logLoginEvent() {
                     Log.d(TAG, "Consent status is not REQUIRED. No consent form shown.")
                 }
             },
-            { requestConsentError -> 
+            { requestConsentError ->
                 /* Handle update error */
                 Log.e(TAG, "Error requesting consent info update: $requestConsentError")
             }

@@ -160,18 +160,23 @@ class LandingPageState extends State<LandingPage>
       // Reset tutorial steps with updated translations
       tutorialSteps = [
         TutorialStep(
+          widget: _tutorialStepWidget("Select your preferred language here."),
+          targetKey: keyLanguageSelector,
+          direction: TooltipDirection.top,
+          description: "This dropdown allows you to choose your language.",
+        ),
+        TutorialStep(
           widget: _tutorialStepWidget(translatedTexts[7]),
           targetKey: key1,
           direction: TooltipDirection.bottom,
-          description: translatedTexts[8],
+          description: translatedTexts[8], // Add description
         ),
         TutorialStep(
           widget: _tutorialStepWidget(translatedTexts[6]),
           targetKey: key2,
           direction: TooltipDirection.top,
-          description: translatedTexts[5],
+          description: translatedTexts[5], // Add description
         ),
-        // Additional steps...
       ];
 
       // Reset tutorial step and make tutorial visible
@@ -1286,6 +1291,12 @@ class TutorialManager {
       TutorialStep(
         widget: _tutorialStepWidget(translatedTexts[6]),
         targetKey: keys[1],
+        direction: TooltipDirection.top,
+        description: translatedTexts[5],
+      ),
+      TutorialStep(
+        widget: _tutorialStepWidget(translatedTexts[6]),
+        targetKey: keys[2],
         direction: TooltipDirection.top,
         description: translatedTexts[5],
       ),

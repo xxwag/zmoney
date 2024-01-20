@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -11,6 +13,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:oauth2/oauth2.dart' as oauth2;
+import 'package:http/http.dart' as http;
 
 import 'landing_page.dart';
 import 'firebase_options.dart';
@@ -134,24 +137,35 @@ class WelcomeScreenState extends State<WelcomeScreen> {
 
       UserCredential userCredential =
           await FirebaseAuth.instance.signInWithCredential(credential);
+
       if (kDebugMode) {
         print("Signed in as: ${userCredential.user?.email}");
       }
 
-      setState(() async {
-        currentUser = userCredential.user;
+      // Assuming you have a function to send data to your backend
+      await sendDataToBackend(userCredential.user?.email, googleAuth.idToken);
 
-        // Store user information in SharedPreferences
-        final prefs = await SharedPreferences.getInstance();
-        prefs.setString('email', currentUser!.email ?? "");
-        prefs.setString('displayName', currentUser!.displayName ?? "");
-        prefs.setString('userId', currentUser!.uid);
-        prefs.setString('idToken', googleAuth.idToken ?? "");
+      setState(() {
+        currentUser = userCredential.user;
       });
     } catch (error) {
       if (kDebugMode) {
         print('Error during Google Sign-In: $error');
       }
+    }
+  }
+
+  Future<void> sendDataToBackend(String? email, String? idToken) async {
+    final uri = Uri.parse('YOUR_BACKEND_ENDPOINT');
+    final response = await http.post(uri, body: {
+      'email': email,
+      'idToken': idToken,
+    });
+
+    if (response.statusCode == 200) {
+      // Handle successful response
+    } else {
+      // Handle error
     }
   }
 
@@ -304,4 +318,39 @@ class OAuth2LoginResult {
   final oauth2.Credentials credential;
 
   OAuth2LoginResult(this.status, this.errorMessage, this.credential);
+}
+
+class GoogleSignInView extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    // This is used in the platform side to register the view.
+    const String viewType = '<platform-view-type>';
+    // Pass parameters to the platform side.
+    final Map<String, dynamic> creationParams = <String, dynamic>{};
+
+    return PlatformViewLink(
+      viewType: viewType,
+      surfaceFactory: (context, controller) {
+        return AndroidViewSurface(
+          controller: controller as AndroidViewController,
+          gestureRecognizers: const <Factory<OneSequenceGestureRecognizer>>{},
+          hitTestBehavior: PlatformViewHitTestBehavior.opaque,
+        );
+      },
+      onCreatePlatformView: (params) {
+        return PlatformViewsService.initSurfaceAndroidView(
+          id: params.id,
+          viewType: viewType,
+          layoutDirection: TextDirection.ltr,
+          creationParams: creationParams,
+          creationParamsCodec: const StandardMessageCodec(),
+          onFocus: () {
+            params.onFocusChanged(true);
+          },
+        )
+          ..addOnPlatformViewCreatedListener(params.onPlatformViewCreated)
+          ..create();
+      },
+    );
+  }
 }
