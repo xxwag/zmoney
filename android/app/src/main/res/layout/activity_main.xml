@@ -22,5 +22,10 @@
     ads:adUnitId="ca-app-pub-4652990815059289/6968524603">
 </com.google.android.gms.ads.AdView>
 
+<TextView
+    android:id="@+id/nameTextView"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"/>
+
 
 </RelativeLayout>
