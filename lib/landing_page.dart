@@ -52,6 +52,7 @@ class LandingPageState extends State<LandingPage>
 
   GlobalKey key1 = GlobalKey();
   GlobalKey key2 = GlobalKey();
+  GlobalKey key3 = GlobalKey();
   GlobalKey keyLanguageSelector = GlobalKey();
   // Add more keys as needed
   String _selectedLanguageCode = 'en'; // Default language code
@@ -139,7 +140,7 @@ class LandingPageState extends State<LandingPage>
     setState(() {
       tutorialManager = TutorialManager(
         translatedTexts: translatedTexts,
-        keys: [keyLanguageSelector, key1, key2],
+        keys: [keyLanguageSelector, key1, key2, key3],
       );
     });
 
@@ -245,7 +246,8 @@ class LandingPageState extends State<LandingPage>
   void _restartTutorialIfNeeded() {
     if (_showTutorial) {
       // Call a method on the TutorialManager to reset and initialize the steps
-      tutorialManager.initializeTutorialSteps(translatedTexts, [key1, key2]);
+      tutorialManager.initializeTutorialSteps(
+          translatedTexts, [keyLanguageSelector, key1, key2]);
 
       // Reset tutorial step and make tutorial visible
       setState(() {
@@ -522,7 +524,7 @@ class LandingPageState extends State<LandingPage>
       // Initialize or update tutorialManager here
       tutorialManager = TutorialManager(
         translatedTexts: translatedTexts,
-        keys: [keyLanguageSelector, key1, key2],
+        keys: [keyLanguageSelector, key1, key2, key3],
       );
     });
     _restartTutorialIfNeeded();
@@ -803,149 +805,148 @@ class LandingPageState extends State<LandingPage>
 
             // The rest of the content is in an Expanded widget
             Expanded(
-              child: Stack(
-                children: [
-                  // Animated background container
-                  AnimatedContainer(
-                    duration: const Duration(seconds: 2),
-                    color: containerColor,
-                    width: screenSize.width,
-                    height: screenSize.height,
-                  ),
+              child: Stack(children: [
+                // Animated background container
+                AnimatedContainer(
+                  duration: const Duration(seconds: 2),
+                  color: containerColor,
+                  width: screenSize.width,
+                  height: screenSize.height,
+                ),
 
-                  // Confetti Widget
-                  Align(
-                    alignment: Alignment.topRight,
-                    child: ConfettiWidget(
-                      confettiController: _confettiController,
-                      blastDirectionality: BlastDirectionality.explosive,
-                      blastDirection: -math.pi / 1,
-                      particleDrag: 0.05,
-                      emissionFrequency: 0.05,
-                      numberOfParticles: 13,
-                      gravity: 0.01,
-                      colors: const [Colors.green],
-                      minBlastForce: 1,
-                      maxBlastForce:
-                          maxBlastForce, // Ensure this is defined in your state
+                // Confetti Widget
+                Align(
+                  alignment: Alignment.topRight,
+                  child: ConfettiWidget(
+                    confettiController: _confettiController,
+                    blastDirectionality: BlastDirectionality.explosive,
+                    blastDirection: -math.pi / 1,
+                    particleDrag: 0.05,
+                    emissionFrequency: 0.05,
+                    numberOfParticles: 13,
+                    gravity: 0.01,
+                    colors: const [Colors.green],
+                    minBlastForce: 1,
+                    maxBlastForce:
+                        maxBlastForce, // Ensure this is defined in your state
+                  ),
+                ),
+
+                Positioned(
+                  top: 20,
+                  left: 20,
+                  child: Builder(
+                    builder: (context) => IconButton(
+                      icon: const Icon(Icons.menu, size: 30.0),
+                      onPressed: () => Scaffold.of(context).openDrawer(),
                     ),
                   ),
+                ),
 
-                  Positioned(
-                    top: 20,
-                    left: 20,
-                    child: Builder(
-                      builder: (context) => IconButton(
-                        icon: const Icon(Icons.menu, size: 30.0),
-                        onPressed: () => Scaffold.of(context).openDrawer(),
-                      ),
-                    ),
-                  ),
+                Positioned(
+                  top: 20,
+                  right: 20,
+                  child: _buildLanguageSelector(),
+                ),
+                Column(
+                  children: [
+                    Expanded(
+                      child: Center(
+                        child: SingleChildScrollView(
+                          child: Column(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                SizedBox(height: screenSize.height * 0.05),
 
-                  Positioned(
-                    top: 20,
-                    right: 20,
-                    child: _buildLanguageSelector(),
-                  ),
-                  Column(
-                    children: [
-                      Expanded(
-                        child: Center(
-                          child: SingleChildScrollView(
-                            child: Column(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  SizedBox(height: screenSize.height * 0.05),
-
-                                  Text(
-                                    translatedTexts[0], // Use translated text
-                                    textAlign: TextAlign.center,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 40,
-                                      fontFamily: 'Inter',
-                                      fontWeight: FontWeight.w800,
-                                    ),
+                                Text(
+                                  translatedTexts[0], // Use translated text
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 40,
+                                    fontFamily: 'Inter',
+                                    fontWeight: FontWeight.w800,
                                   ),
-                                  SizedBox(height: screenSize.height * 0.1),
-                                  _buildNumberInput(
-                                      screenSize, translatedTexts[1]),
+                                ),
+                                SizedBox(height: screenSize.height * 0.1),
+                                _buildNumberInput(
+                                    screenSize, translatedTexts[1]),
 
-                                  // Modified Skip Button to show Rewarded Ad
-                                  if (_timerStarted && _isRewardedAdReady)
-                                    TextButton(
-                                      onPressed: _onPressAdButton,
-                                      child: AnimatedSwitcher(
-                                        duration: const Duration(
-                                            milliseconds:
-                                                500), // Speed of fade effect
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize
-                                              .min, // To keep the row tight around its children
-                                          children: [
-                                            const Icon(Icons.touch_app,
-                                                color: Colors.lightGreen),
-                                            const SizedBox(
-                                                width:
-                                                    5), // A little spacing between the icon and text
-                                            Text(
-                                              "Watch ad to guess again right now!",
-                                              key:
-                                                  UniqueKey(), // Important for unique identification
-                                              style: TextStyle(
-                                                color: _isGreenText
-                                                    ? Colors.lightGreenAccent
-                                                    : Colors.lightGreen,
-                                                fontSize: 18,
-                                                shadows: _isGreenText
-                                                    ? [
-                                                        const Shadow(
-                                                          blurRadius: 10.0,
-                                                          color: Colors
-                                                              .lightGreenAccent,
-                                                          offset: Offset(0, 0),
-                                                        ),
-                                                      ]
-                                                    : [],
-                                              ),
+                                // Modified Skip Button to show Rewarded Ad
+                                if (_timerStarted && _isRewardedAdReady)
+                                  TextButton(
+                                    onPressed: _onPressAdButton,
+                                    child: AnimatedSwitcher(
+                                      duration: const Duration(
+                                          milliseconds:
+                                              500), // Speed of fade effect
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize
+                                            .min, // To keep the row tight around its children
+                                        children: [
+                                          const Icon(Icons.touch_app,
+                                              color: Colors.lightGreen),
+                                          const SizedBox(
+                                              width:
+                                                  5), // A little spacing between the icon and text
+                                          Text(
+                                            "Watch ad to guess again right now!",
+                                            key:
+                                                UniqueKey(), // Important for unique identification
+                                            style: TextStyle(
+                                              color: _isGreenText
+                                                  ? Colors.lightGreenAccent
+                                                  : Colors.lightGreen,
+                                              fontSize: 18,
+                                              shadows: _isGreenText
+                                                  ? [
+                                                      const Shadow(
+                                                        blurRadius: 10.0,
+                                                        color: Colors
+                                                            .lightGreenAccent,
+                                                        offset: Offset(0, 0),
+                                                      ),
+                                                    ]
+                                                  : [],
                                             ),
-                                          ],
-                                        ),
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                ]),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  // Marquee Text Positioned
-                  if (!isKeyboardOpen)
-                    Positioned(
-                      bottom: -10, // Adjust as needed
-                      child: SizedBox(
-                        width: screenSize.width,
-                        height: 40, // Adjust the height as needed
-                        child: MarqueeText(
-                          text: '⚠️App still in the development!         ' * 20,
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.5), // 50% opacity
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
+                                  ),
+                              ]),
                         ),
                       ),
                     ),
-                  if (!isKeyboardOpen)
-                    // Only show the prize pool counter if the keyboard is not open
-                    _buildPrizePoolCounter(isKeyboardOpen),
+                  ],
+                ),
+                // Marquee Text Positioned
+                if (!isKeyboardOpen)
+                  Positioned(
+                    bottom: -10, // Adjust as needed
+                    child: SizedBox(
+                      key: key3,
+                      width: screenSize.width,
+                      height: 40, // Adjust the height as needed
+                      child: MarqueeText(
+                        text: '⚠️App still in the development!         ' * 20,
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.5), // 50% opacity
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                if (!isKeyboardOpen)
+                  // Only show the prize pool counter if the keyboard is not open
+                  _buildPrizePoolCounter(isKeyboardOpen),
 
-                  tutorialManager.isTutorialActive
-                      ? tutorialManager.buildTutorialOverlay()
-                      : const SizedBox.shrink(),
-                ],
-              ),
+                tutorialManager.isTutorialActive
+                    ? tutorialManager.buildTutorialOverlay(context)
+                    : const SizedBox.shrink(),
+              ]),
             )
           ]),
         ));
