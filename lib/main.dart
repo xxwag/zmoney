@@ -40,6 +40,7 @@ void main() async {
 
     bool isAuthenticated = await PlayGamesService().isAuthenticated();
     await MobileAds.instance.initialize();
+    await loadAndShowAppOpenAd();
     if (isAuthenticated) {
       homeScreen =
           const LandingPage(); // Navigate directly to LandingPage if authenticated
@@ -52,6 +53,33 @@ void main() async {
 Future<void> clearSharedPreferences() async {
   final SharedPreferences prefs = await SharedPreferences.getInstance();
   await prefs.clear();
+}
+
+Future<void> loadAndShowAppOpenAd() async {
+  String appOpenAdUnitId =
+      'ca-app-pub-4652990815059289/1374103879'; // Replace with your ad unit ID
+  AppOpenAd? appOpenAd;
+  bool isAdLoaded = false;
+
+  // Load the App Open Ad
+  await AppOpenAd.load(
+      adUnitId: appOpenAdUnitId,
+      request: AdRequest(),
+      adLoadCallback: AppOpenAdLoadCallback(
+        onAdLoaded: (ad) {
+          appOpenAd = ad;
+          isAdLoaded = true;
+        },
+        onAdFailedToLoad: (error) {
+          print('App Open ad failed to load: $error');
+        },
+      ),
+      orientation: AppOpenAd.orientationPortrait);
+
+  // Show the Ad if loaded
+  if (isAdLoaded) {
+    appOpenAd!.show();
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -141,9 +169,6 @@ class WelcomeScreenState extends State<WelcomeScreen> {
       if (kDebugMode) {
         print("Signed in as: ${userCredential.user?.email}");
       }
-
-      // Assuming you have a function to send data to your backend
-      await sendDataToBackend(userCredential.user?.email, googleAuth.idToken);
 
       setState(() {
         currentUser = userCredential.user;
