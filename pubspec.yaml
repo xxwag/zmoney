@@ -15,8 +15,9 @@ dependencies:
   confetti: ^0.7.0
   shared_preferences: ^2.2.2
   http: ^1.1.0
-
- 
+  
+  
+  
   flutter_dotenv: ^5.1.0
   flutter_secure_storage: ^9.0.0
   google_sign_in: ^6.1.6
@@ -28,6 +29,9 @@ dependencies:
   windows_notification: ^1.0.0
   path_provider: ^2.1.1
   firebase_analytics: ^10.8.0
+  firebase_analytics_web: ^0.5.5+12
+  url_launcher: ^6.2.4
+ 
   
 dev_dependencies:
   flutter_test:
@@ -41,6 +45,8 @@ flutter_config:
 flutter:
   uses-material-design: true
   assets:
+    - lib/assets/
     - .env
 
   # Add other configurations like assets and fonts as needed
+ 

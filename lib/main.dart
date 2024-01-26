@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
@@ -9,11 +10,14 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_core/firebase_core.dart';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:oauth2/oauth2.dart' as oauth2;
 import 'package:http/http.dart' as http;
+import 'package:zmoney/loading_screen.dart';
 
 import 'landing_page.dart';
 import 'firebase_options.dart';
@@ -22,7 +26,13 @@ import 'package:flutter/services.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await clearSharedPreferences();
+  // Start with LoadingScreen to prevent a blank screen during initialization
+  Widget homeScreen = const LoadingScreen();
+
+  // Run the app with the LoadingScreen
+  runApp(MyApp(homeScreen: homeScreen));
+
+  clearSharedPreferences();
 
   String envFileName = ".env";
   await dotenv.load(fileName: envFileName);
@@ -31,55 +41,63 @@ void main() async {
   await secureStorage.write(
       key: 'ngrokToken', value: dotenv.env['NGROK_TOKEN']);
 
-  Widget homeScreen = const WelcomeScreen(); // Default to WelcomeScreen
-
+  // Check platform and initialize services
   if (Platform.isAndroid || Platform.isIOS) {
-    await Firebase.initializeApp(
+    Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
 
-    bool isAuthenticated = await PlayGamesService().isAuthenticated();
-    await MobileAds.instance.initialize();
-    await loadAndShowAppOpenAd();
-    if (isAuthenticated) {
-      homeScreen =
-          const LandingPage(); // Navigate directly to LandingPage if authenticated
-    }
+    bool isAuthenticated = await verifyUserAuthentication();
+    MobileAds.instance.initialize();
+
+    // Check for stored user tokens
+    String? userToken = await secureStorage.read(key: 'userToken');
+    String? oauthToken = await secureStorage.read(key: 'oauthToken');
+
+    // Update the homeScreen based on authentication status
+    homeScreen = isAuthenticated ? const LandingPage() : const WelcomeScreen();
+  } else {
+    // For other platforms, default to WelcomeScreen
+    homeScreen = const WelcomeScreen();
   }
 
-  runApp(MyApp(homeScreen: homeScreen)); // Pass homeScreen to MyApp
+  // Update the app to show the appropriate screen after initialization
+  Future.delayed(Duration(seconds: 3), () {
+    // Delay of 3 seconds
+    // Now run the app
+    runApp(MyApp(homeScreen: homeScreen));
+  });
+}
+
+Future<bool> verifyUserAuthentication() async {
+  const secureStorage = FlutterSecureStorage();
+  String? userToken = await secureStorage.read(key: 'userToken');
+
+  if (userToken == null) return false;
+
+  try {
+    var response = await http.post(
+      Uri.parse('http://your-node-js-api.com/verifyCredentials'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'token': userToken}),
+    );
+
+    if (response.statusCode == 200) {
+      var data = jsonDecode(response.body);
+      return data['isAuthenticated'];
+    } else {
+      // Handle server error
+      return false;
+    }
+  } catch (e) {
+    // Handle connection error
+    return false;
+  }
 }
 
 Future<void> clearSharedPreferences() async {
   final SharedPreferences prefs = await SharedPreferences.getInstance();
   await prefs.clear();
-}
-
-Future<void> loadAndShowAppOpenAd() async {
-  String appOpenAdUnitId =
-      'ca-app-pub-4652990815059289/1374103879'; // Replace with your ad unit ID
-  AppOpenAd? appOpenAd;
-  bool isAdLoaded = false;
-
-  // Load the App Open Ad
-  await AppOpenAd.load(
-      adUnitId: appOpenAdUnitId,
-      request: AdRequest(),
-      adLoadCallback: AppOpenAdLoadCallback(
-        onAdLoaded: (ad) {
-          appOpenAd = ad;
-          isAdLoaded = true;
-        },
-        onAdFailedToLoad: (error) {
-          print('App Open ad failed to load: $error');
-        },
-      ),
-      orientation: AppOpenAd.orientationPortrait);
-
-  // Show the Ad if loaded
-  if (isAdLoaded) {
-    appOpenAd!.show();
-  }
 }
 
 class MyApp extends StatelessWidget {
@@ -97,31 +115,6 @@ class MyApp extends StatelessWidget {
 }
 
 // ... Rest of your code for PlayGamesService, WelcomeScreen, etc. ...
-
-class PlayGamesService {
-  static const platform = MethodChannel('com.gg.zmoney/play_games');
-
-  Future<bool> isAuthenticated() async {
-    if (kDebugMode) {
-      print('Checking if user is authenticated...');
-    }
-    final bool isAuthenticated = await platform.invokeMethod('isAuthenticated');
-    if (kDebugMode) {
-      print('User authentication status: $isAuthenticated');
-    }
-    return isAuthenticated;
-  }
-
-  Future<void> signIn() async {
-    if (kDebugMode) {
-      print('Attempting to sign in...');
-    }
-    await platform.invokeMethod('signIn');
-    if (kDebugMode) {
-      print('Sign in process initiated');
-    }
-  }
-}
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
@@ -166,13 +159,23 @@ class WelcomeScreenState extends State<WelcomeScreen> {
       UserCredential userCredential =
           await FirebaseAuth.instance.signInWithCredential(credential);
 
-      if (kDebugMode) {
-        print("Signed in as: ${userCredential.user?.email}");
-      }
+      if (userCredential.user != null) {
+        String? email = userCredential.user?.email;
+        if (email != null) {
+          final response = await approachMasterEndpoint(email);
+          // Handle response accordingly
+          // ...
+        } else {
+          // Handle the case where email is null
+          if (kDebugMode) {
+            print("Email is null. Cannot approach master endpoint.");
+          }
+        }
 
-      setState(() {
-        currentUser = userCredential.user;
-      });
+        setState(() {
+          currentUser = userCredential.user;
+        });
+      }
     } catch (error) {
       if (kDebugMode) {
         print('Error during Google Sign-In: $error');
@@ -180,17 +183,24 @@ class WelcomeScreenState extends State<WelcomeScreen> {
     }
   }
 
-  Future<void> sendDataToBackend(String? email, String? idToken) async {
-    final uri = Uri.parse('YOUR_BACKEND_ENDPOINT');
-    final response = await http.post(uri, body: {
-      'email': email,
-      'idToken': idToken,
-    });
+  Future<dynamic> approachMasterEndpoint(String email) async {
+    // Build the request to the masterEndpoint
+    var response = await http.post(
+      Uri.parse('http://your-node-js-api.com/masterEndpoint'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'action': 'register', // or another appropriate action
+        'email': email,
+        // Include other necessary data
+      }),
+    );
 
     if (response.statusCode == 200) {
-      // Handle successful response
+      var data = jsonDecode(response.body);
+      return data;
     } else {
-      // Handle error
+      // Handle errors or invalid responses
+      return null;
     }
   }
 
@@ -229,29 +239,66 @@ class WelcomeScreenState extends State<WelcomeScreen> {
   }
 
   Future<void> _signInWithOAuth2() async {
+    final List<String> scopes = [
+      'https://www.googleapis.com/auth/userinfo.email'
+    ];
+
     try {
-      // Debug print to indicate the start of the OAuth2 process
       if (kDebugMode) {
         print("Starting OAuth2 sign-in process");
       }
 
       final authorizationEndpoint =
-          Uri.parse('http://example.com/oauth2/authorization');
-      final tokenEndpoint = Uri.parse('http://example.com/oauth2/token');
-      final redirectUrl = Uri.parse('http://my-site.com/oauth2-redirect');
-      const identifier = 'my client identifier';
-      const secret = 'my client secret';
+          Uri.parse('https://accounts.google.com/o/oauth2/auth');
+      final tokenEndpoint = Uri.parse('https://oauth2.googleapis.com/token');
+      final redirectUrl = Uri.parse('com.gg.zmoney://oauth2redirect');
+      const identifier =
+          '446412900874-iu52p62l44up39q0u3m3gtlr3sm55fih.apps.googleusercontent.com';
+      const secret = ''; // Public clients typically don't have a secret
 
-      // Specify the path for the credentials file
       final directory = await getApplicationDocumentsDirectory();
       final credentialsFile = File('${directory.path}/credentials.json');
-
       var exists = await credentialsFile.exists();
       if (kDebugMode) {
+        print("Credentials file path: ${directory.path}");
         print("Credentials file exists: $exists");
       }
 
-      if (exists) {
+      if (!exists) {
+        final grant = oauth2.AuthorizationCodeGrant(
+          identifier,
+          authorizationEndpoint,
+          tokenEndpoint,
+          secret: secret,
+        );
+        if (kDebugMode) {
+          print("Created OAuth2 grant");
+        }
+
+        final authorizationUrl =
+            grant.getAuthorizationUrl(redirectUrl, scopes: scopes);
+        if (kDebugMode) {
+          print("Authorization URL: $authorizationUrl");
+        }
+
+        if (await canLaunchUrl(authorizationUrl)) {
+          await launchUrl(authorizationUrl);
+          if (kDebugMode) {
+            print("Launched URL for authorization");
+          }
+
+          // Listen for the redirect URI
+          // This part depends on how your app can receive the redirect
+          // For example, using a deep link or a custom URI scheme
+
+          // Once you have the response, exchange the code for a token
+          // You will need to handle this part based on your app's specific mechanism
+          // Typically involves listening for the incoming URI, extracting the code, and exchanging it
+        } else {
+          throw 'Could not launch $authorizationUrl';
+        }
+      } else {
+        // Loading existing credentials
         var credentials =
             oauth2.Credentials.fromJson(await credentialsFile.readAsString());
         client =
@@ -259,27 +306,8 @@ class WelcomeScreenState extends State<WelcomeScreen> {
         if (kDebugMode) {
           print("OAuth2 client created from existing credentials");
         }
-      } else {
-        // Logic to handle OAuth2 authorization flow
-        if (kDebugMode) {
-          print(
-              "No existing credentials found, need to start authorization flow");
-        }
-        // Implement the logic to complete the authorization flow
-      }
-
-      if (client != null) {
-        if (kDebugMode) {
-          print("OAuth2 client is available, saving credentials");
-        }
-        await credentialsFile.writeAsString(client!.credentials.toJson());
-      } else {
-        if (kDebugMode) {
-          print("OAuth2 client is null, unable to save credentials");
-        }
       }
     } catch (e) {
-      // Log the error
       if (kDebugMode) {
         print('Error during OAuth2 Sign-In: $e');
       }
@@ -319,23 +347,6 @@ class WelcomeScreenState extends State<WelcomeScreen> {
 }
 
 enum OAuth2LoginStatus { success, cancel, error }
-
-class LoadingScreen extends StatelessWidget {
-  const LoadingScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    // Build your loading screen here
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Loading...'),
-      ),
-      body: const Center(
-        child: CircularProgressIndicator(),
-      ),
-    );
-  }
-}
 
 class OAuth2LoginResult {
   final OAuth2LoginStatus status;

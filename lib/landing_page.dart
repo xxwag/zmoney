@@ -709,10 +709,12 @@ class LandingPageState extends State<LandingPage>
   Color _determineContainerColor() {
     switch (randomAnimationType) {
       case 1:
+        return Color(0xFFFFD700);
       case 3:
         // For animation types 1 and 3, use the color sequence
         return colorSequence[_currentColorIndex];
       case 2:
+        return Colors.amberAccent;
       case 4:
         // For animation types 2 and 4, use the current color (black or white)
         return _currentColor;

@@ -15,19 +15,19 @@
       },
       "oauth_client": [
         {
-          "client_id": "446412900874-alucfv888p73jk9eeqnbudlc0vnrtcl7.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.gg.zmoney",
-            "certificate_hash": "1560d36eb72dabb0467fdada918ec468a0145f79"
-          }
-        },
-        {
           "client_id": "446412900874-b3dtf4eqegeqsnkel6tvfnh7ouaihglp.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.gg.zmoney",
             "certificate_hash": "34f220dbf735443e30a0c874626ae3f03e5aa24b"
+          }
+        },
+        {
+          "client_id": "446412900874-iu52p62l44up39q0u3m3gtlr3sm55fih.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.gg.zmoney",
+            "certificate_hash": "1560d36eb72dabb0467fdada918ec468a0145f79"
           }
         },
         {

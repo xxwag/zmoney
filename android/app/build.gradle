@@ -95,14 +95,14 @@ dependencies {
     // ... Other dependencies ...
      // Import the Firebase BoM
      implementation platform('com.google.firebase:firebase-bom:32.7.0')
- implementation 'com.google.firebase:firebase-auth'
-  implementation 'com.google.firebase:firebase-analytics'
-  implementation 'com.google.firebase:firebase-firestore'
+    implementation 'com.google.firebase:firebase-auth'
+    implementation 'com.google.firebase:firebase-analytics'
+    implementation 'com.google.firebase:firebase-firestore'
     implementation 'com.google.firebase:firebase-crashlytics'
     implementation 'com.android.support:multidex:1.0.3'
  
     implementation 'com.google.android.material:material:1.9.0'
-implementation 'com.google.android.gms:play-services-gcm:15.0.1'
+    implementation 'com.google.android.gms:play-services-gcm:15.0.1'
     // Correct place for Google Mobile Ads SDK dependency
     implementation 'com.google.android.gms:play-services-ads:22.6.0'  
     implementation "com.google.android.gms:play-services-games-v2:19.0.0"
