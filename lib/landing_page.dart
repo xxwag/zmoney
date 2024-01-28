@@ -119,7 +119,7 @@ class LandingPageState extends State<LandingPage>
   void initState() {
     super.initState();
     _increasePrizePool();
-    NgrokManager.fetchNgrokData();
+
     fetchAndSetTranslations(_selectedLanguageCode);
     _incrementLaunchCount();
     _confettiController =
