@@ -7,6 +7,9 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.common.api.ApiException
 
+import com.google.android.gms.common.ConnectionResult
+import com.google.android.gms.common.GoogleApiAvailability
+
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.games.PlayGamesSdk
 import com.google.android.gms.games.PlayGames
@@ -25,7 +28,9 @@ import io.flutter.plugin.common.MethodChannel
 import android.util.Log
 
 class MainActivity : FlutterActivity() {
-    private val CHANNEL = "com.gg.zmoney/play_games"
+   
+    private val CHANNEL = "com.gg.zmoney/game_services"
+
     private lateinit var consentInformation: ConsentInformation
     private val TAG = "MainActivity"
     private lateinit var firebaseAnalytics: FirebaseAnalytics
@@ -37,6 +42,7 @@ class MainActivity : FlutterActivity() {
 
         // Initialize Play Games SDK
         PlayGamesSdk.initialize(this)
+        Log.d(TAG, "Play Games SDK initialized")
 
         // Initialize other services like Firebase, Mobile Ads
         FirebaseApp.initializeApp(this)
@@ -47,6 +53,17 @@ class MainActivity : FlutterActivity() {
 
         // Initialize Google Play Games Sign-In Client
         gamesSignInClient = PlayGames.getGamesSignInClient(this)
+        Log.d(TAG, "Google Play Games Sign-In Client initialized")
+
+        // Check if Google Play Services is available
+        if (GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(this) == ConnectionResult.SUCCESS) {
+            // Google Play Services is available, proceed with sign-in
+            signInWithGooglePlayGames()
+        } else {
+            // Handle the scenario where Google Play Services is not available
+            Log.e(TAG, "Google Play Services not available")
+            // Optionally, prompt the user to install or update Google Play Services
+        }
 
         // Check player authentication
         checkPlayerAuthentication()
@@ -54,6 +71,7 @@ class MainActivity : FlutterActivity() {
         // MethodChannel setup
         MethodChannel(flutterEngine!!.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
             when (call.method) {
+                "signInWithGooglePlayGames" -> signInWithGooglePlayGames()
                 "isAuthenticated" -> isAuthenticated(result)
                 "signIn" -> signIn(result)
                 "requestConsent" -> {
@@ -65,12 +83,37 @@ class MainActivity : FlutterActivity() {
         }
     }
 
+     private fun signInWithGooglePlayGames() {
+        gamesSignInClient.signIn().addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                // Handle successful sign-in
+                val playersClient = PlayGames.getPlayersClient(this)
+                playersClient.currentPlayer.addOnSuccessListener { player ->
+                    val playerId = player.playerId
+                    Log.d(TAG, "Google Play Games sign-in successful. Player ID: $playerId")
+                }.addOnFailureListener { e ->
+                    Log.e(TAG, "Failed to retrieve player information", e)
+                }
+            } else {
+                // Handle failed sign-in
+                Log.e(TAG, "Google Play Games sign-in failed", task.exception)
+                // Provide appropriate user feedback or fallback here
+            }
+        }
+    }
+
+
+
+
     private fun isAuthenticated(result: MethodChannel.Result) {
+        Log.d(TAG, "Checking authentication status with Google Play Games")
         gamesSignInClient.isAuthenticated().addOnCompleteListener { task ->
             val isAuthenticated = task.isSuccessful && task.result?.isAuthenticated == true
+            Log.d(TAG, "Authentication status: $isAuthenticated")
             result.success(isAuthenticated)
         }
     }
+
 
     private fun signIn(result: MethodChannel.Result) {
         gamesSignInClient.signIn().addOnCompleteListener { task ->
