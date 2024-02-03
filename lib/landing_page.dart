@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 import 'dart:math' as math; // Import the math library
 import 'dart:math';
 import 'package:http/http.dart' as http;
@@ -41,6 +40,7 @@ class LandingPageState extends State<LandingPage>
   bool _showPartyAnimation = true; // State for party animation
   final TextEditingController _numberController = TextEditingController();
   late TutorialManager tutorialManager;
+  Key playerDataWidgetKey = UniqueKey();
 
   bool _isWaitingForResponse = false;
 
@@ -149,7 +149,7 @@ class LandingPageState extends State<LandingPage>
     _checkTutorialCompletion();
     _initBannerAd();
     _loadRewardedAd();
-    _startBlinkingEffect();
+    // _startBlinkingEffect();
   }
 
   void _startBlinkingEffect() {
@@ -622,94 +622,10 @@ class LandingPageState extends State<LandingPage>
     _bannerAd.load();
   }
 
-  Widget _buildPrizePoolCounter(bool keyboardOpen) {
-    double bottomPosition =
-        keyboardOpen ? 100 : 20; // Adjust position based on keyboard visibility
-
-    return Positioned(
-      bottom: bottomPosition,
-      left: 0,
-      right: 0,
-      child: Center(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            // Calculate the dimensions for the pill
-            double textHeight = 24; // Assuming this is the text height
-            double pillWidth = 200; // textWidth + textHeight;
-            double pillHeight = textHeight + textHeight;
-
-            return Column(
-              // Wrap the existing Container in a Column
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                const Text(
-                  "Current Reward:", // Add the text here
-                  style: TextStyle(
-                    fontSize: 16, // Adjust the font size as needed
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white, // Adjust the color as needed
-                  ),
-                ),
-                const SizedBox(height: 8), // Add spacing between text and pill
-                Container(
-                  width: pillWidth,
-                  height: pillHeight,
-                  decoration: BoxDecoration(
-                    color: const Color.fromARGB(128, 255, 255, 255),
-                    borderRadius: BorderRadius.circular(pillHeight / 2),
-                  ),
-                  alignment: Alignment.center,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      // Outline
-                      AnimatedFlipCounter(
-                        duration: const Duration(milliseconds: 500),
-                        value: _prizePoolAmount,
-                        textStyle: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Color.fromARGB(0, 255, 255, 255),
-                          fontFamily: 'Digital-7',
-                          shadows: [
-                            Shadow(
-                                offset: Offset(-1.5, -1.5),
-                                color: Color.fromARGB(0, 255, 255, 255)),
-                            Shadow(
-                                offset: Offset(1.5, 1.5),
-                                color: Color.fromARGB(0, 255, 255, 255)),
-                          ],
-                        ),
-                        prefix: "\$",
-                      ),
-                      // Main Text
-                      AnimatedFlipCounter(
-                        duration: const Duration(milliseconds: 500),
-                        value: _prizePoolAmount,
-                        textStyle: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green,
-                          fontFamily: 'Digital-7',
-                        ),
-                        prefix: "\$",
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
-      ),
-    );
-  }
-
   Color _determineContainerColor() {
     switch (randomAnimationType) {
       case 1:
-        return Color(0xFFFFD700);
+        return const Color(0xFFFFD700);
       case 3:
         // For animation types 1 and 3, use the color sequence
         return colorSequence[_currentColorIndex];
@@ -923,6 +839,9 @@ class LandingPageState extends State<LandingPage>
                     ),
                   ],
                 ),
+
+                //  PlayerDataWidget(key: playerDataWidgetKey),
+
                 // Marquee Text Positioned
                 if (!isKeyboardOpen)
                   Positioned(
@@ -951,6 +870,7 @@ class LandingPageState extends State<LandingPage>
               ]),
             )
           ]),
+          floatingActionButton: const StatisticsFloatingButton(),
         ));
   }
 
@@ -1084,82 +1004,196 @@ class LandingPageState extends State<LandingPage>
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
+  Widget _buildPrizePoolCounter(bool keyboardOpen) {
+    double bottomPosition =
+        keyboardOpen ? 100 : 20; // Adjust position based on keyboard visibility
+
+    return Positioned(
+      bottom: bottomPosition,
+      left: 0,
+      right: 0,
+      child: Center(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            // Calculate the dimensions for the pill
+            double textHeight = 24; // Assuming this is the text height
+            double pillWidth = 200; // textWidth + textHeight;
+            double pillHeight = textHeight + textHeight;
+
+            return Column(
+              // Wrap the existing Container in a Column
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const Text(
+                  "Current Reward:", // Add the text here
+                  style: TextStyle(
+                    fontSize: 16, // Adjust the font size as needed
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white, // Adjust the color as needed
+                  ),
+                ),
+                const SizedBox(height: 8), // Add spacing between text and pill
+                Container(
+                  width: pillWidth,
+                  height: pillHeight,
+                  decoration: BoxDecoration(
+                    color: const Color.fromARGB(128, 255, 255, 255),
+                    borderRadius: BorderRadius.circular(pillHeight / 2),
+                  ),
+                  alignment: Alignment.center,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // Outline
+                      AnimatedFlipCounter(
+                        duration: const Duration(milliseconds: 500),
+                        value: _prizePoolAmount,
+                        textStyle: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Color.fromARGB(0, 255, 255, 255),
+                          fontFamily: 'Digital-7',
+                          shadows: [
+                            Shadow(
+                                offset: Offset(-1.5, -1.5),
+                                color: Color.fromARGB(0, 255, 255, 255)),
+                            Shadow(
+                                offset: Offset(1.5, 1.5),
+                                color: Color.fromARGB(0, 255, 255, 255)),
+                          ],
+                        ),
+                        prefix: "\$",
+                      ),
+                      // Main Text
+                      AnimatedFlipCounter(
+                        duration: const Duration(milliseconds: 500),
+                        value: _prizePoolAmount,
+                        textStyle: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green,
+                          fontFamily: 'Digital-7',
+                        ),
+                        prefix: "\$",
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
   Future<void> submitGuess() async {
-    // Fetch Ngrok data
-    await NgrokManager.fetchNgrokData(); // Make sure to await the fetch
-    String guessStr = _numberController.text; // Guess as a string
+    // Assuming NgrokManager.fetchNgrokData() and _numberController are defined elsewhere correctly
+    await NgrokManager.fetchNgrokData();
+    String guessStr = _numberController.text;
 
     if (guessStr.isEmpty) {
-      // If the text field is empty, show the notification
       _showEmptyTextFieldNotification();
-      return; // Exit the function to prevent further processing
+      return;
     }
 
-    if (guessStr.isNotEmpty && !_timerStarted) {
+    setState(() {
+      _isWaitingForResponse = true;
+    });
+
+    if (NgrokManager.ngrokUrl.isEmpty) {
       setState(() {
-        _isWaitingForResponse = true; // Start waiting stage
+        _isWaitingForResponse = false;
       });
+      _showServerNotRunningDialog();
+      return;
+    }
 
-      // Check if Ngrok URL is empty
-      if (NgrokManager.ngrokUrl.isEmpty) {
+    int? guessInt = int.tryParse(guessStr);
+    if (guessInt == null) {
+      setState(() {
+        _isWaitingForResponse = false;
+      });
+      return;
+    }
+
+    // Retrieve userId and prizePoolAmount
+    final prefs = await SharedPreferences.getInstance();
+    final String playerDataJson = prefs.getString('playerData') ?? '{}';
+    var playerData = jsonDecode(playerDataJson);
+
+    // Retrieve or define userId and prizePoolAmount here
+    final int userId =
+        playerData['user_id']; // Example retrieval from player data
+    double prizePoolAmount =
+        _prizePoolAmount; // Example fixed prize pool amount
+
+    try {
+      var response = await http.post(
+        Uri.parse('${NgrokManager.ngrokUrl}/api/guess'),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          'guess': guessInt,
+          'userId': userId, // Now using the retrieved or defined userId
+          'prizePool':
+              prizePoolAmount, // Now using the determined prizePoolAmount
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        var result = json.decode(response.body);
+        bool isCorrect = result['correct'];
+
+        final prefs = await SharedPreferences.getInstance();
+        final String playerDataJson = prefs.getString('playerData') ?? '{}';
+        var playerData = jsonDecode(playerDataJson);
+        double prizePoolAmount =
+            _prizePoolAmount; // Assuming this is already a double
+
+        // Update guess count and potentially other fields based on guess correctness
+        playerData['total_guesses'] = (playerData['total_guesses'] ?? 0) + 1;
+        if (isCorrect) {
+          playerData['wins'] = ((playerData['wins'] ?? 0) as int) + 1;
+          playerData['total_win_amount'] =
+              (playerData['total_win_amount'] ?? 0) + prizePoolAmount;
+          if (prizePoolAmount >
+              (playerData['highest_win_amount']?.toDouble() ?? 0.0)) {
+            playerData['highest_win_amount'] = prizePoolAmount;
+          }
+        }
+        // Update last_guesses
+        List<String> guesses = (playerData['last_guesses'] != null)
+            ? List<String>.from(playerData['last_guesses'].split(','))
+            : [];
+        guesses.add(guessStr); // Add the new guess to the list
+        playerData['last_guesses'] =
+            guesses.join(','); // Convert list back to string and save
+
+        await prefs.setString('playerData', jsonEncode(playerData));
+
+        // Refresh UI and PlayerDataWidget
+        setState(() {
+          _isWaitingForResponse = false;
+          isButtonLocked = true;
+          _showResultDialog(isCorrect);
+          _remainingTime = 600;
+          startTimer();
+          playerDataWidgetKey =
+              UniqueKey(); // This forces the PlayerDataWidget to rebuild and reload data
+        });
+        //_showResultDialog(isCorrect);
+      } else {
         setState(() {
           _isWaitingForResponse = false;
         });
-        _showServerNotRunningDialog();
-        return;
+        // Consider showing an error dialog or notification here
       }
-
-      // Convert string to integer
-      int? guessInt = int.tryParse(guessStr);
-      if (guessInt == null) {
-        if (kDebugMode) {
-          print('Invalid number entered');
-        }
-        setState(() {
-          _isWaitingForResponse = false;
-        });
-        return;
-      }
-
-      try {
-        var response = await http.post(
-          Uri.parse('${NgrokManager.ngrokUrl}/api/guess'),
-          headers: {"Content-Type": "application/json"},
-          body: jsonEncode({'guess': guessInt}), // Send the integer guess
-        );
-
-        if (response.statusCode == 200) {
-          // Handle valid response
-          var result = json.decode(response.body);
-          bool isCorrect = result['correct'];
-
-          // Lock the "Go" button and start the timer only after a successful response
-          setState(() {
-            _isWaitingForResponse = false;
-            isButtonLocked = true;
-            _showResultDialog(isCorrect);
-            _remainingTime = 600;
-            startTimer();
-          });
-        } else {
-          // For non-200 responses, do not lock the button, allow retry
-          setState(() {
-            _isWaitingForResponse = false;
-          });
-          _showServerNotRunningDialog();
-        }
-      } catch (e) {
-        // Handle exception
-        setState(() {
-          _isWaitingForResponse = false;
-        });
-
-        if (e is SocketException || e is HttpException) {
-          _showServerNotRunningDialog();
-        }
-      }
-    } else {
-      _showEmptyTextFieldNotification();
+    } catch (e) {
+      setState(() {
+        _isWaitingForResponse = false;
+      });
+      _showServerNotRunningDialog();
     }
   }
 
@@ -1397,5 +1431,295 @@ class LandingPageState extends State<LandingPage>
       // Tutorial was not completed, keep the current state
       setState(() => _showTutorial = false);
     }
+  }
+}
+
+class PlayerDataWidget extends StatefulWidget {
+  const PlayerDataWidget({Key? key}) : super(key: key);
+
+  @override
+  _PlayerDataWidgetState createState() => _PlayerDataWidgetState();
+}
+
+class _PlayerDataWidgetState extends State<PlayerDataWidget> {
+  Map<String, dynamic> playerData = {};
+  String? userEmail;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPlayerData();
+    _loadUserEmail();
+  }
+
+  Future<void> _loadPlayerData() async {
+    final prefs = await SharedPreferences.getInstance();
+    String? playerDataString = prefs.getString('playerData');
+    if (playerDataString != null) {
+      setState(() {
+        playerData = jsonDecode(playerDataString);
+      });
+    }
+  }
+
+  Future<void> _loadUserEmail() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      userEmail = prefs.getString('userEmail');
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final double conversionRatio = 0.0000001; // Adjusted for demonstration
+    final double totalWinAmount =
+        ((playerData['total_win_amount'] as num?)?.toDouble() ?? 0.0);
+
+    final double realMoneyValue = totalWinAmount * conversionRatio;
+
+    List<String> lastGuesses =
+        playerData['last_guesses']?.toString().split(',') ?? [];
+
+    return Material(
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    // Wins
+                    _buildHighlightedInfo(
+                        title: "Wins",
+                        value: (playerData['wins'] as int?)?.toString() ?? '0'),
+
+                    // Total Guesses
+                    _buildHighlightedInfo(
+                        title: "Total Guesses",
+                        value: playerData['total_guesses'].toString()),
+                  ],
+                ),
+              ),
+              if (userEmail != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8.0),
+                  child: Text(
+                    "Logged in as: $userEmail",
+                    style: const TextStyle(
+                        fontSize: 16, fontStyle: FontStyle.italic),
+                  ),
+                ),
+              _buildSectionTitle("Earnings"),
+              _buildAmountRow("Total Win Amount:", totalWinAmount,
+                  leadingIcon: Icons.account_balance_wallet),
+              _buildAmountRow("Real Money Value:", realMoneyValue,
+                  leadingIcon: Icons.monetization_on, isCurrency: true),
+              const Divider(),
+              _buildSectionTitle("Highest Win"),
+              _buildAmountRow("Highest Win Amount:",
+                  (playerData['highest_win_amount'] as int?)?.toDouble() ?? 0.0,
+                  leadingIcon: Icons.emoji_events),
+              const Divider(),
+              _buildSectionTitle("Last Guesses"),
+              lastGuesses.isNotEmpty
+                  ? Column(
+                      children: lastGuesses
+                          .map((guess) => ListTile(
+                                leading: const Icon(Icons.casino,
+                                    color: Colors.orange),
+                                title: Text(guess,
+                                    style: const TextStyle(fontSize: 16)),
+                              ))
+                          .toList(),
+                    )
+                  : const Text("No last guesses available",
+                      style: TextStyle(fontSize: 16)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHighlightedInfo({required String title, required String value}) {
+    return Column(
+      children: [
+        Text(title,
+            style: const TextStyle(
+                fontWeight: FontWeight.bold, color: Colors.blue)),
+        Text(value,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+      ],
+    );
+  }
+}
+
+Widget _buildSectionTitle(String title) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 8.0),
+    child: Text(
+      title,
+      style: const TextStyle(
+          fontSize: 20, fontWeight: FontWeight.bold, color: Colors.blueAccent),
+    ),
+  );
+}
+
+Widget _buildAmountRow(String title, double amount,
+    {bool isCurrency = false, IconData? leadingIcon}) {
+  return ListTile(
+    leading: leadingIcon != null ? Icon(leadingIcon) : null,
+    title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+    subtitle: Text(
+      isCurrency
+          ? '\$${amount.toStringAsFixed(2)}'
+          : '${amount.toString()} Coins',
+      style: const TextStyle(
+          color: Colors.green, fontWeight: FontWeight.bold, fontSize: 16),
+    ),
+  );
+}
+
+// Assuming PlayerDataWidget is defined elsewhere in your code
+
+class StatisticsFloatingButton extends StatefulWidget {
+  const StatisticsFloatingButton({Key? key}) : super(key: key);
+
+  @override
+  State<StatisticsFloatingButton> createState() =>
+      _StatisticsFloatingButtonState();
+}
+
+class _StatisticsFloatingButtonState extends State<StatisticsFloatingButton>
+    with SingleTickerProviderStateMixin {
+  OverlayEntry? _overlayEntry;
+  late AnimationController _animationController;
+  bool isOverlayVisible = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+  }
+
+  void _toggleOverlay(BuildContext context) {
+    if (isOverlayVisible) {
+      _hideOverlay();
+    } else {
+      _showOverlay(context);
+    }
+  }
+
+  void _showOverlay(BuildContext context) {
+    _overlayEntry = _createOverlayEntry(context);
+    Overlay.of(context)?.insert(_overlayEntry!);
+    _animationController.forward();
+    isOverlayVisible = true;
+  }
+
+  void _hideOverlay() {
+    if (_overlayEntry != null) {
+      _animationController.reverse().then((value) => _overlayEntry?.remove());
+      isOverlayVisible = false;
+    }
+  }
+
+  OverlayEntry _createOverlayEntry(BuildContext context) {
+    // Animation for slide transition
+    var slideAnimation = Tween<Offset>(
+      begin: const Offset(1, 0), // Start from the right
+      end: Offset.zero, // End at its natural position
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    ));
+
+    // Tracking start and end points of the swipe
+    Offset? dragStart;
+    Offset? dragEnd;
+
+    return OverlayEntry(
+      builder: (context) => GestureDetector(
+        onTap: _hideOverlay, // Close drawer when tapping outside
+        behavior: HitTestBehavior.translucent,
+        child: Stack(
+          children: [
+            // Transparent area
+            Positioned.fill(
+              child: Container(
+                  color: Colors.black54), // Semi-transparent background
+            ),
+            // Drawer
+            Align(
+              alignment: Alignment.centerRight,
+              child: SlideTransition(
+                position: slideAnimation,
+                child: Material(
+                  elevation: 16.0, // Shadow
+                  child: Container(
+                    width: MediaQuery.of(context).size.width * 0.75,
+                    height: MediaQuery.of(context).size.height,
+                    color: Colors.white,
+                    child: GestureDetector(
+                      onHorizontalDragStart: (details) {
+                        dragStart = details.globalPosition;
+                      },
+                      onHorizontalDragUpdate: (details) {
+                        dragEnd = details.globalPosition;
+                      },
+                      onHorizontalDragEnd: (details) {
+                        // Determine swipe direction and velocity
+                        final velocity = details.primaryVelocity ?? 0;
+                        // Close drawer if swipe to the right or fast swipe to the left
+                        if (dragEnd!.dx > dragStart!.dx || velocity > 250) {
+                          _hideOverlay();
+                        }
+                      },
+                      child: Column(
+                        children: [
+                          AppBar(
+                            title: const Text("Player Stats"),
+                            leading: IconButton(
+                              icon: const Icon(Icons.arrow_back),
+                              onPressed:
+                                  _hideOverlay, // Back button to close the drawer
+                            ),
+                            automaticallyImplyLeading: false,
+                          ),
+                          const Expanded(
+                            child: PlayerDataWidget(),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FloatingActionButton(
+      onPressed: () => _toggleOverlay(context),
+      child: Icon(isOverlayVisible ? Icons.close : Icons.bar_chart),
+    );
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
   }
 }
