@@ -15,11 +15,13 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:oauth2/oauth2.dart' as oauth2;
 import 'package:http/http.dart' as http;
+import 'package:zmoney/loading_screen.dart';
 import 'package:zmoney/ngrok.dart';
-
+import 'package:google_api_availability/google_api_availability.dart';
 import 'landing_page.dart';
 import 'firebase_options.dart';
 import 'package:flutter/services.dart';
+import 'package:games_services/games_services.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,58 +34,65 @@ void main() async {
   const secureStorage = FlutterSecureStorage();
   await secureStorage.write(
       key: 'ngrokToken', value: dotenv.env['NGROK_TOKEN']);
+  // Fetch Ngrok data
+  await NgrokManager.fetchNgrokData();
 
-  Widget homeScreen = const WelcomeScreen(); // Default to WelcomeScreen
+  // Start with LoadingScreen
+  Widget homeScreen = const LoadingScreen();
+  runApp(MyApp(homeScreen: homeScreen));
 
   if (Platform.isAndroid || Platform.isIOS) {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
 
-    bool isAuthenticated = false; //TODO: Missing implementation
     await MobileAds.instance.initialize();
-    await loadAndShowAppOpenAd();
-    if (isAuthenticated) {
-      homeScreen =
-          const LandingPage(); // Navigate directly to LandingPage if authenticated
+
+    GooglePlayServicesAvailability availability = await GoogleApiAvailability
+        .instance
+        .checkGooglePlayServicesAvailability(true);
+
+    String? jwtToken = await secureStorage.read(key: 'jwtToken');
+    if (jwtToken != null) {
+      final playerDataResponse = await verifyAndRetrieveData(jwtToken);
+      if (playerDataResponse.statusCode == 200) {
+        var playerData = jsonDecode(playerDataResponse.body)['playerData'];
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('playerData', jsonEncode(playerData));
+        print(playerData);
+        // homeScreen = const LandingPage();
+        homeScreen = const LandingPage();
+      } else {
+        homeScreen = const WelcomeScreen();
+      }
+    } else {
+      homeScreen = const WelcomeScreen();
     }
+  } else {
+    homeScreen = const WelcomeScreen();
   }
-  NgrokManager.fetchNgrokData();
-  runApp(MyApp(homeScreen: homeScreen)); // Pass homeScreen to MyApp
+
+  Future.delayed(Duration(seconds: 3), () {
+    runApp(MyApp(homeScreen: homeScreen));
+  });
+}
+
+Future<http.Response> verifyAndRetrieveData(String jwtToken) async {
+  // Print the JWT token for verification
+  if (kDebugMode) {
+    print("Verifying with JWT token: $jwtToken");
+  }
+
+  return http.post(
+    Uri.parse('${NgrokManager.ngrokUrl}/api/verifyAndRetrieveData'),
+    headers: {'Content-Type': 'application/json'},
+    body: jsonEncode({'token': jwtToken}),
+  );
 }
 
 Future<void> clearSharedPreferences() async {
   final SharedPreferences prefs = await SharedPreferences.getInstance();
   await prefs.clear();
-}
-
-Future<void> loadAndShowAppOpenAd() async {
-  String appOpenAdUnitId =
-      'ca-app-pub-4652990815059289/1374103879'; // Replace with your ad unit ID
-  AppOpenAd? appOpenAd;
-  bool isAdLoaded = false;
-
-  // Load the App Open Ad
-  await AppOpenAd.load(
-      adUnitId: appOpenAdUnitId,
-      request: const AdRequest(),
-      adLoadCallback: AppOpenAdLoadCallback(
-        onAdLoaded: (ad) {
-          appOpenAd = ad;
-          isAdLoaded = true;
-        },
-        onAdFailedToLoad: (error) {
-          if (kDebugMode) {
-            print('App Open ad failed to load: $error');
-          }
-        },
-      ),
-      orientation: AppOpenAd.orientationPortrait);
-
-  // Show the Ad if loaded
-  if (isAdLoaded) {
-    appOpenAd!.show();
-  }
 }
 
 class MyApp extends StatelessWidget {
@@ -115,6 +124,7 @@ class WelcomeScreenState extends State<WelcomeScreen> {
   bool showSkipButton = true;
   oauth2.Client? client;
   final FlutterSecureStorage secureStorage = FlutterSecureStorage();
+  static const platform = MethodChannel('com.gg.zmoney/game_services');
 
   @override
   void initState() {
@@ -152,20 +162,47 @@ class WelcomeScreenState extends State<WelcomeScreen> {
 
         if (response.statusCode == 200) {
           var responseData = jsonDecode(response.body);
-          var jwtToken = responseData[
-              'token']; // Assuming the token is returned with this key
-          await secureStorage.write(
-              key: 'jwtToken', value: jwtToken); // Storing the token securely
+          var jwtToken = responseData['token'];
+          await secureStorage.write(key: 'jwtToken', value: jwtToken);
 
-          if (kDebugMode) print("Master endpoint response: ${response.body}");
+          final playerDataResponse = await verifyAndRetrieveData(jwtToken);
+          if (playerDataResponse.statusCode == 200) {
+            var playerData = jsonDecode(playerDataResponse.body)['playerData'];
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setString('playerData', jsonEncode(playerData));
+
+            if (kDebugMode) {
+              print("Retrieved Player Data: $playerData");
+            }
+
+            // Call GameAuth.signIn() after successful data retrieval
+            GameAuth.signIn();
+          } else {
+            if (kDebugMode) {
+              print(
+                  "Error verifying token and retrieving data: ${playerDataResponse.statusCode}");
+            }
+            return; // Return early as player data retrieval failed
+          }
         } else {
-          if (kDebugMode)
+          if (kDebugMode) {
             print("Error contacting master endpoint: ${response.statusCode}");
+          }
+          return; // Return early as contacting master endpoint failed
         }
+
         setState(() {
           currentUser = userCredential.user;
         });
+      } else {
+        if (kDebugMode) {
+          print("UserCredential user is null, authentication failed");
+        }
+        return; // Return early as authentication failed
       }
+
+      // Additional Sign-In with Google Play Games
+      //final bool result =  await platform.invokeMethod('signInWithGooglePlayGames');
     } catch (error) {
       if (kDebugMode) print('Error during Google Sign-In: $error');
     }
@@ -181,6 +218,19 @@ class WelcomeScreenState extends State<WelcomeScreen> {
         'idToken': idToken,
         'accessToken': accessToken,
       }),
+    );
+  }
+
+  Future<http.Response> verifyAndRetrieveData(String jwtToken) async {
+    // Print the JWT token for verification
+    if (kDebugMode) {
+      print("Verifying with JWT token: $jwtToken");
+    }
+
+    return http.post(
+      Uri.parse('${NgrokManager.ngrokUrl}/api/verifyAndRetrieveData'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'token': jwtToken}),
     );
   }
 
@@ -312,23 +362,6 @@ class WelcomeScreenState extends State<WelcomeScreen> {
 }
 
 enum OAuth2LoginStatus { success, cancel, error }
-
-class LoadingScreen extends StatelessWidget {
-  const LoadingScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    // Build your loading screen here
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Loading...'),
-      ),
-      body: const Center(
-        child: CircularProgressIndicator(),
-      ),
-    );
-  }
-}
 
 class OAuth2LoginResult {
   final OAuth2LoginStatus status;
