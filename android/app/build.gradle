@@ -58,7 +58,7 @@ android {
         minSdkVersion 19
         compileSdkVersion 33
         targetSdkVersion 33
-        versionCode 16 // Increment this number manually
+        versionCode 17 // Increment this number manually
         versionName "6.0.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         multiDexEnabled true

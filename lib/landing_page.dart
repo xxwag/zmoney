@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math; // Import the math library
-import 'dart:math';
+
 import 'package:http/http.dart' as http;
 
 import 'package:confetti/confetti.dart';
@@ -25,8 +25,10 @@ class LandingPage extends StatefulWidget {
 }
 
 class LandingPageState extends State<LandingPage>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   Timer? _timer;
+  static DateTime? lastUpdateTime;
+
   DateTime? lastPressed;
   int _remainingTime = 600;
   late bool _timerStarted = false;
@@ -118,8 +120,10 @@ class LandingPageState extends State<LandingPage>
   @override
   void initState() {
     super.initState();
-    _increasePrizePool();
 
+    WidgetsBinding.instance.addObserver(this); // Add the observer
+    _initBannerAd();
+    _loadRewardedAd();
     fetchAndSetTranslations(_selectedLanguageCode);
     _incrementLaunchCount();
     _confettiController =
@@ -147,8 +151,8 @@ class LandingPageState extends State<LandingPage>
     togglePartyAnimation();
     // Check if the tutorial has been completed previously
     _checkTutorialCompletion();
-    _initBannerAd();
-    _loadRewardedAd();
+
+    _increasePrizePool();
     // _startBlinkingEffect();
   }
 
@@ -164,14 +168,11 @@ class LandingPageState extends State<LandingPage>
 
   void _loadRewardedAd() {
     RewardedAd.load(
-      adUnitId:
-          'ca-app-pub-4652990815059289/8386402654', // test ca-app-pub-3940256099942544/5224354917
-      // ignore: prefer_const_constructors
-      request: AdRequest(),
+      adUnitId: 'ca-app-pub-4652990815059289/8386402654',
+      request: const AdRequest(),
       rewardedAdLoadCallback: RewardedAdLoadCallback(
         onAdLoaded: (RewardedAd ad) {
-          // ignore: unnecessary_this
-          this._rewardedAd = ad;
+          _rewardedAd = ad;
           _isRewardedAdReady = true;
         },
         onAdFailedToLoad: (LoadAdError error) {
@@ -179,6 +180,8 @@ class LandingPageState extends State<LandingPage>
             print('RewardedAd failed to load: $error');
           }
           _isRewardedAdReady = false;
+          _retryLoadRewardedAd;
+          // Consider implementing a retry mechanism here with exponential backoff
         },
       ),
     );
@@ -199,31 +202,40 @@ class LandingPageState extends State<LandingPage>
     if (_isRewardedAdReady) {
       _rewardedAd.show(
         onUserEarnedReward: (AdWithoutView ad, RewardItem reward) {
-          // User has earned the reward, call skipTimer
-
+          // User has earned the reward. Implement any logic needed when a reward is earned.
+          // Example: Call a method to skip timer or unlock content
           _timerFinished = true;
           _timerStarted = false;
           isButtonLocked = false; // Unlock the Go button here as well
         },
       );
+
       _rewardedAd.fullScreenContentCallback = FullScreenContentCallback(
         onAdDismissedFullScreenContent: (AdWithoutView ad) {
+          // Dispose of the ad when it's dismissed to free up resources
           ad.dispose();
-          _loadRewardedAd(); // Load a new ad for next time
+          // Preemptively load a new rewarded ad for future use
+          _loadRewardedAd();
         },
         onAdFailedToShowFullScreenContent: (AdWithoutView ad, AdError error) {
+          // Log or handle the error if the ad fails to show
           if (kDebugMode) {
             print('Failed to show rewarded ad: $error');
           }
+          // Dispose of the ad to free up resources
           ad.dispose();
-          _loadRewardedAd(); // Load a new ad for next time
+          // Attempt to load a new rewarded ad
+          _loadRewardedAd();
         },
+        // Consider handling other callback events if needed
       );
     } else {
+      // This block executes if the rewarded ad is not ready to be shown
+      // Log this status or inform the user as needed
       if (kDebugMode) {
-        print('Rewarded ad is not ready yet');
+        print('Rewarded ad is not ready yet.');
       }
-      // Optionally, handle the case when the ad is not ready
+      // Optionally, trigger a load or retry mechanism for the rewarded ad here
     }
   }
 
@@ -258,7 +270,7 @@ class LandingPageState extends State<LandingPage>
   }
 
   void togglePartyAnimation() {
-    int randomAnimationType = Random().nextInt(4) + 1;
+    int randomAnimationType = math.Random().nextInt(4) + 1;
 
     setState(() {
       _isAnimating = true;
@@ -407,10 +419,15 @@ class LandingPageState extends State<LandingPage>
 */
 
   void _playConfettiAnimation() {
+    // Reduce the number of particles for better performance
+    _confettiController =
+        ConfettiController(duration: const Duration(seconds: 5));
+
+    // Play the confetti with reduced duration
     _confettiController.play();
 
-    // Schedule the animation to stop after a certain duration
-    Future.delayed(const Duration(seconds: 2), () {
+    // Automatically stop the animation to free up resources
+    Future.delayed(const Duration(seconds: 5), () {
       if (mounted) {
         _confettiController.stop();
       }
@@ -532,11 +549,24 @@ class LandingPageState extends State<LandingPage>
 
   @override
   void dispose() {
-    _timer?.cancel();
-    _bannerAd.dispose();
-    _rewardedAd.dispose();
+    _timer
+        ?.cancel(); // Ensure the timer is canceled when the widget is disposed
+
+    _bannerAd.dispose(); // Dispose of _bannerAd safely
+    _rewardedAd.dispose(); // Dispose of _rewardedAd safely
     _confettiController.dispose();
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.resumed) {
+      // App is resumed; this is a good time to reload ads if needed
+      _initBannerAd(); // Reinitialize the banner ad
+      _loadRewardedAd(); // Preemptively load a new rewarded ad
+    }
   }
 
   Widget _buildLanguageSelector() {
@@ -589,37 +619,63 @@ class LandingPageState extends State<LandingPage>
   }
 
   void _increasePrizePool() {
-    if (_prizePoolAmount < 1000000) {
-      // Generate a random increase amount, you can adjust the range as needed
-      int randomIncrease = Random().nextInt(500) + 100; // Between 100 and 600
+    const int updateInterval = 5; // seconds
 
-      setState(() {
-        _prizePoolAmount += randomIncrease; // Increment the amount unevenly
-      });
+    DateTime now = DateTime.now();
+    if (lastUpdateTime == null ||
+        now.difference(lastUpdateTime!) > Duration(seconds: updateInterval)) {
+      if (_prizePoolAmount < 1000000) {
+        int randomIncrease =
+            math.Random().nextInt(500) + 100; // Between 100 and 600
+        setState(() {
+          _prizePoolAmount += randomIncrease; // Increment the amount unevenly
+        });
 
-      // Schedule the next update with a random delay
-      int randomDelay = Random().nextInt(5) + 1; // Between 1 and 5 seconds
-      Future.delayed(Duration(seconds: randomDelay), _increasePrizePool);
+        lastUpdateTime = now;
+      }
     }
+
+    // Continue to schedule the next update
+    int randomDelay = math.Random().nextInt(5) + 1; // Between 1 and 5 seconds
+    Future.delayed(Duration(seconds: randomDelay), _increasePrizePool);
   }
 
   void _initBannerAd() {
+    // Initialize the BannerAd instance and assign it to the _bannerAd variable.
     _bannerAd = BannerAd(
-      adUnitId: 'ca-app-pub-4652990815059289/6968524603',
+      adUnitId:
+          'ca-app-pub-4652990815059289/6968524603', // Replace with your ad unit ID
       size: AdSize.banner,
       request: const AdRequest(),
       listener: BannerAdListener(
-        onAdLoaded: (_) => setState(() => _isBannerAdReady = true),
-        onAdFailedToLoad: (ad, error) {
-          if (kDebugMode) {
-            print('Ad failed to load: $error');
-          }
-          ad.dispose();
+        onAdLoaded: (Ad ad) {
+          // When the ad is loaded, set _isBannerAdReady to true and update the UI as needed
+          setState(() {
+            _isBannerAdReady = true;
+          });
         },
+        onAdFailedToLoad: (Ad ad, LoadAdError error) {
+          // Handle the error when loading an ad fails
+          _retryLoadRewardedAd;
+          if (kDebugMode) {
+            print('BannerAd failed to load: $error');
+          }
+          ad.dispose(); // Dispose the ad to free up resources
+          // Optionally, implement a retry mechanism or update UI to reflect the failure
+        },
+        // You may handle other ad lifecycle events, such as onAdOpened, onAdClosed, etc.
       ),
     );
 
+    // Load the ad
     _bannerAd.load();
+  }
+
+  void _retryLoadRewardedAd({int attempt = 1}) {
+    const maxAttempts = 3;
+    if (attempt <= maxAttempts) {
+      Future.delayed(Duration(seconds: attempt * 2), () => _loadRewardedAd());
+    }
   }
 
   Color _determineContainerColor() {
@@ -960,42 +1016,44 @@ class LandingPageState extends State<LandingPage>
   }
 
   void startTimer() {
-    if (_timer != null) {
-      _timer!.cancel(); // Cancel any existing timer
-    }
+    const oneSec = Duration(seconds: 1);
+    _timer?.cancel(); // Cancel any existing timer first
 
-    setState(() {
-      _timerStarted = true;
-      _remainingTime = 600; // 10 minutes in seconds
-      _timerFinished = false; // Reset the timer finished flag
-// Initially lock the Go button
-    });
+    final endTime = DateTime.now().add(Duration(seconds: _remainingTime));
+    _timerStarted = true;
+    _timerFinished = false;
 
-    _timer = Timer.periodic(const Duration(seconds: 1), (Timer timer) {
-      if (_remainingTime > 0) {
-        setState(() {
-          _remainingTime--;
-        });
-      } else {
+    _timer = Timer.periodic(oneSec, (Timer timer) {
+      final secondsLeft = endTime.difference(DateTime.now()).inSeconds;
+      if (secondsLeft < 0) {
         timer.cancel();
-        onTimerEnd(); // Call the method to handle timer end
+        onTimerEnd();
+      } else {
+        // Throttle UI updates to every few seconds to reduce rebuilds
+        if (_remainingTime - secondsLeft >= 5 || secondsLeft == 0) {
+          setState(() {
+            _remainingTime = secondsLeft;
+          });
+        }
       }
     });
+
+    // Ensure initial state is set outside the periodic callback
+    setState(() {});
   }
 
   void onTimerEnd() {
     setState(() {
-      _timerFinished = true;
-// Unlock the Go button
-      isButtonLocked = false; // Unlock the Go button
+      _timerFinished = true; // Mark timer as finished
+      isButtonLocked = false; // Unlock the "Go" button
+      _timerStarted = false; // Mark timer as not started
     });
 
-    // Additional actions to be performed when the timer ends
-    // For instance, updating the UI, showing notifications, etc.
+    // Perform any additional actions needed when the timer ends
   }
 
   void _showEmptyTextFieldNotification() {
-    final snackBar = const SnackBar(
+    const snackBar = SnackBar(
       content: Text("You have to enter some numbers to win💲💲..."),
       duration: Duration(seconds: 5),
     );
@@ -1435,7 +1493,7 @@ class LandingPageState extends State<LandingPage>
 }
 
 class PlayerDataWidget extends StatefulWidget {
-  const PlayerDataWidget({Key? key}) : super(key: key);
+  const PlayerDataWidget({super.key});
 
   @override
   _PlayerDataWidgetState createState() => _PlayerDataWidgetState();
@@ -1471,7 +1529,7 @@ class _PlayerDataWidgetState extends State<PlayerDataWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final double conversionRatio = 0.0000001; // Adjusted for demonstration
+    const double conversionRatio = 0.0000001; // Adjusted for demonstration
     final double totalWinAmount =
         ((playerData['total_win_amount'] as num?)?.toDouble() ?? 0.0);
 
@@ -1587,7 +1645,7 @@ Widget _buildAmountRow(String title, double amount,
 // Assuming PlayerDataWidget is defined elsewhere in your code
 
 class StatisticsFloatingButton extends StatefulWidget {
-  const StatisticsFloatingButton({Key? key}) : super(key: key);
+  const StatisticsFloatingButton({super.key});
 
   @override
   State<StatisticsFloatingButton> createState() =>
@@ -1619,7 +1677,7 @@ class _StatisticsFloatingButtonState extends State<StatisticsFloatingButton>
 
   void _showOverlay(BuildContext context) {
     _overlayEntry = _createOverlayEntry(context);
-    Overlay.of(context)?.insert(_overlayEntry!);
+    Overlay.of(context).insert(_overlayEntry!);
     _animationController.forward();
     isOverlayVisible = true;
   }
