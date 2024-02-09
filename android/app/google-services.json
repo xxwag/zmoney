@@ -15,6 +15,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "446412900874-ahqkgka4tmdssv5saom7ofpfpv0kl00v.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.gg.zmoney",
+            "certificate_hash": "f38bf89fd87be74e5e66f0852f00070d6d79fb96"
+          }
+        },
+        {
           "client_id": "446412900874-b3dtf4eqegeqsnkel6tvfnh7ouaihglp.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {

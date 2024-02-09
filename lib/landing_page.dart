@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math; // Import the math library
 
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:confetti/confetti.dart';
@@ -45,6 +46,10 @@ class LandingPageState extends State<LandingPage>
   Key playerDataWidgetKey = UniqueKey();
 
   bool _isWaitingForResponse = false;
+
+  Timer? _smoothIncrementationTimer;
+  double _incrementAmountPerInterval = 0.0;
+  final int _smoothUpdateIntervalMs = 5000; // Update every 100 milliseconds
 
 // To keep track of tutorial steps
   late ConfettiController _confettiController; // ConfettiController
@@ -126,9 +131,8 @@ class LandingPageState extends State<LandingPage>
     _loadRewardedAd();
     fetchAndSetTranslations(_selectedLanguageCode);
     _incrementLaunchCount();
-    _confettiController =
-        ConfettiController(duration: const Duration(seconds: 10));
-    _confettiController.play();
+    _confettiController = ConfettiController();
+    //_confettiController.play();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       FocusScope.of(context).unfocus();
@@ -151,9 +155,64 @@ class LandingPageState extends State<LandingPage>
     togglePartyAnimation();
     // Check if the tutorial has been completed previously
     _checkTutorialCompletion();
+    _fetchPrizePoolFromServer();
 
-    _increasePrizePool();
     // _startBlinkingEffect();
+  }
+
+  Future<void> _fetchPrizePoolFromServer() async {
+    const secureStorage = FlutterSecureStorage();
+    try {
+      final jwtToken = await secureStorage.read(key: 'jwtToken');
+      final uri = Uri.parse('${NgrokManager.ngrokUrl}/api/prizePool');
+      final response = await http.get(
+        uri,
+        // Include the JWT token in the Authorization header
+        headers: {
+          'Authorization': 'Bearer $jwtToken',
+        },
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data != null && data['prizePool'] != null) {
+          setState(() {
+            _prizePoolAmount = data['prizePool'].toDouble();
+            // Optionally, start local incrementation from the fetched value
+            _startSmoothPrizePoolIncrementation();
+          });
+        }
+      } else {
+        throw Exception('Failed to load prize pool from server');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error fetching prize pool: ${e.toString()}');
+      }
+      // Handle the error appropriately
+    }
+  }
+
+  void _startSmoothPrizePoolIncrementation() {
+    // Server increments between 100 and 600 every 5 seconds. Calculate the average increment per second.
+    const averageIncrementPerUpdate = (100 + 600) / 2;
+    const updateIntervalSeconds = 5; // Server update interval
+    const averageIncrementPerSecond =
+        averageIncrementPerUpdate / updateIntervalSeconds;
+
+    // Calculate increment amount per interval for smooth updates
+    _incrementAmountPerInterval =
+        averageIncrementPerSecond * (_smoothUpdateIntervalMs / 1000.0);
+
+    // Initialize or reset the smooth incrementation timer
+    _smoothIncrementationTimer?.cancel();
+    _smoothIncrementationTimer = Timer.periodic(
+        Duration(milliseconds: _smoothUpdateIntervalMs), (timer) {
+      setState(() {
+        // Smoothly increment the prize pool amount
+        _prizePoolAmount += _incrementAmountPerInterval;
+        // Ensure the prize pool amount doesn't exceed a maximum value, if necessary
+      });
+    });
   }
 
   void _startBlinkingEffect() {
@@ -419,19 +478,10 @@ class LandingPageState extends State<LandingPage>
 */
 
   void _playConfettiAnimation() {
-    // Reduce the number of particles for better performance
-    _confettiController =
-        ConfettiController(duration: const Duration(seconds: 5));
-
-    // Play the confetti with reduced duration
-    _confettiController.play();
-
-    // Automatically stop the animation to free up resources
-    Future.delayed(const Duration(seconds: 5), () {
-      if (mounted) {
-        _confettiController.stop();
-      }
-    });
+    // Check if the controller is already playing, to avoid restarting it unnecessarily
+    if (_confettiController.state != ConfettiControllerState.playing) {
+      _confettiController.play();
+    }
   }
 
   Future<String> combineEnglishTextsForTranslation(
@@ -551,7 +601,8 @@ class LandingPageState extends State<LandingPage>
   void dispose() {
     _timer
         ?.cancel(); // Ensure the timer is canceled when the widget is disposed
-
+    _smoothIncrementationTimer
+        ?.cancel(); // Cancel the smooth incrementation timer
     _bannerAd.dispose(); // Dispose of _bannerAd safely
     _rewardedAd.dispose(); // Dispose of _rewardedAd safely
     _confettiController.dispose();
@@ -616,28 +667,6 @@ class LandingPageState extends State<LandingPage>
         );
       }).toList(),
     );
-  }
-
-  void _increasePrizePool() {
-    const int updateInterval = 5; // seconds
-
-    DateTime now = DateTime.now();
-    if (lastUpdateTime == null ||
-        now.difference(lastUpdateTime!) > Duration(seconds: updateInterval)) {
-      if (_prizePoolAmount < 1000000) {
-        int randomIncrease =
-            math.Random().nextInt(500) + 100; // Between 100 and 600
-        setState(() {
-          _prizePoolAmount += randomIncrease; // Increment the amount unevenly
-        });
-
-        lastUpdateTime = now;
-      }
-    }
-
-    // Continue to schedule the next update
-    int randomDelay = math.Random().nextInt(5) + 1; // Between 1 and 5 seconds
-    Future.delayed(Duration(seconds: randomDelay), _increasePrizePool);
   }
 
   void _initBannerAd() {
@@ -1121,7 +1150,7 @@ class LandingPageState extends State<LandingPage>
                                 color: Color.fromARGB(0, 255, 255, 255)),
                           ],
                         ),
-                        prefix: "\$",
+                        prefix: "Ƶ",
                       ),
                       // Main Text
                       AnimatedFlipCounter(
@@ -1133,7 +1162,7 @@ class LandingPageState extends State<LandingPage>
                           color: Colors.green,
                           fontFamily: 'Digital-7',
                         ),
-                        prefix: "\$",
+                        prefix: "ⓩ ",
                       ),
                     ],
                   ),
@@ -1148,7 +1177,7 @@ class LandingPageState extends State<LandingPage>
 
   Future<void> submitGuess() async {
     // Assuming NgrokManager.fetchNgrokData() and _numberController are defined elsewhere correctly
-    await NgrokManager.fetchNgrokData();
+    //await NgrokManager.fetchNgrokData();
     String guessStr = _numberController.text;
 
     if (guessStr.isEmpty) {
@@ -1184,8 +1213,6 @@ class LandingPageState extends State<LandingPage>
     // Retrieve or define userId and prizePoolAmount here
     final int userId =
         playerData['user_id']; // Example retrieval from player data
-    double prizePoolAmount =
-        _prizePoolAmount; // Example fixed prize pool amount
 
     try {
       var response = await http.post(
@@ -1194,8 +1221,6 @@ class LandingPageState extends State<LandingPage>
         body: jsonEncode({
           'guess': guessInt,
           'userId': userId, // Now using the retrieved or defined userId
-          'prizePool':
-              prizePoolAmount, // Now using the determined prizePoolAmount
         }),
       );
 
@@ -1496,10 +1521,10 @@ class PlayerDataWidget extends StatefulWidget {
   const PlayerDataWidget({super.key});
 
   @override
-  _PlayerDataWidgetState createState() => _PlayerDataWidgetState();
+  PlayerDataWidgetState createState() => PlayerDataWidgetState();
 }
 
-class _PlayerDataWidgetState extends State<PlayerDataWidget> {
+class PlayerDataWidgetState extends State<PlayerDataWidget> {
   Map<String, dynamic> playerData = {};
   String? userEmail;
 

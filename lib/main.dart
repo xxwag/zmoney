@@ -17,6 +17,7 @@ import 'package:oauth2/oauth2.dart' as oauth2;
 import 'package:http/http.dart' as http;
 import 'package:zmoney/loading_screen.dart';
 import 'package:zmoney/ngrok.dart';
+
 import 'package:google_api_availability/google_api_availability.dart';
 import 'landing_page.dart';
 import 'firebase_options.dart';
@@ -71,7 +72,7 @@ void main() async {
   } else {
     homeScreen = const WelcomeScreen();
   }
-
+  await GameAuth.signIn();
   Future.delayed(Duration(seconds: 3), () {
     runApp(MyApp(homeScreen: homeScreen));
   });
@@ -121,15 +122,18 @@ class WelcomeScreen extends StatefulWidget {
 class WelcomeScreenState extends State<WelcomeScreen> {
   final GoogleSignIn _googleSignIn = GoogleSignIn(scopes: ['email']);
   User? currentUser;
-  bool showSkipButton = true;
+  bool isSigningInWithGoogle = true; // Initially, try to sign in with Google
+  bool showAlternativeOptions =
+      false; // Show skip and OAuth2 only if Google sign-in fails
   oauth2.Client? client;
-  final FlutterSecureStorage secureStorage = FlutterSecureStorage();
-  static const platform = MethodChannel('com.gg.zmoney/game_services');
+  final FlutterSecureStorage secureStorage = const FlutterSecureStorage();
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _closeKeyboard());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _signInWithGoogle(); // Try to sign in with Google immediately
+    });
   }
 
   void _closeKeyboard() {
@@ -175,36 +179,32 @@ class WelcomeScreenState extends State<WelcomeScreen> {
               print("Retrieved Player Data: $playerData");
             }
 
-            // Call GameAuth.signIn() after successful data retrieval
-            GameAuth.signIn();
+            // Navigate to the next screen or update the state as necessary
+            // Example: Navigate to the LandingPage
+            Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (context) => const LandingPage()));
           } else {
             if (kDebugMode) {
               print(
                   "Error verifying token and retrieving data: ${playerDataResponse.statusCode}");
             }
-            return; // Return early as player data retrieval failed
+            // Handle error in player data retrieval
           }
         } else {
           if (kDebugMode) {
             print("Error contacting master endpoint: ${response.statusCode}");
           }
-          return; // Return early as contacting master endpoint failed
+          // Handle error in contacting master endpoint
         }
-
-        setState(() {
-          currentUser = userCredential.user;
-        });
       } else {
         if (kDebugMode) {
           print("UserCredential user is null, authentication failed");
         }
-        return; // Return early as authentication failed
+        // Handle authentication failure
       }
-
-      // Additional Sign-In with Google Play Games
-      //final bool result =  await platform.invokeMethod('signInWithGooglePlayGames');
     } catch (error) {
       if (kDebugMode) print('Error during Google Sign-In: $error');
+      // Handle general sign-in error
     }
   }
 
@@ -250,21 +250,6 @@ class WelcomeScreenState extends State<WelcomeScreen> {
     return ElevatedButton(
       onPressed: _signInWithGoogle,
       child: const Text('Sign in with Google'),
-    );
-  }
-
-  Widget _buildSkipButton() {
-    return Visibility(
-      visible: showSkipButton,
-      child: TextButton(
-        onPressed: () {
-          // Directly navigate to the LandingPage
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const LandingPage()),
-          );
-        },
-        child: const Text('Skip'),
-      ),
     );
   }
 
@@ -341,21 +326,37 @@ class WelcomeScreenState extends State<WelcomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Semantics(
-          label: 'How Much? Signup - Create your account for the game',
-          child: const Text('How Much? Signup'),
-        ),
+        title: const Text('How Much? Signup'),
       ),
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _buildUserInfo(),
-            _buildSignInButton(),
-            _buildOAuth2SignInButton(),
-            if (showSkipButton) _buildSkipButton(),
-          ],
-        ),
+        child: isSigningInWithGoogle
+            ? const CircularProgressIndicator() // Show loading indicator while trying to sign in with Google
+            : Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (showAlternativeOptions) ...[
+                    // Use showAlternativeOptions here
+                    _buildOAuth2SignInButton(),
+                    _buildSkipButton(),
+                  ],
+                ],
+              ),
+      ),
+    );
+  }
+
+  // Add the missing _buildSkipButton method here
+  Widget _buildSkipButton() {
+    return Visibility(
+      visible:
+          showAlternativeOptions, // Only show if alternative options should be displayed
+      child: TextButton(
+        onPressed: () {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const LandingPage()),
+          );
+        },
+        child: const Text('Skip'),
       ),
     );
   }
