@@ -51,6 +51,8 @@ class MainActivity : FlutterActivity() {
     FirebaseCrashlytics.getInstance().log("MainActivity Loaded Successfully")
     initializeUMP()
 
+    GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(this)
+
     // Correctly initialize Google Play Games Sign-In Client
     gamesSignInClient = PlayGames.getGamesSignInClient(this)
     Log.d(TAG, "Google Play Games Sign-In Client initialized")

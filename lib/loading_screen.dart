@@ -89,7 +89,7 @@ class _LoadingScreenState extends State<LoadingScreen>
           Opacity(
             opacity: _opacityAnimation.value,
             child: Image.asset(
-              'lib/assets/mainscreen.png', // Replace with your image asset or network image
+              'assets/mainscreen.png', // Replace with your image asset or network image
               fit: BoxFit.cover,
             ),
           ),
