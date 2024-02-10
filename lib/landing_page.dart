@@ -15,7 +15,11 @@ import 'package:zmoney/marquee.dart';
 import 'package:zmoney/ngrok.dart';
 import 'package:animated_flip_counter/animated_flip_counter.dart';
 import 'package:zmoney/side_menu.dart';
+import 'package:zmoney/text_cycle.dart';
 import 'package:zmoney/tutorial_steps.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:intl/intl.dart'; // Import intl package
+
 // Import the necessary library
 
 class LandingPage extends StatefulWidget {
@@ -223,79 +227,6 @@ class LandingPageState extends State<LandingPage>
       });
       return true; // Return true to continue blinking indefinitely
     });
-  }
-
-  void _loadRewardedAd() {
-    RewardedAd.load(
-      adUnitId: 'ca-app-pub-4652990815059289/8386402654',
-      request: const AdRequest(),
-      rewardedAdLoadCallback: RewardedAdLoadCallback(
-        onAdLoaded: (RewardedAd ad) {
-          _rewardedAd = ad;
-          _isRewardedAdReady = true;
-        },
-        onAdFailedToLoad: (LoadAdError error) {
-          if (kDebugMode) {
-            print('RewardedAd failed to load: $error');
-          }
-          _isRewardedAdReady = false;
-          _retryLoadRewardedAd;
-          // Consider implementing a retry mechanism here with exponential backoff
-        },
-      ),
-    );
-  }
-
-  // Function to handle the press of the ad button
-  void _onPressAdButton() {
-    // Close the keyboard
-    FocusScope.of(context).unfocus();
-
-    // After a brief delay to ensure the keyboard is closed, show the rewarded ad
-    Future.delayed(const Duration(milliseconds: 300), () {
-      _showRewardedAd();
-    });
-  }
-
-  void _showRewardedAd() {
-    if (_isRewardedAdReady) {
-      _rewardedAd.show(
-        onUserEarnedReward: (AdWithoutView ad, RewardItem reward) {
-          // User has earned the reward. Implement any logic needed when a reward is earned.
-          // Example: Call a method to skip timer or unlock content
-          _timerFinished = true;
-          _timerStarted = false;
-          isButtonLocked = false; // Unlock the Go button here as well
-        },
-      );
-
-      _rewardedAd.fullScreenContentCallback = FullScreenContentCallback(
-        onAdDismissedFullScreenContent: (AdWithoutView ad) {
-          // Dispose of the ad when it's dismissed to free up resources
-          ad.dispose();
-          // Preemptively load a new rewarded ad for future use
-          _loadRewardedAd();
-        },
-        onAdFailedToShowFullScreenContent: (AdWithoutView ad, AdError error) {
-          // Log or handle the error if the ad fails to show
-          if (kDebugMode) {
-            print('Failed to show rewarded ad: $error');
-          }
-          // Dispose of the ad to free up resources
-          ad.dispose();
-          // Attempt to load a new rewarded ad
-          _loadRewardedAd();
-        },
-        // Consider handling other callback events if needed
-      );
-    } else {
-      // This block executes if the rewarded ad is not ready to be shown
-      // Log this status or inform the user as needed
-      if (kDebugMode) {
-        print('Rewarded ad is not ready yet.');
-      }
-      // Optionally, trigger a load or retry mechanism for the rewarded ad here
-    }
   }
 
   Future<bool> onWillPop() async {
@@ -669,6 +600,79 @@ class LandingPageState extends State<LandingPage>
     );
   }
 
+  void _loadRewardedAd() {
+    RewardedAd.load(
+      adUnitId: 'ca-app-pub-4652990815059289/8386402654',
+      request: const AdRequest(),
+      rewardedAdLoadCallback: RewardedAdLoadCallback(
+        onAdLoaded: (RewardedAd ad) {
+          _rewardedAd = ad;
+          _isRewardedAdReady = true;
+        },
+        onAdFailedToLoad: (LoadAdError error) {
+          if (kDebugMode) {
+            print('RewardedAd failed to load: $error');
+          }
+          _isRewardedAdReady = false;
+          _retryLoadRewardedAd;
+          // Consider implementing a retry mechanism here with exponential backoff
+        },
+      ),
+    );
+  }
+
+  // Function to handle the press of the ad button
+  void _onPressAdButton() {
+    // Close the keyboard
+    FocusScope.of(context).unfocus();
+
+    // After a brief delay to ensure the keyboard is closed, show the rewarded ad
+    Future.delayed(const Duration(milliseconds: 300), () {
+      _showRewardedAd();
+    });
+  }
+
+  void _showRewardedAd() {
+    if (_isRewardedAdReady) {
+      _rewardedAd.show(
+        onUserEarnedReward: (AdWithoutView ad, RewardItem reward) {
+          // User has earned the reward. Implement any logic needed when a reward is earned.
+          // Example: Call a method to skip timer or unlock content
+          _timerFinished = true;
+          _timerStarted = false;
+          isButtonLocked = false; // Unlock the Go button here as well
+        },
+      );
+
+      _rewardedAd.fullScreenContentCallback = FullScreenContentCallback(
+        onAdDismissedFullScreenContent: (AdWithoutView ad) {
+          // Dispose of the ad when it's dismissed to free up resources
+          ad.dispose();
+          // Preemptively load a new rewarded ad for future use
+          _loadRewardedAd();
+        },
+        onAdFailedToShowFullScreenContent: (AdWithoutView ad, AdError error) {
+          // Log or handle the error if the ad fails to show
+          if (kDebugMode) {
+            print('Failed to show rewarded ad: $error');
+          }
+          // Dispose of the ad to free up resources
+          ad.dispose();
+          // Attempt to load a new rewarded ad
+          _loadRewardedAd();
+        },
+        // Consider handling other callback events if needed
+      );
+    } else {
+      // This block executes if the rewarded ad is not ready to be shown
+      // Log this status or inform the user as needed
+      if (kDebugMode) {
+        print('Rewarded ad is not ready yet.');
+      }
+      // Optionally, trigger a load or retry mechanism for the rewarded ad here
+    }
+  }
+
   void _initBannerAd() {
     // Initialize the BannerAd instance and assign it to the _bannerAd variable.
     _bannerAd = BannerAd(
@@ -861,8 +865,8 @@ class LandingPageState extends State<LandingPage>
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
                                 SizedBox(height: screenSize.height * 0.05),
-
-                                Text(
+                                TextCycleWidget(),
+                                /* Text(
                                   translatedTexts[0], // Use translated text
                                   textAlign: TextAlign.center,
                                   style: const TextStyle(
@@ -871,7 +875,7 @@ class LandingPageState extends State<LandingPage>
                                     fontFamily: 'Inter',
                                     fontWeight: FontWeight.w800,
                                   ),
-                                ),
+                                ),*/
                                 SizedBox(height: screenSize.height * 0.1),
                                 _buildNumberInput(
                                     screenSize, translatedTexts[1]),
@@ -1394,57 +1398,157 @@ class LandingPageState extends State<LandingPage>
   void _showResultDialog(bool isCorrect) {
     if (isCorrect) {
       _confettiController.play();
-    }
 
-    showDialog(
-      context: context,
-      barrierDismissible: false, // Disable closing by tapping outside
-      builder: (BuildContext context) {
-        return PopScope(
-          child: isCorrect ? _buildWinOverlay() : _buildLoseOverlay(),
-        );
-      },
-    );
+      showDialog(
+        context: context,
+        barrierDismissible: false, // Disable closing by tapping outside
+        builder: (BuildContext context) {
+          // Use _prizePoolAmount directly if it's already updated
+          return WillPopScope(
+            onWillPop: () async =>
+                false, // Prevent dialog from closing on back press
+            child:
+                _buildWinOverlay(context, _prizePoolAmount), // Corrected call
+          );
+        },
+      );
+      _fetchPrizePoolFromServer();
+    } else {
+      showDialog(
+        context: context,
+        barrierDismissible: false, // Disable closing by tapping outside
+        builder: (BuildContext context) {
+          return WillPopScope(
+            onWillPop: () async => false,
+            child:
+                _buildLoseOverlay(), // Assuming _buildLoseOverlay is defined elsewhere
+          );
+        },
+      );
+    }
   }
 
-  Widget _buildWinOverlay() {
+  Widget _buildWinOverlay(BuildContext context, double prizePoolAmount) {
+    // Initialize the audio player
+    AudioPlayer audioPlayer = AudioPlayer();
+
+    // Function to play sound
+    Future<void> playVictorySound() async {
+      await audioPlayer.play(AssetSource('sounds/victory_sound.mp3'));
+    }
+
+    // Play the victory sound when the widget is displayed
+    playVictorySound();
+
+    // First, format the number with the US locale to get the correct decimal separator
+    String tempFormattedPrizePoolAmount =
+        NumberFormat('#,##0.##', 'en_US').format(prizePoolAmount);
+
+// Then replace commas with dots for the thousand separator
+    String formattedPrizePoolAmount =
+        tempFormattedPrizePoolAmount.replaceAll(',', '.');
     return GestureDetector(
       onTap: () => Navigator.of(context).pop(), // Close on tap
       child: Container(
         color: Colors.transparent,
         child: Center(
           child: Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.greenAccent,
-              borderRadius: BorderRadius.circular(15),
+              gradient: LinearGradient(
+                colors: [Colors.greenAccent.shade200, Colors.green.shade400],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.green.shade200,
-                  blurRadius: 10,
-                  spreadRadius: 5,
+                  color: Colors.green.shade200.withOpacity(0.5),
+                  blurRadius: 12,
+                  spreadRadius: 3,
                 ),
               ],
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.celebration, size: 48, color: Colors.white),
-                const SizedBox(height: 8),
-                const Text(
+                RedemptionAnimation(), // Assuming this is a custom widget for the animation
+                SizedBox(height: 24),
+                Text(
                   'Congratulations!',
                   style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white),
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    shadows: [
+                      Shadow(
+                        offset: Offset(0, 1),
+                        blurRadius: 3,
+                        color: Color.fromARGB(150, 0, 0, 0),
+                      ),
+                    ],
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 16),
-                TextButton(
-                  child:
-                      const Text('OK', style: TextStyle(color: Colors.white)),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
+                SizedBox(height: 24),
+                RichText(
+                  textAlign: TextAlign.center,
+                  text: TextSpan(
+                    children: [
+                      TextSpan(
+                        text: 'You have won ',
+                        style: TextStyle(fontSize: 24, color: Colors.white),
+                      ),
+                      TextSpan(
+                        text: '$formattedPrizePoolAmount ',
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.yellow,
+                        ),
+                      ),
+                      TextSpan(
+                        text: '\Ƶ\$!',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 24,
+                            color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 40),
+                Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(
+                        25.0), // Match the button's border radius
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.green.shade200.withOpacity(0.5),
+                        blurRadius: 12,
+                        spreadRadius: 3,
+                      ),
+                    ],
+                  ),
+                  child: TextButton(
+                    style: TextButton.styleFrom(
+                      backgroundColor: Colors.white.withOpacity(0.3),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(25.0),
+                      ),
+                      // Adjust padding around the button text here
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 20.0,
+                          vertical: 10.0), // Add horizontal padding
+                    ),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: Text(
+                      'WUAU! OK?!!',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -1804,5 +1908,54 @@ class _StatisticsFloatingButtonState extends State<StatisticsFloatingButton>
   void dispose() {
     _animationController.dispose();
     super.dispose();
+  }
+}
+
+class RedemptionAnimation extends StatefulWidget {
+  @override
+  _RedemptionAnimationState createState() => _RedemptionAnimationState();
+}
+
+class _RedemptionAnimationState extends State<RedemptionAnimation> {
+  int _iconIndex = 0;
+  final List<IconData> _icons = [
+    Icons.account_balance_wallet, // Representing the wallet
+    Icons.sync_alt, // Representing the transfer action
+    Icons.account_balance, // Representing the bank
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _startAnimation();
+  }
+
+  void _startAnimation() async {
+    while (true) {
+      await Future.delayed(Duration(seconds: 1)); // Change icon every second
+      if (mounted) {
+        setState(() {
+          _iconIndex =
+              (_iconIndex + 1) % _icons.length; // Cycle through the icons
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 500),
+      transitionBuilder: (Widget child, Animation<double> animation) {
+        return ScaleTransition(scale: animation, child: child);
+      },
+      child: Icon(
+        _icons[_iconIndex],
+        key: ValueKey<int>(
+            _iconIndex), // Ensure AnimatedSwitcher sees this as a new child
+        size: 60.0,
+        color: Colors.green[500],
+      ),
+    );
   }
 }

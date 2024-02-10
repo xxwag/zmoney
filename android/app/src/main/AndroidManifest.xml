@@ -44,6 +44,10 @@
     android:name="com.google.android.gms.version"
     android:value="@integer/google_play_services_version" />
 
+     <meta-data
+        android:name="com.google.android.gms.signin"
+        android:value="@string/default_web_client_id" />
+
             <!-- Default intent filter for the main launcher activity -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
