@@ -57,7 +57,7 @@ android {
         minSdkVersion 19
         compileSdkVersion 33
         targetSdkVersion 33
-        versionCode 18 // Increment this number manually
+        versionCode 19 // Increment this number manually
         versionName "6.0.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         multiDexEnabled true
@@ -121,4 +121,5 @@ dependencies {
 }
 
 apply plugin: 'com.google.gms.google-services'
+apply plugin: 'com.google.firebase.firebase-perf'
 apply plugin: 'com.google.firebase.crashlytics'
