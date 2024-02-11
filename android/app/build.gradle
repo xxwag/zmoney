@@ -5,7 +5,7 @@ plugins {
       // Apply Google Play services plugin
     id "com.google.gms.google-services"
       // Add the Crashlytics Gradle plugin
-
+    
 }
 
 def localProperties = new Properties()
@@ -41,7 +41,6 @@ android {
         }
     }
 
-    
 
       kotlinOptions {
         jvmTarget = "1.8"
@@ -102,6 +101,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-analytics'
     implementation 'com.google.firebase:firebase-firestore'
     implementation 'com.google.firebase:firebase-crashlytics'
+    implementation("com.google.firebase:firebase-perf")
     implementation 'com.android.support:multidex:1.0.3'
  
     implementation 'com.google.android.material:material:1.9.0'
