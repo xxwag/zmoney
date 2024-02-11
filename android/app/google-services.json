@@ -31,6 +31,14 @@
           }
         },
         {
+          "client_id": "446412900874-bgerot0ql6b29i515is9d52408m257uh.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.gg.zmoney",
+            "certificate_hash": "1a38d11a604527fe2e18791d67d2f49d485b987c"
+          }
+        },
+        {
           "client_id": "446412900874-iu52p62l44up39q0u3m3gtlr3sm55fih.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
