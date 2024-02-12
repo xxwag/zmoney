@@ -2,7 +2,7 @@ name: zmoney
 description: How Much? Number Guessing Game
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
-version: 6.0.0+19
+version: 6.0.0+20
 
 environment:
   sdk: '>=3.1.0 <4.0.0'
@@ -36,6 +36,7 @@ dependencies:
   audioplayers: ^5.2.1
   intl: ^0.19.0
   firebase_performance: ^0.9.3+13
+  video_player: ^2.8.2
  
  
   
@@ -54,6 +55,8 @@ flutter:
     - .env
     - assets/mainscreen.png
     - assets/sounds/victory_sound.mp3
+    - assets/videos/main_video.mp4
+    - assets/videos/8s.mp4
     - assets/
 
   # Add other configurations like assets and fonts as needed
