@@ -1681,10 +1681,9 @@ class PlayerDataWidgetState extends State<PlayerDataWidget> {
                   children: [
                     // Wins
                     _buildHighlightedInfo(
-                        title: "Wins",
-                        value: (playerData['wins'] as int?)?.toString() ?? '0'),
-
-                    // Total Guesses
+                      title: "Wins",
+                      value: playerData['wins']?.toString() ?? '0',
+                    ), // Total Guesses
                     _buildHighlightedInfo(
                         title: "Total Guesses",
                         value: playerData['total_guesses'].toString()),
