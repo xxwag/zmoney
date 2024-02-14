@@ -48,7 +48,6 @@ class NgrokManager {
 
           ngrokUrl = publicUrl;
 
-          print(jsonResponse);
           return true; // Successfully fetched the URL
         } else {
           NotificationHandler.showNotification('No Ngrok Tunnel',
@@ -97,8 +96,6 @@ class NgrokManager {
               'Ngrok URL Fetched', 'apiBaseUrl updated to: $publicUrl');
 
           ngrokUrl = publicUrl;
-
-          print(jsonResponse);
         } else {
           NotificationHandler.showNotification('No Ngrok Tunnel',
               'No tunnel is currently running, contact your administrator');

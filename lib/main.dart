@@ -18,7 +18,6 @@ import 'package:http/http.dart' as http;
 import 'package:zmoney/loading_screen.dart';
 import 'package:zmoney/ngrok.dart';
 
-import 'package:google_api_availability/google_api_availability.dart';
 import 'landing_page.dart';
 import 'firebase_options.dart';
 import 'package:flutter/services.dart';
@@ -27,7 +26,7 @@ import 'package:games_services/games_services.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await clearSharedPreferences();
+  // await clearSharedPreferences();
 
   String envFileName = ".env";
   await dotenv.load(fileName: envFileName);
@@ -49,10 +48,6 @@ void main() async {
 
     await MobileAds.instance.initialize();
 
-    GooglePlayServicesAvailability availability = await GoogleApiAvailability
-        .instance
-        .checkGooglePlayServicesAvailability(true);
-
     String? jwtToken = await secureStorage.read(key: 'jwtToken');
     if (jwtToken != null) {
       final playerDataResponse = await verifyAndRetrieveData(jwtToken);
@@ -60,7 +55,7 @@ void main() async {
         var playerData = jsonDecode(playerDataResponse.body)['playerData'];
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('playerData', jsonEncode(playerData));
-        print(playerData);
+
         // homeScreen = const LandingPage();
         homeScreen = const LandingPage();
       } else {
@@ -73,7 +68,7 @@ void main() async {
     homeScreen = const WelcomeScreen();
   }
   await GameAuth.signIn();
-  Future.delayed(Duration(seconds: 3), () {
+  Future.delayed(const Duration(seconds: 3), () {
     runApp(MyApp(homeScreen: homeScreen));
   });
 }
@@ -131,7 +126,9 @@ class WelcomeScreenState extends State<WelcomeScreen> {
   @override
   void initState() {
     super.initState();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _closeKeyboard();
       _signInWithGoogle(); // Try to sign in with Google immediately
     });
   }
@@ -144,6 +141,7 @@ class WelcomeScreenState extends State<WelcomeScreen> {
     try {
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
+        _signInWithOAuth2();
         if (kDebugMode) print("Google Sign-In was cancelled.");
         return;
       }
@@ -234,25 +232,6 @@ class WelcomeScreenState extends State<WelcomeScreen> {
     );
   }
 
-  Widget _buildUserInfo() {
-    if (currentUser != null) {
-      return Column(
-        children: [
-          Text('Name: ${currentUser!.displayName ?? "Not available"}'),
-          Text('Email: ${currentUser!.email ?? "Not available"}'),
-        ],
-      );
-    }
-    return const SizedBox.shrink(); // Empty widget if no user
-  }
-
-  Widget _buildSignInButton() {
-    return ElevatedButton(
-      onPressed: _signInWithGoogle,
-      child: const Text('Sign in with Google'),
-    );
-  }
-
   Future<void> _signInWithOAuth2() async {
     try {
       // Debug print to indicate the start of the OAuth2 process
@@ -293,6 +272,7 @@ class WelcomeScreenState extends State<WelcomeScreen> {
           print(
               "No existing credentials found, need to start authorization flow");
         }
+        _warnUserAboutAccountIssues();
         // Implement the logic to complete the authorization flow
       }
 
@@ -300,18 +280,48 @@ class WelcomeScreenState extends State<WelcomeScreen> {
         if (kDebugMode) {
           print("OAuth2 client is available, saving credentials");
         }
+
         await credentialsFile.writeAsString(client!.credentials.toJson());
       } else {
         if (kDebugMode) {
           print("OAuth2 client is null, unable to save credentials");
         }
+        _warnUserAboutAccountIssues();
       }
     } catch (e) {
       // Log the error
       if (kDebugMode) {
         print('Error during OAuth2 Sign-In: $e');
       }
+      _warnUserAboutAccountIssues();
     }
+  }
+
+  Future<void> _warnUserAboutAccountIssues() async {
+    // Show warning dialog to the user
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // User must tap a button
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('Sign-In Failed'),
+          content: const Text(
+              'Your game account might not work, and your game data might not be stored. '
+              'We might not be able to authorize your winnings or withdrawals later on.'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Understand'),
+              onPressed: () {
+                Navigator.of(dialogContext).pop(); // Dismiss the dialog
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (context) => const LandingPage()),
+                );
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Widget _buildOAuth2SignInButton() {

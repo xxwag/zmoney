@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 enum TooltipDirection { top, right, bottom, left }
 
@@ -7,12 +8,14 @@ class TutorialStep {
   final GlobalKey targetKey;
   final TooltipDirection direction;
   final String description;
+  final Function onTap; // Added callback for tap action
 
   TutorialStep({
     required this.widget,
     required this.targetKey,
     required this.direction,
     required this.description,
+    required this.onTap, // Require the callback in the constructor
   });
 }
 
@@ -20,12 +23,25 @@ class TutorialManager {
   List<TutorialStep> tutorialSteps = [];
   int currentStep = 0;
   bool isTutorialActive = true;
+  bool showTutorial = false; // Default to showing the tutorial.
 
   TutorialManager({
     required List<String> translatedTexts,
     required List<GlobalKey> keys,
   }) {
-    initializeTutorialSteps(translatedTexts, keys);
+    loadPreferences().then((_) {
+      // Ensure tutorial steps are initialized after preferences are loaded.
+
+      if (!showTutorial) {
+        initializeTutorialSteps(translatedTexts, keys);
+      } else {}
+    });
+  }
+
+  Future<void> loadPreferences() async {
+    // Load the preference.
+    final prefs = await SharedPreferences.getInstance();
+    final showTutorial = prefs.getBool('tutorialCompleted') ?? false;
   }
 
   void initializeTutorialSteps(
@@ -34,39 +50,53 @@ class TutorialManager {
 
     tutorialSteps = [
       TutorialStep(
-        widget: _tutorialStepWidget(translatedTexts[7]),
+        widget: TutorialStepWidget(
+            description: translatedTexts[9], onTap: nextTutorialStep),
         targetKey: keys[0],
         direction: TooltipDirection.bottom,
-        description: translatedTexts[7],
+        description: translatedTexts[9],
+        onTap: nextTutorialStep,
       ),
       TutorialStep(
-        widget: _tutorialStepWidget(translatedTexts[6]),
+        widget: TutorialStepWidget(
+            description: translatedTexts[8], onTap: nextTutorialStep),
         targetKey: keys[1],
         direction: TooltipDirection.top,
-        description: translatedTexts[6],
+        description: translatedTexts[8],
+        onTap: nextTutorialStep,
       ),
       TutorialStep(
-        widget: _tutorialStepWidget(translatedTexts[5]),
+        widget: TutorialStepWidget(
+            description: translatedTexts[4], onTap: nextTutorialStep),
         targetKey: keys[2],
         direction: TooltipDirection.top,
-        description: translatedTexts[5],
+        description: translatedTexts[4],
+        onTap: nextTutorialStep,
       ),
       TutorialStep(
-        widget: _tutorialStepWidget(translatedTexts[4]),
+        widget: TutorialStepWidget(
+            description: translatedTexts[6], onTap: nextTutorialStep),
         targetKey: keys[3],
         direction: TooltipDirection.top,
-        description: translatedTexts[4],
+        description: translatedTexts[6],
+        onTap: nextTutorialStep,
       ),
 // Add more steps as needed...
     ];
   }
 
-  void nextTutorialStep() {
+  void nextTutorialStep() async {
     if (currentStep < tutorialSteps.length - 1) {
       currentStep++;
     } else {
       isTutorialActive = false;
       currentStep = 0;
+      // Tutorial completed, store the attribute in shared preferences
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('tutorialCompleted', true);
+
+      final tutorialCompleted = prefs.getBool('tutorialCompleted') ?? false;
+      print('wtf2$tutorialCompleted');
     }
   }
 
@@ -116,20 +146,101 @@ class TutorialManager {
     }
   }
 
-  static Widget _tutorialStepWidget(String text) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      margin: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.black), // Added border for clarity
-      ),
-      child: Text(
-        text.isNotEmpty ? text : "No description provided",
-        style: const TextStyle(color: Colors.black),
-        textAlign: TextAlign.center,
-      ),
+  static Widget _tutorialStepWidget(String text, Function onTap) {
+    // Now also taking the onTap function as a parameter
+    return TutorialStepWidget(description: text, onTap: onTap);
+  }
+}
+
+class TutorialStepWidget extends StatefulWidget {
+  final String description;
+  final Function onTap; // Callback for tap action
+
+  const TutorialStepWidget(
+      {Key? key, required this.description, required this.onTap})
+      : super(key: key);
+
+  @override
+  _TutorialStepWidgetState createState() => _TutorialStepWidgetState();
+}
+
+class _TutorialStepWidgetState extends State<TutorialStepWidget>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController =
+        AnimationController(vsync: this, duration: Duration(seconds: 1));
+    _animation =
+        Tween<double>(begin: 0.5, end: 1.0).animate(_animationController);
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animationController,
+      builder: (context, child) {
+        return GestureDetector(
+          onTap: () {
+            widget.onTap(); // Call the provided onTap callback.
+            _animationController.forward(
+                from: 0.0); // Restart the animation from the beginning.
+          },
+          child: Opacity(
+            opacity: _animation.value,
+            child: Container(
+              padding:
+                  const EdgeInsets.fromLTRB(20, 12, 20, 25), // Adjusted padding
+              margin: const EdgeInsets.all(22),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.8),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.transparent),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.transparent,
+                    offset: Offset(0, 4),
+                    blurRadius: 4,
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize
+                    .min, // Use minimum space needed by the column's children
+                children: [
+                  Flexible(
+                    child: Text(
+                      widget.description.isNotEmpty
+                          ? widget.description
+                          : "No description provided",
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        fontStyle: FontStyle.italic,
+                        letterSpacing: 0.5,
+                        fontFamily: 'Proxima',
+                        height: 1.2, // Adjusted line height
+                      ),
+                      textAlign: TextAlign.center,
+                      softWrap: true, // Ensure text wraps
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
