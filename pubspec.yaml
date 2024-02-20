@@ -31,13 +31,18 @@ dependencies:
   firebase_analytics: ^10.8.0
   firebase_analytics_web: ^0.5.5+12
   url_launcher: ^6.2.4
-  google_api_availability: ^5.0.0
   games_services: ^4.0.0
   audioplayers: ^5.2.1
-  intl: ^0.19.0
+  intl: ^0.18.1
   firebase_performance: ^0.9.3+13
   video_player: ^2.8.2
- 
+  flutter_appauth: ^6.0.4
+  font_awesome_flutter: ^10.7.0
+  firebase_ui_auth: ^1.13.0
+  firebase_ui_oauth_google: ^1.3.0
+  flutter_facebook_auth: ^6.1.0
+  firebase_ui_oauth_facebook: ^1.2.18
+  barcode_widget: ^2.0.4
  
   
 dev_dependencies:
@@ -48,16 +53,23 @@ dev_dependencies:
 flutter_config:
   generate_for_dir: ["lib/"]
   env: ".env"
-
 flutter:
   uses-material-design: true
   assets:
     - .env
+    - assets/zmoneyblazing.png
     - assets/mainscreen.png
     - assets/sounds/victory_sound.mp3
     - assets/videos/main_video.mp4
     - assets/videos/8s.mp4
     - assets/
+    # If you intend to include all assets within a directory, use this format:
+    # - assets/
 
+  fonts:
+    - family: Proxima
+      fonts:
+        - asset: fonts/Proxima_Nova_Light.ttf
+        - asset: fonts/Proxima_Nova_Light_It.ttf
+          weight: 700
   # Add other configurations like assets and fonts as needed
- 

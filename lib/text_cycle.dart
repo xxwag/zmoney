@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 class TextCycleWidget extends StatefulWidget {
+  const TextCycleWidget({super.key});
+
   @override
   _TextCycleWidgetState createState() => _TextCycleWidgetState();
 }

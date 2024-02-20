@@ -5,9 +5,11 @@ class VideoBackgroundScreen extends StatefulWidget {
   final String videoAsset;
   final String imageAsset;
 
-  const VideoBackgroundScreen(
-      {required Key key, required this.videoAsset, required this.imageAsset})
-      : super(key: key);
+  const VideoBackgroundScreen({
+    super.key, // Updated to Key? to allow for nullable keys
+    required this.videoAsset,
+    required this.imageAsset,
+  });
 
   @override
   _VideoBackgroundScreenState createState() => _VideoBackgroundScreenState();
@@ -22,13 +24,12 @@ class _VideoBackgroundScreenState extends State<VideoBackgroundScreen> {
     super.initState();
     _controller = VideoPlayerController.asset(widget.videoAsset)
       ..initialize().then((_) {
-        _controller.play();
-        _controller.setLooping(true);
         setState(() {
           _isVideoInitialized = true;
-        }); // when your controller is initialized.
+        });
+        _controller.play();
+        _controller.setLooping(true);
       }).catchError((error) {
-        // Handle video initialization error, e.g., file not found
         print("Error initializing video: $error");
         setState(() {
           _isVideoInitialized = false;
@@ -42,34 +43,28 @@ class _VideoBackgroundScreenState extends State<VideoBackgroundScreen> {
     super.dispose();
   }
 
+  Widget _buildVideo() {
+    if (_isVideoInitialized) {
+      return AspectRatio(
+        aspectRatio: _controller.value.aspectRatio,
+        child: VideoPlayer(_controller),
+      );
+    } else {
+      // Backup image as a fallback
+      return Image.asset(widget.imageAsset, fit: BoxFit.cover);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      body: SizedBox(
-        // Container to define dedicated space
-        width: double.infinity,
-        height: double.infinity,
-        child: _isVideoInitialized
-            ? FittedBox(
-                fit: BoxFit
-                    .cover, // This will cover the space without stretching
-                child: SizedBox(
-                  width: _controller.value.size.width,
-                  height: _controller.value.size.height,
-                  child: VideoPlayer(_controller),
-                ),
-              )
-            : FittedBox(
-                fit: BoxFit
-                    .cover, // This will cover the space without stretching
-                child: Image.asset(widget.imageAsset),
-              ),
+      body: SizedBox.expand(
+        child: FittedBox(
+          fit: BoxFit.cover, // Ensures the content covers the space
+          child: _buildVideo(),
+        ),
       ),
     );
-  }
-
-  void showErrorDialogFragment() {
-    // Your showErrorDialogFragment implementation
   }
 }

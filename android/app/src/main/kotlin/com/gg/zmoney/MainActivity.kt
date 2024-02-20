@@ -8,7 +8,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.common.api.ApiException
 
 import com.google.android.gms.common.ConnectionResult
-import com.google.android.gms.common.GoogleApiAvailability
+
 
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.games.PlayGamesSdk
@@ -30,14 +30,17 @@ import android.util.Log
 class MainActivity : FlutterActivity() {
    
     private val CHANNEL = "com.gg.zmoney/game_services"
+    private val authChannel = "com.gg.zmoney/auth"
 
     private lateinit var consentInformation: ConsentInformation
     private val TAG = "MainActivity"
     private lateinit var firebaseAnalytics: FirebaseAnalytics
     private lateinit var gamesSignInClient: GamesSignInClient
+    private lateinit var auth: FirebaseAuth
 
     override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
+    
     firebaseAnalytics = FirebaseAnalytics.getInstance(this)
 
     // Initialize Play Games SDK
@@ -46,30 +49,21 @@ class MainActivity : FlutterActivity() {
 
     // Initialize other services like Firebase, Mobile Ads
     FirebaseApp.initializeApp(this)
+    auth = FirebaseAuth.getInstance()
+
+    
     MobileAds.initialize(this) {}
     FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(true)
     FirebaseCrashlytics.getInstance().log("MainActivity Loaded Successfully")
     initializeUMP()
 
-    GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(this)
-
+    
     // Correctly initialize Google Play Games Sign-In Client
     gamesSignInClient = PlayGames.getGamesSignInClient(this)
     Log.d(TAG, "Google Play Games Sign-In Client initialized")
 
-    // Now it's safe to attempt to sign in
-    // Move signInWithGooglePlayGames call to after gamesSignInClient has been initialized
-    signInWithGooglePlayGames()
-
-    // Check if Google Play Services is available
-    if (GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(this) == ConnectionResult.SUCCESS) {
-        // Google Play Services is available
-        Log.d(TAG, "Google Play Services is available.")
-    } else {
-        // Handle the scenario where Google Play Services is not available
-        Log.e(TAG, "Google Play Services not available")
-        // Optionally, prompt the user to install or update Google Play Services
-    }
+  
+   
 
     // Check player authentication
     checkPlayerAuthentication()
@@ -87,7 +81,56 @@ class MainActivity : FlutterActivity() {
             else -> result.notImplemented()
         }
     }
-}
+ // New authentication channel setup
+        MethodChannel(flutterEngine!!.dartExecutor.binaryMessenger, authChannel).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "signUp" -> {
+                    val email = call.argument<String>("email")
+                    val password = call.argument<String>("password")
+                    signUp(email!!, password!!, result)
+                }
+                "signIn" -> {
+                    val email = call.argument<String>("email")
+                    val password = call.argument<String>("password")
+                    signIn(email!!, password!!, result)
+                }
+                "signOut" -> {
+                    signOut(result)
+                }
+                else -> result.notImplemented()
+            }
+        }
+    }
+    
+
+     private fun signUp(email: String, password: String, result: MethodChannel.Result) {
+        auth.createUserWithEmailAndPassword(email, password)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    result.success(true)
+                } else {
+                    result.error("AUTH_ERROR", task.exception?.message, null)
+                }
+            }
+    }
+
+    private fun signIn(email: String, password: String, result: MethodChannel.Result) {
+        auth.signInWithEmailAndPassword(email, password)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    result.success(true)
+                } else {
+                    result.error("AUTH_ERROR", task.exception?.message, null)
+                }
+            }
+    }
+
+    private fun signOut(result: MethodChannel.Result) {
+        auth.signOut()
+        result.success(true)
+    }
+
+
 
 private fun signInWithGooglePlayGames() {
     gamesSignInClient.signIn().addOnCompleteListener { task ->

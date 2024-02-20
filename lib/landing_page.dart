@@ -75,12 +75,12 @@ class LandingPageState extends State<LandingPage>
   String translatedText2 = 'Enter numbers';
   String translatedText3 = 'Go!';
   String translatedText4 = 'Ready';
-  String translatedText5 = 'The next try will be available in:';
-  String translatedText6 = 'This is the Go button. Tap here to start.';
-  String translatedText7 = 'Tap the Go button to start playing!';
+  String translatedText5 = 'Time remaining';
+  String translatedText6 = 'This is the Go button';
+  String translatedText7 = 'Your current prize:';
   String translatedText8 = 'Here you can enter numbers.';
   String translatedText9 = 'Enter numbers in this field.';
-  String translatedText10 = 'Select your language';
+  String translatedText10 = 'Select your language here';
   String translatedText11 = 'Game Menu';
   String translatedText12 = 'How to play: Enter numbers & test your luck.';
   String translatedText13 = 'You can win various prices, including real money.';
@@ -91,7 +91,6 @@ class LandingPageState extends State<LandingPage>
 
 // To track the Go button lock state
   bool isButtonLocked = false; // Add this variable to your widget state
-  bool _isTextVisible = true;
   List<TutorialStep> tutorialSteps = [];
   final bool _isGreenText = true; // Define _isGreenText as a boolean variable
 
@@ -119,12 +118,6 @@ class LandingPageState extends State<LandingPage>
   int _currentColorIndex = 0;
   bool _isAnimating = false;
 
-  void _incrementLaunchCount() async {
-    final prefs = await SharedPreferences.getInstance();
-    int launchCount = prefs.getInt('launchCount') ?? 0;
-    prefs.setInt('launchCount', launchCount + 1);
-  }
-
   //INIT STATE <<<<<<<<<<<<<<<<<<<<
   @override
   void initState() {
@@ -133,8 +126,10 @@ class LandingPageState extends State<LandingPage>
     WidgetsBinding.instance.addObserver(this); // Add the observer
     _initBannerAd();
     _loadRewardedAd();
+
     fetchAndSetTranslations(_selectedLanguageCode);
-    _incrementLaunchCount();
+    _checkTutorialCompletion();
+    _fetchPrizePoolFromServer();
     _confettiController = ConfettiController();
     //_confettiController.play();
 
@@ -146,9 +141,6 @@ class LandingPageState extends State<LandingPage>
       }
     });
 
-    // TADY SE MUSI DODELAT TUTORIAL STEPY, KAZDEJ JE NAVAZANEJ NA KEY (key1, key2) KTERYM SE MUSI OZNACIT ELEMENT WIDGETU
-    // VIz. DOLE TUTORIAL STEP CLASS
-
     setState(() {
       tutorialManager = TutorialManager(
         translatedTexts: translatedTexts,
@@ -158,8 +150,6 @@ class LandingPageState extends State<LandingPage>
 
     togglePartyAnimation();
     // Check if the tutorial has been completed previously
-    _checkTutorialCompletion();
-    _fetchPrizePoolFromServer();
 
     // _startBlinkingEffect();
   }
@@ -216,16 +206,6 @@ class LandingPageState extends State<LandingPage>
         _prizePoolAmount += _incrementAmountPerInterval;
         // Ensure the prize pool amount doesn't exceed a maximum value, if necessary
       });
-    });
-  }
-
-  void _startBlinkingEffect() {
-    Future.doWhile(() async {
-      await Future.delayed(const Duration(seconds: 1)); // Set blinking speed
-      setState(() {
-        _isTextVisible = !_isTextVisible;
-      });
-      return true; // Return true to continue blinking indefinitely
     });
   }
 
@@ -460,6 +440,8 @@ class LandingPageState extends State<LandingPage>
   Future<String> translateText(String text, String toLang,
       {String fromLang = 'auto'}) async {
     var url = Uri.parse('https://libretranslate.de/translate');
+    print(
+        'Attempting to translate text: $text from $fromLang to $toLang'); // Debug print
     try {
       var response = await http.post(
         url,
@@ -473,25 +455,37 @@ class LandingPageState extends State<LandingPage>
         }),
       );
 
+      print('Response status: ${response.statusCode}'); // Debug print
+
       if (response.statusCode == 200) {
         var decodedResponse =
             utf8.decode(response.bodyBytes); // Explicit UTF-8 decoding
+        print('Decoded response: $decodedResponse'); // Debug print
         var data = json.decode(decodedResponse);
         return data['translatedText'];
       } else {
+        print(
+            'Translation failed, status code: ${response.statusCode}'); // Debug print
         return text; // Return original text on failure
       }
     } catch (e) {
+      print('Error translating text: $e'); // Debug print
       return text; // Return original text on error
     }
   }
 
   Future<void> fetchAndSetTranslations(String targetLanguageCode) async {
+    print(
+        'Fetching and setting translations for: $targetLanguageCode'); // Debug print
+
     final prefs = await SharedPreferences.getInstance();
 
     // Use the original English texts as a base for translation
     String combinedEnglishTexts =
         await combineEnglishTextsForTranslation(prefs);
+
+    print(
+        'Combined English texts for translation: $combinedEnglishTexts'); // Debug print
 
     List<String> updatedTranslations = List.filled(15, '', growable: false);
 
@@ -501,6 +495,8 @@ class LandingPageState extends State<LandingPage>
           await translateText(combinedEnglishTexts, targetLanguageCode);
       List<String> individualTranslations =
           translatedCombinedTexts.split("999666");
+
+      print('Translated texts: $individualTranslations'); // Debug print
 
       // Ensure there are enough elements in the list
       for (int i = 0;
@@ -514,6 +510,7 @@ class LandingPageState extends State<LandingPage>
         updatedTranslations[i] = prefs.getString('translatedText${i + 1}_en') ??
             "Default Text ${i + 1}";
       }
+      print('Using English texts directly'); // Debug print
     }
 
     // Update state with new translations
@@ -524,8 +521,12 @@ class LandingPageState extends State<LandingPage>
         translatedTexts: translatedTexts,
         keys: [keyLanguageSelector, key1, key2, key3],
       );
+      print(
+          'Translations updated and TutorialManager initialized'); // Debug print
     });
+
     _restartTutorialIfNeeded();
+    print('Completed fetchAndSetTranslations'); // Debug print
   }
 
   @override
@@ -784,6 +785,9 @@ class LandingPageState extends State<LandingPage>
     double calculatedBlastForce = screenSize.width / 1; // Example calculation
     double maxAllowedBlastForce = 1800; // Set your maximum limit here
     double maxBlastForce = math.min(calculatedBlastForce, maxAllowedBlastForce);
+    final bannerAdHeight = _isBannerAdReady
+        ? 50.0
+        : 0.0; // Example ad height, adjust based on actual ad size
 
     return WillPopScope(
         onWillPop: onWillPop,
@@ -794,31 +798,57 @@ class LandingPageState extends State<LandingPage>
             containerColor: containerColor,
           ),
           body: Column(children: [
-            if (_isBannerAdReady)
-              AnimatedContainer(
-                duration: const Duration(
-                    seconds: 2), // Duration of the color transition
-                color:
-                    containerColor, // This color will animate when containerColor changes
-                child: SafeArea(
-                  top: true, // Only apply padding at the top
-                  child: SizedBox(
-                    width: screenSize.width.toDouble(),
-                    height: _bannerAd.size.height.toDouble(),
-                    child: AdWidget(ad: _bannerAd),
-                  ),
-                ),
-              ),
+            AnimatedContainer(
+              duration: const Duration(
+                  milliseconds: 1), // Duration of the color transition
+              color:
+                  containerColor, // This color will animate when containerColor changes
+            ),
 
             // The rest of the content is in an Expanded widget
             Expanded(
               child: Stack(children: [
                 // Animated background container
+
                 AnimatedContainer(
-                  duration: const Duration(seconds: 2),
+                  duration: const Duration(milliseconds: 1),
                   color: containerColor,
                   width: screenSize.width,
                   height: screenSize.height,
+                ),
+
+                if (_isBannerAdReady)
+                  Positioned(
+                    top: 40, // Banner ad at the top
+                    child: SizedBox(
+                      width: screenSize.width,
+                      height: bannerAdHeight, // Adjust based on actual ad size
+                      child: AdWidget(ad: _bannerAd), // Your banner ad
+                    ),
+                  ),
+
+                Positioned(
+                  top: 33 +
+                      (_isBannerAdReady
+                          ? bannerAdHeight
+                          : 40), // Dynamically adjust based on ad readiness
+                  left: 20,
+                  child: Builder(
+                    builder: (context) => IconButton(
+                      icon: const Icon(Icons.menu, size: 30.0),
+                      onPressed: () => Scaffold.of(context).openDrawer(),
+                    ),
+                  ),
+                ),
+
+                Positioned(
+                  top: 33 +
+                      (_isBannerAdReady
+                          ? bannerAdHeight
+                          : 40), // Apply the same adjustment here
+                  right: 20,
+                  child:
+                      _buildLanguageSelector(), // Your language selector widget
                 ),
 
                 // Confetti Widget
@@ -839,22 +869,6 @@ class LandingPageState extends State<LandingPage>
                   ),
                 ),
 
-                Positioned(
-                  top: 20,
-                  left: 20,
-                  child: Builder(
-                    builder: (context) => IconButton(
-                      icon: const Icon(Icons.menu, size: 30.0),
-                      onPressed: () => Scaffold.of(context).openDrawer(),
-                    ),
-                  ),
-                ),
-
-                Positioned(
-                  top: 20,
-                  right: 20,
-                  child: _buildLanguageSelector(),
-                ),
                 Column(
                   children: [
                     Expanded(
@@ -864,8 +878,9 @@ class LandingPageState extends State<LandingPage>
                               mainAxisAlignment: MainAxisAlignment.start,
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
-                                SizedBox(height: screenSize.height * 0.05),
                                 TextCycleWidget(),
+                                _buildNumberInput(
+                                    screenSize, translatedTexts[1]),
                                 /* Text(
                                   translatedTexts[0], // Use translated text
                                   textAlign: TextAlign.center,
@@ -876,9 +891,6 @@ class LandingPageState extends State<LandingPage>
                                     fontWeight: FontWeight.w800,
                                   ),
                                 ),*/
-                                SizedBox(height: screenSize.height * 0.1),
-                                _buildNumberInput(
-                                    screenSize, translatedTexts[1]),
 
                                 // Modified Skip Button to show Rewarded Ad
                                 if (_timerStarted && _isRewardedAdReady)
@@ -1473,8 +1485,8 @@ class LandingPageState extends State<LandingPage>
               mainAxisSize: MainAxisSize.min,
               children: [
                 RedemptionAnimation(), // Assuming this is a custom widget for the animation
-                SizedBox(height: 24),
-                Text(
+                const SizedBox(height: 24),
+                const Text(
                   'Congratulations!',
                   style: TextStyle(
                     fontSize: 24,
@@ -1490,24 +1502,25 @@ class LandingPageState extends State<LandingPage>
                   ),
                   textAlign: TextAlign.center,
                 ),
-                SizedBox(height: 24),
+                const SizedBox(height: 24),
                 RichText(
                   textAlign: TextAlign.center,
                   text: TextSpan(
                     children: [
-                      TextSpan(
+                      const TextSpan(
                         text: 'You have won ',
                         style: TextStyle(fontSize: 24, color: Colors.white),
                       ),
                       TextSpan(
                         text: '$formattedPrizePoolAmount ',
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
                           color: Colors.yellow,
                         ),
                       ),
-                      TextSpan(
+                      const TextSpan(
+                        // ignore: unnecessary_string_escapes
                         text: '\Ƶ\$!',
                         style: TextStyle(
                             fontWeight: FontWeight.bold,
@@ -1517,7 +1530,7 @@ class LandingPageState extends State<LandingPage>
                     ],
                   ),
                 ),
-                SizedBox(height: 40),
+                const SizedBox(height: 40),
                 Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(
@@ -1537,14 +1550,14 @@ class LandingPageState extends State<LandingPage>
                         borderRadius: BorderRadius.circular(25.0),
                       ),
                       // Adjust padding around the button text here
-                      padding: EdgeInsets.symmetric(
+                      padding: const EdgeInsets.symmetric(
                           horizontal: 20.0,
                           vertical: 10.0), // Add horizontal padding
                     ),
                     onPressed: () {
                       Navigator.of(context).pop();
                     },
-                    child: Text(
+                    child: const Text(
                       'WUAU! OK?!!',
                       style: TextStyle(color: Colors.white),
                     ),
@@ -1608,16 +1621,11 @@ class LandingPageState extends State<LandingPage>
 
   void _checkTutorialCompletion() async {
     final prefs = await SharedPreferences.getInstance();
+    // This retrieves the boolean value, defaulting to false if not set
     final tutorialCompleted = prefs.getBool('tutorialCompleted') ?? false;
-
-    if (tutorialCompleted) {
-      // Tutorial was completed previously, reset it
-      await prefs.setBool('tutorialCompleted', false); // Reset to false
-      setState(() => _showTutorial = true); // Show the tutorial again
-    } else {
-      // Tutorial was not completed, keep the current state
-      setState(() => _showTutorial = false);
-    }
+    setState(() {
+      _showTutorial = !tutorialCompleted;
+    });
   }
 }
 
@@ -1931,7 +1939,8 @@ class _RedemptionAnimationState extends State<RedemptionAnimation> {
 
   void _startAnimation() async {
     while (true) {
-      await Future.delayed(Duration(seconds: 1)); // Change icon every second
+      await Future.delayed(
+          const Duration(seconds: 1)); // Change icon every second
       if (mounted) {
         setState(() {
           _iconIndex =

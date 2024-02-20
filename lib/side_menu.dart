@@ -1,10 +1,13 @@
 import 'dart:convert';
 
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:video_player/video_player.dart';
+import 'package:zmoney/loading_screen.dart';
 import 'package:zmoney/main.dart';
 import 'package:zmoney/ngrok.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -54,7 +57,7 @@ class SideMenuDrawerState extends State<SideMenuDrawer> {
           ),
           actions: <Widget>[
             TextButton(
-              child: Text('Close'),
+              child: const Text('Close'),
               onPressed: () {
                 Navigator.of(context).pop();
               },
@@ -72,7 +75,7 @@ class SideMenuDrawerState extends State<SideMenuDrawer> {
         padding: EdgeInsets.zero,
         children: <Widget>[
           // Here we use a Container instead of DrawerHeader to better control the layout
-          Container(
+          SizedBox(
             height: 200.0, // Set the initial height for the drawer header
             child: Stack(
               fit: StackFit.expand,
@@ -88,7 +91,7 @@ class SideMenuDrawerState extends State<SideMenuDrawer> {
                     padding: const EdgeInsets.all(8.0),
                     child: Text(
                       widget.translatedTexts[10],
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 24.0,
                         fontWeight: FontWeight.bold,
@@ -101,8 +104,8 @@ class SideMenuDrawerState extends State<SideMenuDrawer> {
           ),
 
           ListTile(
-            leading: Icon(Icons.rule),
-            title: Text(
+            leading: const Icon(Icons.rule),
+            title: const Text(
                 'Rules'), // You might want to use one of the translated texts here
             onTap: () => showRulesDialog(context),
           ),
@@ -144,7 +147,9 @@ class SettingsPageState extends State<SettingsPage> {
     String endpoint = '${NgrokManager.ngrokUrl}/api/zdatawipe';
     try {
       final jwtToken = await _secureStorage.read(key: 'jwtToken');
-      print(jwtToken);
+      if (kDebugMode) {
+        print(jwtToken);
+      }
       final response = await http.post(
         Uri.parse(endpoint),
         headers: {
@@ -180,9 +185,14 @@ class SettingsPageState extends State<SettingsPage> {
     try {
       await _googleSignIn
           .signOut(); // Or use disconnect() if you want to revoke access completely
-      print("Signed out of Google");
+      await FirebaseAuth.instance.signOut();
+      if (kDebugMode) {
+        print("Signed out of Google");
+      }
     } catch (error) {
-      print("Error signing out of Google: $error");
+      if (kDebugMode) {
+        print("Error signing out of Google: $error");
+      }
     }
 
     // Navigate to WelcomeScreen if the context is still mounted
