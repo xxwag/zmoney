@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math; // Import the math library
+import 'dart:math';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
@@ -11,6 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:zmoney/fukk_widgets/skin.dart';
 import 'package:zmoney/marquee.dart';
 import 'package:zmoney/ngrok.dart';
 import 'package:animated_flip_counter/animated_flip_counter.dart';
@@ -44,7 +46,7 @@ class LandingPageState extends State<LandingPage>
   bool _timerFinished = false;
   bool _isBannerAdReady = false;
   bool _showTutorial = true; // State to manage tutorial visibility
-  bool _showPartyAnimation = true; // State for party animation
+// State for party animation
   final TextEditingController _numberController = TextEditingController();
   late TutorialManager tutorialManager;
   Key playerDataWidgetKey = UniqueKey();
@@ -76,7 +78,7 @@ class LandingPageState extends State<LandingPage>
   String translatedText3 = 'Go!';
   String translatedText4 = 'Ready';
   String translatedText5 = 'Time remaining';
-  String translatedText6 = 'This is the Go button';
+  String translatedText6 = 'Money withdrawal';
   String translatedText7 = 'Your current prize:';
   String translatedText8 = 'Here you can enter numbers.';
   String translatedText9 = 'Enter numbers in this field.';
@@ -94,29 +96,98 @@ class LandingPageState extends State<LandingPage>
   List<TutorialStep> tutorialSteps = [];
   final bool _isGreenText = true; // Define _isGreenText as a boolean variable
 
-  Color _currentColor = Colors.black; // Default color, can be black or white
+// Default color, can be black or white
 
-  List<Color> colorSequence = [
-    const Color(0xFF2196F3), // Bright Blue
-    const Color(0xFF64B5F6), // Light Blue (Transition)
-    const Color(0xFF4CAF50), // Green
-    const Color(0xFF81C784), // Light Green (Transition)
-    const Color(0xFFFFC107), // Amber
-    const Color(0xFFFFD54F), // Light Amber (Transition)
-    const Color(0xFFFF5722), // Deep Orange
-    const Color(0xFFFF8A65), // Light Orange (Transition)
-    const Color(0xFF9C27B0), // Purple
-    const Color(0xFFCE93D8), // Light Purple (Transition)
-    const Color(0xFFE91E63), // Pink
-    const Color(0xFFF48FB1), // Light Pink (Transition)
-    const Color(0xFF00BCD4), // Cyan
-    const Color(0xFF80DEEA), // Light Cyan (Transition)
-    const Color(0xFF2196F3), // Bright Blue (looping back)
-  ];
   Duration animationDuration = const Duration(seconds: 5);
 
-  int _currentColorIndex = 0;
-  bool _isAnimating = false;
+  bool useTexture = false; // Flag to toggle between color and texture
+  int currentSkin = 1; // Default skin. Adjust based on how many skins you have.
+  int currentSkinIndex = 0; // Default to the first skin
+  List<Skin> skins = [
+    Skin(
+      backgroundColor: Colors.black,
+      prizePoolTextColor: Colors.lightGreen,
+      textColor: Colors.white,
+      specialTextColor: Colors
+          .white, // Assuming you've added this property based on previous instructions
+      buttonColor: Colors.black,
+      buttonTextColor: Colors.white,
+      textColorSwitchTrue: Colors.lightGreenAccent, // True condition color
+      textColorSwitchFalse: Colors.lightGreen, // False condition color
+      decoration: const BoxDecoration(color: Colors.black),
+    ),
+    Skin(
+      backgroundColor: Colors.white,
+      prizePoolTextColor: Colors.blueAccent,
+      textColor: Colors.white,
+      specialTextColor: Colors.white, // Example special text color
+      buttonColor: Colors.black,
+      buttonTextColor: Colors.white,
+      textColorSwitchTrue: Colors.lightGreenAccent, // True condition color
+      textColorSwitchFalse: Colors.lightGreen, // False condition color
+      decoration: const BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage('assets/texture1.jpg'),
+          fit: BoxFit.cover,
+        ),
+      ),
+    ),
+    Skin(
+      backgroundColor: Color(0xFF4A2040), // Dark Amethyst
+      prizePoolTextColor: Color(0xFFE0B0FF), // Mauve
+      textColor: Color(0xFFF8E8FF), // Very Pale Purple
+      specialTextColor: Color(0xFFDEC0E6), // Thistle
+      buttonColor: Color(0xFF6A417A), // Medium Amethyst
+      buttonTextColor: Color(0xFFF8E8FF), // Very Pale Purple
+      textColorSwitchTrue: Color(0xFFCDA4DE), // Pastel Violet
+      textColorSwitchFalse: Color(0xFFB0A8B9), // Greyish Lavender
+      decoration: const BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage('assets/texture2.jpg'),
+          fit: BoxFit.cover,
+        ),
+      ),
+    ),
+    Skin(
+      backgroundColor: Color(0xFF0B3D2E), // Dark Green
+      prizePoolTextColor: Colors.white, // Bright Green
+      textColor: Color(0xFFE9E4D0), // Light Beige
+      specialTextColor: Color(0xFFD1E8D2), // Pale Green
+      buttonColor: Color(0xFF507C59), // Moss Green
+      buttonTextColor: Color(0xFFE9E4D0), // Light Beige
+      textColorSwitchTrue: Color(0xFFD1E8D2), // Pale Green
+      textColorSwitchFalse: Color(0xFF6C8E67), // Sage Green
+      decoration: const BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage('assets/texture3.jpg'),
+          fit: BoxFit.cover,
+        ),
+      ),
+    ),
+    Skin(
+      backgroundColor: Colors.brown[800]!, // Deep wood color
+      prizePoolTextColor: Colors.white, // Warm amber for highlights
+      textColor: Colors.white, // High contrast for readability
+      specialTextColor: Colors.white, // Earthy orange for special texts
+      buttonColor:
+          Colors.green[800]!, // Dark green for buttons, resembling forest
+      buttonTextColor:
+          Colors.white, // White text for clear readability on buttons
+      textColorSwitchTrue: Colors.amber, // Warm amber for true state
+      textColorSwitchFalse:
+          Colors.brown[600]!, // Slightly lighter wood color for false
+      decoration: const BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage('assets/texture4.jpg'),
+          fit: BoxFit.cover,
+        ),
+      ),
+    ),
+  ];
+
+  RewardedInterstitialAd? _rewardedInterstitialAd;
+  bool _preventAd =
+      false; // Flag to prevent ad from showing on consecutive guesses
 
   //INIT STATE <<<<<<<<<<<<<<<<<<<<
   @override
@@ -126,6 +197,7 @@ class LandingPageState extends State<LandingPage>
     WidgetsBinding.instance.addObserver(this); // Add the observer
     _initBannerAd();
     _loadRewardedAd();
+    _loadRewardedInterstitialAd();
 
     fetchAndSetTranslations(_selectedLanguageCode);
     _checkTutorialCompletion();
@@ -148,10 +220,51 @@ class LandingPageState extends State<LandingPage>
       );
     });
 
-    togglePartyAnimation();
     // Check if the tutorial has been completed previously
+  }
 
-    // _startBlinkingEffect();
+  void _loadRewardedInterstitialAd() {
+    RewardedInterstitialAd.load(
+      adUnitId: 'ca-app-pub-4652990815059289/7189734426',
+      request: const AdRequest(),
+      rewardedInterstitialAdLoadCallback: RewardedInterstitialAdLoadCallback(
+        onAdLoaded: (RewardedInterstitialAd ad) {
+          _rewardedInterstitialAd = ad;
+        },
+        onAdFailedToLoad: (LoadAdError error) {
+          print('Failed to load a rewarded interstitial ad: $error');
+          _rewardedInterstitialAd = null;
+        },
+      ),
+    );
+  }
+
+  Future<void> _showRewardedInterstitialAd() async {
+    if (_rewardedInterstitialAd == null) {
+      print(
+          'Warning: attempt to show a rewarded interstitial ad before loaded.');
+      return;
+    }
+    _rewardedInterstitialAd!.fullScreenContentCallback =
+        FullScreenContentCallback(
+      onAdDismissedFullScreenContent: (RewardedInterstitialAd ad) {
+        ad.dispose();
+        _loadRewardedInterstitialAd();
+        _preventAd = true; // Prevent ad from showing on the next guess
+      },
+      onAdFailedToShowFullScreenContent:
+          (RewardedInterstitialAd ad, AdError error) {
+        ad.dispose();
+        _loadRewardedInterstitialAd();
+      },
+    );
+    _rewardedInterstitialAd!.show(
+        onUserEarnedReward: (AdWithoutView ad, RewardItem reward) {
+      // Handle reward
+      _timerFinished = true;
+      print("Reward earned: ${reward.amount}");
+    });
+    _rewardedInterstitialAd = null;
   }
 
   Future<void> _fetchPrizePoolFromServer() async {
@@ -189,7 +302,7 @@ class LandingPageState extends State<LandingPage>
   void _startSmoothPrizePoolIncrementation() {
     // Server increments between 100 and 600 every 5 seconds. Calculate the average increment per second.
     const averageIncrementPerUpdate = (100 + 600) / 2;
-    const updateIntervalSeconds = 5; // Server update interval
+    const updateIntervalSeconds = 1; // Server update interval
     const averageIncrementPerSecond =
         averageIncrementPerUpdate / updateIntervalSeconds;
 
@@ -237,106 +350,6 @@ class LandingPageState extends State<LandingPage>
         _showTutorial = true;
       });
     }
-  }
-
-  void togglePartyAnimation() {
-    int randomAnimationType = math.Random().nextInt(4) + 1;
-
-    setState(() {
-      _isAnimating = true;
-    });
-
-    switch (randomAnimationType) {
-      case 1:
-        animationType1();
-        break;
-      case 2:
-        animationType2();
-        break;
-      case 3:
-        animationType3();
-        break;
-      case 4:
-        animationType4();
-        break;
-      default:
-        break;
-    }
-
-    // Stop the animation after a specified duration
-    Future.delayed(const Duration(seconds: 5), () {
-      if (mounted) {
-        setState(() {
-          _isAnimating = false;
-        });
-      }
-    });
-  }
-
-  void animationType1() {
-    _isAnimating = true;
-    cycleThroughColors();
-  }
-
-  void animationType2() {
-    _isAnimating = true;
-    fastBlinkBlackAndWhite();
-  }
-
-  void fastBlinkBlackAndWhite() {
-    if (!_isAnimating) return;
-
-    setState(() {
-      _currentColor =
-          (_currentColor == Colors.black) ? Colors.white : Colors.black;
-    });
-
-    Future.delayed(const Duration(milliseconds: 250), () {
-      // Faster blink rate
-      if (mounted && _isAnimating) {
-        fastBlinkBlackAndWhite();
-      }
-    });
-  }
-
-  void animationType3() {
-    _isAnimating = true;
-    cycleThroughColorsReverse();
-  }
-
-  void cycleThroughColorsReverse() {
-    if (!_isAnimating) return;
-
-    setState(() {
-      _currentColorIndex =
-          (_currentColorIndex - 1).abs() % colorSequence.length;
-    });
-
-    Future.delayed(const Duration(milliseconds: 500), () {
-      if (mounted && _isAnimating) {
-        cycleThroughColorsReverse();
-      }
-    });
-  }
-
-  void animationType4() {
-    _isAnimating = true;
-    fastBlinkBlackAndWhite();
-  }
-
-  void cycleThroughColors() {
-    if (!_isAnimating) return;
-
-    setState(() {
-      _currentColorIndex = (_currentColorIndex + 1) % colorSequence.length;
-      _showPartyAnimation = !_showPartyAnimation; // Toggles the state
-    });
-
-    Future.delayed(const Duration(milliseconds: 500), () {
-      if (mounted && _isAnimating) {
-        cycleThroughColors(); // Continue cycling through colors
-      }
-    });
   }
 
 /*
@@ -574,16 +587,20 @@ class LandingPageState extends State<LandingPage>
       // Add other supported languages here
     };
 
+    Skin currentSkin = skins[currentSkinIndex];
+
     return DropdownButton<String>(
       key: keyLanguageSelector, // Assign the GlobalKey here
       value: _selectedLanguageCode,
-      icon: const Icon(Icons.arrow_downward),
-      elevation: 16,
-      style: const TextStyle(color: Colors.deepPurple),
-      underline: Container(
-        height: 2,
-        color: Colors.deepPurpleAccent,
+      focusColor: currentSkin.buttonColor,
+      icon: Icon(
+        Icons.arrow_downward,
+        color: currentSkin.textColor,
       ),
+      elevation: 16,
+      dropdownColor: currentSkin.buttonColor,
+      style: TextStyle(color: currentSkin.textColor),
+      underline: Container(height: 2, color: currentSkin.specialTextColor),
       onChanged: (String? newValue) {
         if (newValue != null && newValue != _selectedLanguageCode) {
           setState(() {
@@ -712,22 +729,18 @@ class LandingPageState extends State<LandingPage>
     }
   }
 
-  Color _determineContainerColor() {
-    switch (randomAnimationType) {
-      case 1:
-        return const Color(0xFFFFD700);
-      case 3:
-        // For animation types 1 and 3, use the color sequence
-        return colorSequence[_currentColorIndex];
-      case 2:
-        return Colors.amberAccent;
-      case 4:
-        // For animation types 2 and 4, use the current color (black or white)
-        return _currentColor;
-      default:
-        // Default color
-        return Colors.transparent;
-    }
+  void precacheTextures() {
+    // Preload each texture
+    precacheImage(const AssetImage('assets/texture1.jpg'), context);
+    precacheImage(const AssetImage('assets/texture2.jpg'), context);
+    // Add more as needed
+    precacheImage(const AssetImage('assets/texture3.jpg'), context);
+    precacheImage(const AssetImage('assets/texture4.jpg'), context);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
   }
 
   Widget _buildNumberInput(Size screenSize, String hintText) {
@@ -774,13 +787,82 @@ class LandingPageState extends State<LandingPage>
     );
   }
 
+  BoxDecoration _determineContainerDecoration() {
+    switch (currentSkin) {
+      case 1:
+        // First skin - solid color
+        return const BoxDecoration(color: Colors.blue);
+      case 2:
+        // Second skin - texture
+        return const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/texture1.jpg'),
+            fit: BoxFit.cover,
+          ),
+        );
+      case 3:
+        // Third skin - another solid color
+        return const BoxDecoration(color: Colors.green);
+      case 4:
+        // Fourth skin - another texture
+        return const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/texture2.jpg'),
+            fit: BoxFit.cover,
+          ),
+        );
+      case 5:
+        // Fifth skin - new solid color
+        return const BoxDecoration(color: Colors.deepPurple);
+      case 6:
+        // Sixth skin - new texture
+        return const BoxDecoration(
+          image: DecorationImage(
+            image:
+                AssetImage('assets/texture3.jpg'), // Ensure this asset exists
+            fit: BoxFit.cover,
+          ),
+        );
+      case 7:
+        // Seventh skin - another new solid color
+        return const BoxDecoration(color: Colors.orangeAccent);
+      case 8:
+        // Eighth skin - another new texture
+        return const BoxDecoration(
+          image: DecorationImage(
+            image:
+                AssetImage('assets/texture4.jpg'), // Ensure this asset exists
+            fit: BoxFit.cover,
+          ),
+        );
+      // Add more cases as needed for additional skins
+      default:
+        // Default case to fallback on
+        return const BoxDecoration(color: Colors.transparent);
+    }
+  }
+
+  void _toggleSkin(bool isIncrementing) {
+    setState(() {
+      if (isIncrementing) {
+        // Increment the index and wrap around if necessary
+        currentSkinIndex = (currentSkinIndex + 1) % skins.length;
+      } else {
+        // Decrement the index and wrap around if necessary
+        currentSkinIndex = (currentSkinIndex - 1 + skins.length) % skins.length;
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    precacheTextures(); // Call your precaching method here
     var screenSize = MediaQuery.of(context).size;
     var isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
-    Color containerColor =
-        _determineContainerColor(); // Use the container color determining method
 
+// Use the currentSkinIndex to get the current Skin object
+
+    Skin currentSkin = skins[currentSkinIndex];
     // Calculate maxBlastForce based on screen width, with a maximum limit
     double calculatedBlastForce = screenSize.width / 1; // Example calculation
     double maxAllowedBlastForce = 1800; // Set your maximum limit here
@@ -795,14 +877,14 @@ class LandingPageState extends State<LandingPage>
           key: _scaffoldKey,
           drawer: SideMenuDrawer(
             translatedTexts: translatedTexts,
-            containerColor: containerColor,
+            containerColor: currentSkin.specialTextColor,
           ),
           body: Column(children: [
             AnimatedContainer(
               duration: const Duration(
                   milliseconds: 1), // Duration of the color transition
-              color:
-                  containerColor, // This color will animate when containerColor changes
+              color: currentSkin
+                  .backgroundColor, // This color will animate when containerColor changes
             ),
 
             // The rest of the content is in an Expanded widget
@@ -810,11 +892,31 @@ class LandingPageState extends State<LandingPage>
               child: Stack(children: [
                 // Animated background container
 
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 1),
-                  color: containerColor,
-                  width: screenSize.width,
-                  height: screenSize.height,
+                GestureDetector(
+                  onHorizontalDragEnd: (DragEndDetails details) {
+                    // Check the velocity of the drag to determine swipe direction
+                    if (details.primaryVelocity! > 0) {
+                      // User swiped Left to Right
+                      _toggleSkin(
+                          false); // Call _toggleSkin to decrement the index
+                    } else if (details.primaryVelocity! < 0) {
+                      // User swiped Right to Left
+                      _toggleSkin(
+                          true); // Call _toggleSkin to increment the index
+                    }
+                  },
+                  child: AnimatedSwitcher(
+                    duration: const Duration(
+                        milliseconds: 1000), // Smooth transition duration
+                    child: Container(
+                      key: ValueKey<int>(
+                          currentSkinIndex), // Unique key based on current skin
+                      decoration: skins[currentSkinIndex]
+                          .decoration, // Use current skin's decoration
+                      width: screenSize.width,
+                      height: screenSize.height,
+                    ),
+                  ),
                 ),
 
                 if (_isBannerAdReady)
@@ -878,7 +980,7 @@ class LandingPageState extends State<LandingPage>
                               mainAxisAlignment: MainAxisAlignment.start,
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
-                                TextCycleWidget(),
+                                const TextCycleWidget(),
                                 _buildNumberInput(
                                     screenSize, translatedTexts[1]),
                                 /* Text(
@@ -904,8 +1006,9 @@ class LandingPageState extends State<LandingPage>
                                         mainAxisSize: MainAxisSize
                                             .min, // To keep the row tight around its children
                                         children: [
-                                          const Icon(Icons.touch_app,
-                                              color: Colors.lightGreen),
+                                          Icon(Icons.touch_app,
+                                              color: currentSkin
+                                                  .prizePoolTextColor),
                                           const SizedBox(
                                               width:
                                                   5), // A little spacing between the icon and text
@@ -915,15 +1018,17 @@ class LandingPageState extends State<LandingPage>
                                                 UniqueKey(), // Important for unique identification
                                             style: TextStyle(
                                               color: _isGreenText
-                                                  ? Colors.lightGreenAccent
-                                                  : Colors.lightGreen,
+                                                  ? currentSkin
+                                                      .textColorSwitchTrue
+                                                  : currentSkin
+                                                      .textColorSwitchFalse,
                                               fontSize: 18,
                                               shadows: _isGreenText
                                                   ? [
-                                                      const Shadow(
+                                                      Shadow(
                                                         blurRadius: 10.0,
-                                                        color: Colors
-                                                            .lightGreenAccent,
+                                                        color: currentSkin
+                                                            .textColorSwitchFalse,
                                                         offset: Offset(0, 0),
                                                       ),
                                                     ]
@@ -954,7 +1059,8 @@ class LandingPageState extends State<LandingPage>
                       child: MarqueeText(
                         text: '⚠️App still in the development!         ' * 20,
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.5), // 50% opacity
+                          color: currentSkin.specialTextColor
+                              .withOpacity(0.5), // 50% opacity
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
@@ -969,9 +1075,14 @@ class LandingPageState extends State<LandingPage>
                     ? tutorialManager.buildTutorialOverlay(context)
                     : const SizedBox.shrink(),
               ]),
-            )
+            ),
           ]),
-          floatingActionButton: const StatisticsFloatingButton(),
+          floatingActionButton: Stack(
+            children: [
+              Positioned(
+                  right: 10, bottom: 5, child: StatisticsFloatingButton()),
+            ],
+          ),
         ));
   }
 
@@ -1111,6 +1222,7 @@ class LandingPageState extends State<LandingPage>
     double bottomPosition =
         keyboardOpen ? 100 : 20; // Adjust position based on keyboard visibility
 
+    Skin currentSkin = skins[currentSkinIndex];
     return Positioned(
       bottom: bottomPosition,
       left: 0,
@@ -1121,64 +1233,55 @@ class LandingPageState extends State<LandingPage>
             // Calculate the dimensions for the pill
             double textHeight = 24; // Assuming this is the text height
             double pillWidth = 200; // textWidth + textHeight;
-            double pillHeight = textHeight + textHeight;
+            double pillHeight =
+                textHeight * 2; // Adjusted calculation for pill height
 
             return Column(
-              // Wrap the existing Container in a Column
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                const Text(
-                  "Current Reward:", // Add the text here
+                Text(
+                  "Current Reward:",
                   style: TextStyle(
-                    fontSize: 16, // Adjust the font size as needed
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white, // Adjust the color as needed
+                    color: currentSkin.specialTextColor,
                   ),
                 ),
-                const SizedBox(height: 8), // Add spacing between text and pill
+                SizedBox(height: 8),
                 Container(
                   width: pillWidth,
                   height: pillHeight,
                   decoration: BoxDecoration(
-                    color: const Color.fromARGB(128, 255, 255, 255),
+                    color: Color.fromARGB(128, 255, 255, 255),
                     borderRadius: BorderRadius.circular(pillHeight / 2),
                   ),
                   alignment: Alignment.center,
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
-                      // Outline
                       AnimatedFlipCounter(
-                        duration: const Duration(milliseconds: 500),
-                        value: _prizePoolAmount,
-                        textStyle: const TextStyle(
+                        duration: Duration(milliseconds: 500),
+                        value:
+                            _prizePoolAmount, // Assuming this is defined elsewhere
+                        textStyle: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
-                          color: Color.fromARGB(0, 255, 255, 255),
+                          color: currentSkin
+                              .prizePoolTextColor, // Correctly using runtime value
                           fontFamily: 'Digital-7',
                           shadows: [
                             Shadow(
                                 offset: Offset(-1.5, -1.5),
-                                color: Color.fromARGB(0, 255, 255, 255)),
+                                color: currentSkin.prizePoolTextColor
+                                    .withOpacity(0.2)),
                             Shadow(
                                 offset: Offset(1.5, 1.5),
-                                color: Color.fromARGB(0, 255, 255, 255)),
+                                color: currentSkin.prizePoolTextColor
+                                    .withOpacity(0.2)),
                           ],
                         ),
-                        prefix: "Ƶ",
-                      ),
-                      // Main Text
-                      AnimatedFlipCounter(
-                        duration: const Duration(milliseconds: 500),
-                        value: _prizePoolAmount,
-                        textStyle: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green,
-                          fontFamily: 'Digital-7',
-                        ),
-                        prefix: "ⓩ ",
+                        prefix: "ⓩ",
                       ),
                     ],
                   ),
@@ -1195,6 +1298,17 @@ class LandingPageState extends State<LandingPage>
     // Assuming NgrokManager.fetchNgrokData() and _numberController are defined elsewhere correctly
     //await NgrokManager.fetchNgrokData();
     String guessStr = _numberController.text;
+
+    // Implement the 33% chance logic and check the _preventAd flag
+    if (!_preventAd && Random().nextInt(3) == 0) {
+      // Approximately 33% chance
+      await _showRewardedInterstitialAd();
+    } else {
+      // If an ad was shown last time, reset the flag to allow showing ads again
+      if (_preventAd) {
+        _preventAd = false;
+      }
+    }
 
     if (guessStr.isEmpty) {
       _showEmptyTextFieldNotification();
@@ -1666,7 +1780,7 @@ class PlayerDataWidgetState extends State<PlayerDataWidget> {
 
   @override
   Widget build(BuildContext context) {
-    const double conversionRatio = 0.0000001; // Adjusted for demonstration
+    const double conversionRatio = 0.1; // Adjusted for demonstration
     final double totalWinAmount =
         ((playerData['total_win_amount'] as num?)?.toDouble() ?? 0.0);
 

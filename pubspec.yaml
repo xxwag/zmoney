@@ -2,7 +2,7 @@ name: zmoney
 description: How Much? Number Guessing Game
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
-version: 6.0.0+20
+version: 6.0.0+23
 
 environment:
   sdk: '>=3.1.0 <4.0.0'
@@ -42,7 +42,7 @@ dependencies:
   firebase_ui_oauth_google: ^1.3.0
   flutter_facebook_auth: ^6.1.0
   firebase_ui_oauth_facebook: ^1.2.18
-  barcode_widget: ^2.0.4
+
  
   
 dev_dependencies:
@@ -56,13 +56,16 @@ flutter_config:
 flutter:
   uses-material-design: true
   assets:
+
     - .env
-    - assets/zmoneyblazing.png
     - assets/mainscreen.png
     - assets/sounds/victory_sound.mp3
-    - assets/videos/main_video.mp4
     - assets/videos/8s.mp4
     - assets/
+    - assets/texture1.jpg
+    - assets/texture2.jpg
+    - assets/texture3.jpg
+    - assets/texture4.jpg
     # If you intend to include all assets within a directory, use this format:
     # - assets/
 

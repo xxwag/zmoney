@@ -137,13 +137,15 @@ class AuthGate extends StatelessWidget {
 
 class MyApp extends StatelessWidget {
   final Widget homeScreen;
-
+  static final GlobalKey<NavigatorState> navigatorKey =
+      GlobalKey<NavigatorState>();
   const MyApp({super.key, required this.homeScreen});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'How Much?',
+      navigatorKey: navigatorKey,
       home: homeScreen, // Use the passed homeScreen widget
     );
   }
@@ -174,6 +176,7 @@ class WelcomeScreenState extends State<WelcomeScreen>
   final TextEditingController _passwordController = TextEditingController();
   List<Map<String, dynamic>> _widgets = [];
   bool _isSignUpMode = true; // false for sign-in mode, true for sign-up mode
+  bool _isAuthenticating = false; // New variable to track authentication state
 
   final Map<String, Map<String, String>> oAuth2Providers = {
     'google': {
@@ -200,6 +203,26 @@ class WelcomeScreenState extends State<WelcomeScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) => _closeKeyboard());
     WidgetsBinding.instance
         .addPostFrameCallback((_) => _revealWidgetsSequentially());
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Signup Error'),
+          content: Text(message),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop(); // Dismiss the dialog
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Widget _buildToggleFormModeButton() {
@@ -335,7 +358,7 @@ class WelcomeScreenState extends State<WelcomeScreen>
       body: Stack(
         fit: StackFit.expand,
         children: [
-          AnimatedBackgroundScreen(), // Use your animated background here
+          const AnimatedBackgroundScreen(), // Use your animated background here
           Center(
             child: SingleChildScrollView(
               child: Column(
@@ -385,55 +408,8 @@ class WelcomeScreenState extends State<WelcomeScreen>
     );
   }
 
-  Future<void> _signInWithGitHub() async {
-    final providerConfig = oAuth2Providers['github'];
-    if (providerConfig == null) {
-      if (kDebugMode) {
-        print('GitHub provider configuration not found');
-      }
-      return;
-    }
-
-    try {
-      final AuthorizationTokenResponse? result =
-          await _appAuth.authorizeAndExchangeCode(
-        AuthorizationTokenRequest(
-          providerConfig['clientId']!,
-          providerConfig['redirectUri']!,
-          discoveryUrl: 'https://github.com/.well-known/openid-configuration',
-          scopes: ['read:user', 'user:email'],
-          serviceConfiguration: AuthorizationServiceConfiguration(
-            authorizationEndpoint: providerConfig['authorizationEndpoint']!,
-            tokenEndpoint: providerConfig['tokenEndpoint']!,
-          ),
-        ),
-      );
-
-      if (result != null) {
-        // Use the access token to sign in with Firebase
-        final AuthCredential credential =
-            GithubAuthProvider.credential(result.accessToken!);
-
-        final userCredential =
-            await FirebaseAuth.instance.signInWithCredential(credential);
-        if (kDebugMode) {
-          print("GitHub Sign-In successful: ${userCredential.user}");
-        }
-
-        // Optionally, navigate or update UI state here
-      } else {
-        if (kDebugMode) {
-          print("GitHub Sign-In aborted by user");
-        }
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('GitHub Sign-In failed: $e');
-      }
-    }
-  }
-
   Widget _buildAuthActionButton() {
+    bool isButtonDisabled = _isAuthenticating;
     Color buttonColor =
         _isSignUpMode ? Colors.blueAccent : Colors.lightGreen; // Example colors
     // Define the vertical padding value
@@ -450,7 +426,9 @@ class WelcomeScreenState extends State<WelcomeScreen>
           size: 24,
         ),
         label: Text(_isSignUpMode ? 'Sign Up' : 'Sign In'),
-        onPressed: _isSignUpMode ? _handleSignUp : _handleSignIn,
+        onPressed: isButtonDisabled
+            ? null
+            : (_isSignUpMode ? _handleSignUp : _handleSignIn),
         style: ElevatedButton.styleFrom(
           foregroundColor: Colors.white,
           backgroundColor: buttonColor, // Icon and text color
@@ -754,20 +732,23 @@ class WelcomeScreenState extends State<WelcomeScreen>
     FocusScope.of(context).unfocus();
   }
 
-  Future<void> _signInWithOAuth2(String providerKey) async {
-    try {
-      final providerConfig = oAuth2Providers[providerKey];
-      if (providerConfig == null) {
-        print('Provider configuration not found');
-        return;
-      }
+  Future<void> _signInWithGitHub() async {
+    _isAuthenticating = true; // Lock UI
+    final providerConfig = oAuth2Providers['github'];
+    if (providerConfig == null) {
+      _showSnackBar('GitHub provider configuration not found');
+      _isAuthenticating = false; // Unlock UI
+      return;
+    }
 
+    try {
       final AuthorizationTokenResponse? result =
           await _appAuth.authorizeAndExchangeCode(
         AuthorizationTokenRequest(
           providerConfig['clientId']!,
           providerConfig['redirectUri']!,
-          scopes: providerConfig['scopes']!.split(','),
+          discoveryUrl: 'https://github.com/.well-known/openid-configuration',
+          scopes: ['read:user', 'user:email'],
           serviceConfiguration: AuthorizationServiceConfiguration(
             authorizationEndpoint: providerConfig['authorizationEndpoint']!,
             tokenEndpoint: providerConfig['tokenEndpoint']!,
@@ -776,55 +757,64 @@ class WelcomeScreenState extends State<WelcomeScreen>
       );
 
       if (result != null) {
-        // Simulate retrieving email from the OAuth provider's user info endpoint
-        // This is a placeholder and should be replaced with actual logic
-        final email = ""; // Placeholder
-        final response = await approachMasterEndpoint(
-            email, result.idToken ?? '', result.accessToken ?? '');
+        final AuthCredential credential =
+            GithubAuthProvider.credential(result.accessToken!);
+        final UserCredential userCredential =
+            await FirebaseAuth.instance.signInWithCredential(credential);
 
-        if (response.statusCode == 200) {
-          // Handle response, save JWT token, retrieve player data, navigate
-          _handleSuccessfulSignIn(response);
+        if (userCredential.user != null) {
+          // Assuming your backend needs email, GitHub access token, and possibly a Firebase token
+          String? firebaseToken = await userCredential.user!.getIdToken(true);
+          final response = await approachMasterEndpoint(
+            userCredential.user!.email!,
+            firebaseToken!, // Assuming the firebaseToken is not null, handle nullability as needed
+            result.accessToken!, // GitHub access token
+          );
+
+          if (response.statusCode == 200) {
+            var responseData = jsonDecode(response.body);
+            var jwtToken = responseData['token'];
+            await secureStorage.write(key: 'jwtToken', value: jwtToken);
+
+            final playerDataResponse = await verifyAndRetrieveData(jwtToken);
+            if (playerDataResponse.statusCode == 200) {
+              var playerData =
+                  jsonDecode(playerDataResponse.body)['playerData'];
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.setString('playerData', jsonEncode(playerData));
+
+              Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (context) => const LandingPage()));
+              _showSnackBar("GitHub Sign-in successful.");
+            } else {
+              _showSnackBar("Error verifying token and retrieving data.");
+              _isAuthenticating = false; // Unlock UI
+            }
+          } else {
+            _showSnackBar("Error contacting master endpoint.");
+            _isAuthenticating = false; // Unlock UI
+          }
         } else {
-          print("Error contacting master endpoint: ${response.statusCode}");
-          // Handle error in contacting master endpoint
+          _showSnackBar("Authentication failed.");
+          _isAuthenticating = false; // Unlock UI
         }
       } else {
-        print("OAuth2 authorization failed");
-        // Handle failed authorization
+        _showSnackBar("GitHub Sign-In aborted by user.");
+        _isAuthenticating = false; // Unlock UI
       }
     } catch (e) {
-      print('Error during OAuth2 Sign-In: $e');
-      // Handle sign-in error
-    }
-  }
-
-  void _handleSuccessfulSignIn(http.Response response) async {
-    // Parse response, save JWT token, retrieve player data, navigate
-    var responseData = jsonDecode(response.body);
-    var jwtToken = responseData['token'];
-    await secureStorage.write(key: 'jwtToken', value: jwtToken);
-
-    final playerDataResponse = await verifyAndRetrieveData(jwtToken);
-    if (playerDataResponse.statusCode == 200) {
-      var playerData = jsonDecode(playerDataResponse.body)['playerData'];
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('playerData', jsonEncode(playerData));
-
-      Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const LandingPage()));
-    } else {
-      print(
-          "Error verifying token and retrieving data: ${playerDataResponse.statusCode}");
-      // Handle error in player data retrieval
+      _showSnackBar('GitHub Sign-In failed: $e');
+      _isAuthenticating = false; // Unlock UI
     }
   }
 
   Future<void> _signInWithGoogle() async {
+    _isAuthenticating = true; // Lock UI
     try {
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
-        if (kDebugMode) print("Google Sign-In was cancelled.");
+        _showSnackBar("Google Sign-In was cancelled.");
+        _isAuthenticating = false; // Unlock UI
         return;
       }
 
@@ -855,36 +845,25 @@ class WelcomeScreenState extends State<WelcomeScreen>
             final prefs = await SharedPreferences.getInstance();
             await prefs.setString('playerData', jsonEncode(playerData));
 
-            if (kDebugMode) {
-              print("Retrieved Player Data: $playerData");
-            }
-
             // Navigate to the next screen or update the state as necessary
-            // Example: Navigate to the LandingPage
             Navigator.of(context).pushReplacement(
                 MaterialPageRoute(builder: (context) => const LandingPage()));
+            _showSnackBar("Sign-in successful.");
           } else {
-            if (kDebugMode) {
-              print(
-                  "Error verifying token and retrieving data: ${playerDataResponse.statusCode}");
-            }
-            // Handle error in player data retrieval
+            _showSnackBar("Error verifying token and retrieving data.");
+            _isAuthenticating = false; // Unlock UI
           }
         } else {
-          if (kDebugMode) {
-            print("Error contacting master endpoint: ${response.statusCode}");
-          }
-          // Handle error in contacting master endpoint
+          _showSnackBar("Error contacting master endpoint.");
+          _isAuthenticating = false; // Unlock UI
         }
       } else {
-        if (kDebugMode) {
-          print("UserCredential user is null, authentication failed");
-        }
-        // Handle authentication failure
+        _showSnackBar("Authentication failed.");
+        _isAuthenticating = false; // Unlock UI
       }
     } catch (error) {
-      if (kDebugMode) print('Error during Google Sign-In: $error');
-      // Handle general sign-in error
+      _showSnackBar('Error during Google Sign-In: $error');
+      _isAuthenticating = false; // Unlock UI
     }
   }
 
@@ -914,34 +893,8 @@ class WelcomeScreenState extends State<WelcomeScreen>
     );
   }
 
-  Future<void> _warnUserAboutAccountIssues() async {
-    // Show warning dialog to the user
-    return showDialog<void>(
-      context: context,
-      barrierDismissible: false, // User must tap a button
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: const Text('Sign-In Failed'),
-          content: const Text(
-              'Your game account might not work, and your game data might not be stored. '
-              'We might not be able to authorize your winnings or withdrawals later on.'),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Understand'),
-              onPressed: () {
-                Navigator.of(dialogContext).pop(); // Dismiss the dialog
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (context) => const LandingPage()),
-                );
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   // Add the missing _buildSkipButton method here
+  // ignore: unused_element
   Widget _buildSkipButton() {
     return Visibility(
       visible:
@@ -960,6 +913,8 @@ class WelcomeScreenState extends State<WelcomeScreen>
 }
 
 class AnimatedBackgroundScreen extends StatefulWidget {
+  const AnimatedBackgroundScreen({super.key});
+
   @override
   _AnimatedBackgroundScreenState createState() =>
       _AnimatedBackgroundScreenState();

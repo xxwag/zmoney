@@ -8,7 +8,7 @@ class TextCycleWidget extends StatefulWidget {
 }
 
 class _TextCycleWidgetState extends State<TextCycleWidget> {
-  final List<String> translatedTexts = [
+  final List<String> translatedtexts2 = [
     "How Much?",
     "How Much?",
     "How Much?",
@@ -66,7 +66,7 @@ class _TextCycleWidgetState extends State<TextCycleWidget> {
 
   void _updateText() {
     setState(() {
-      _currentIndex = (_currentIndex + 1) % translatedTexts.length;
+      _currentIndex = (_currentIndex + 1) % translatedtexts2.length;
     });
   }
 
@@ -80,7 +80,7 @@ class _TextCycleWidgetState extends State<TextCycleWidget> {
           return FadeTransition(opacity: animation, child: child);
         },
         child: Text(
-          translatedTexts[_currentIndex], // Use translated text
+          translatedtexts2[_currentIndex], // Use translated text
           key: ValueKey<int>(_currentIndex),
           textAlign: TextAlign.center,
           style: const TextStyle(
