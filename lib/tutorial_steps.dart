@@ -21,6 +21,8 @@ class TutorialStep {
 }
 
 class TutorialManager {
+  Function? onUpdate; // Callback for when the state updates
+
   List<TutorialStep> tutorialSteps = [];
   int currentStep = 0;
   bool isTutorialActive = true;
@@ -29,6 +31,7 @@ class TutorialManager {
   TutorialManager({
     required List<String> translatedTexts,
     required List<GlobalKey> keys,
+    this.onUpdate,
   }) {
     loadPreferences().then((_) {
       // Ensure tutorial steps are initialized after preferences are loaded.
@@ -99,6 +102,7 @@ class TutorialManager {
         print('wtf2$tutorialCompleted');
       }
     }
+    onUpdate?.call(); // Call the callback to trigger a state update
   }
 
   Widget buildTutorialOverlay(BuildContext context) {

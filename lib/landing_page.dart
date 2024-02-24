@@ -133,14 +133,14 @@ class LandingPageState extends State<LandingPage>
       ),
     ),
     Skin(
-      backgroundColor: Color(0xFF4A2040), // Dark Amethyst
-      prizePoolTextColor: Color(0xFFE0B0FF), // Mauve
-      textColor: Color(0xFFF8E8FF), // Very Pale Purple
-      specialTextColor: Color(0xFFDEC0E6), // Thistle
-      buttonColor: Color(0xFF6A417A), // Medium Amethyst
-      buttonTextColor: Color(0xFFF8E8FF), // Very Pale Purple
-      textColorSwitchTrue: Color(0xFFCDA4DE), // Pastel Violet
-      textColorSwitchFalse: Color(0xFFB0A8B9), // Greyish Lavender
+      backgroundColor: const Color(0xFF4A2040), // Dark Amethyst
+      prizePoolTextColor: const Color(0xFFE0B0FF), // Mauve
+      textColor: const Color(0xFFF8E8FF), // Very Pale Purple
+      specialTextColor: const Color(0xFFDEC0E6), // Thistle
+      buttonColor: const Color(0xFF6A417A), // Medium Amethyst
+      buttonTextColor: const Color(0xFFF8E8FF), // Very Pale Purple
+      textColorSwitchTrue: const Color(0xFFCDA4DE), // Pastel Violet
+      textColorSwitchFalse: const Color(0xFFB0A8B9), // Greyish Lavender
       decoration: const BoxDecoration(
         image: DecorationImage(
           image: AssetImage('assets/texture2.jpg'),
@@ -149,14 +149,14 @@ class LandingPageState extends State<LandingPage>
       ),
     ),
     Skin(
-      backgroundColor: Color(0xFF0B3D2E), // Dark Green
+      backgroundColor: const Color(0xFF0B3D2E), // Dark Green
       prizePoolTextColor: Colors.white, // Bright Green
-      textColor: Color(0xFFE9E4D0), // Light Beige
-      specialTextColor: Color(0xFFD1E8D2), // Pale Green
-      buttonColor: Color(0xFF507C59), // Moss Green
-      buttonTextColor: Color(0xFFE9E4D0), // Light Beige
-      textColorSwitchTrue: Color(0xFFD1E8D2), // Pale Green
-      textColorSwitchFalse: Color(0xFF6C8E67), // Sage Green
+      textColor: const Color(0xFFE9E4D0), // Light Beige
+      specialTextColor: const Color(0xFFD1E8D2), // Pale Green
+      buttonColor: const Color(0xFF507C59), // Moss Green
+      buttonTextColor: const Color(0xFFE9E4D0), // Light Beige
+      textColorSwitchTrue: const Color(0xFFD1E8D2), // Pale Green
+      textColorSwitchFalse: const Color(0xFF6C8E67), // Sage Green
       decoration: const BoxDecoration(
         image: DecorationImage(
           image: AssetImage('assets/texture3.jpg'),
@@ -217,6 +217,7 @@ class LandingPageState extends State<LandingPage>
       tutorialManager = TutorialManager(
         translatedTexts: translatedTexts,
         keys: [keyLanguageSelector, key1, key2, key3],
+        onUpdate: () => setState(() {}),
       );
     });
 
@@ -232,7 +233,6 @@ class LandingPageState extends State<LandingPage>
           _rewardedInterstitialAd = ad;
         },
         onAdFailedToLoad: (LoadAdError error) {
-          print('Failed to load a rewarded interstitial ad: $error');
           _rewardedInterstitialAd = null;
         },
       ),
@@ -241,8 +241,6 @@ class LandingPageState extends State<LandingPage>
 
   Future<void> _showRewardedInterstitialAd() async {
     if (_rewardedInterstitialAd == null) {
-      print(
-          'Warning: attempt to show a rewarded interstitial ad before loaded.');
       return;
     }
     _rewardedInterstitialAd!.fullScreenContentCallback =
@@ -262,7 +260,6 @@ class LandingPageState extends State<LandingPage>
         onUserEarnedReward: (AdWithoutView ad, RewardItem reward) {
       // Handle reward
       _timerFinished = true;
-      print("Reward earned: ${reward.amount}");
     });
     _rewardedInterstitialAd = null;
   }
@@ -453,8 +450,7 @@ class LandingPageState extends State<LandingPage>
   Future<String> translateText(String text, String toLang,
       {String fromLang = 'auto'}) async {
     var url = Uri.parse('https://libretranslate.de/translate');
-    print(
-        'Attempting to translate text: $text from $fromLang to $toLang'); // Debug print
+    // Debug print
     try {
       var response = await http.post(
         url,
@@ -468,28 +464,26 @@ class LandingPageState extends State<LandingPage>
         }),
       );
 
-      print('Response status: ${response.statusCode}'); // Debug print
+      // Debug print
 
       if (response.statusCode == 200) {
         var decodedResponse =
             utf8.decode(response.bodyBytes); // Explicit UTF-8 decoding
-        print('Decoded response: $decodedResponse'); // Debug print
+        // Debug print
         var data = json.decode(decodedResponse);
         return data['translatedText'];
       } else {
-        print(
-            'Translation failed, status code: ${response.statusCode}'); // Debug print
+        // Debug print
         return text; // Return original text on failure
       }
     } catch (e) {
-      print('Error translating text: $e'); // Debug print
+      // Debug print
       return text; // Return original text on error
     }
   }
 
   Future<void> fetchAndSetTranslations(String targetLanguageCode) async {
-    print(
-        'Fetching and setting translations for: $targetLanguageCode'); // Debug print
+    // Debug print
 
     final prefs = await SharedPreferences.getInstance();
 
@@ -497,8 +491,7 @@ class LandingPageState extends State<LandingPage>
     String combinedEnglishTexts =
         await combineEnglishTextsForTranslation(prefs);
 
-    print(
-        'Combined English texts for translation: $combinedEnglishTexts'); // Debug print
+    // Debug print
 
     List<String> updatedTranslations = List.filled(15, '', growable: false);
 
@@ -509,7 +502,7 @@ class LandingPageState extends State<LandingPage>
       List<String> individualTranslations =
           translatedCombinedTexts.split("999666");
 
-      print('Translated texts: $individualTranslations'); // Debug print
+      // Debug print
 
       // Ensure there are enough elements in the list
       for (int i = 0;
@@ -523,7 +516,7 @@ class LandingPageState extends State<LandingPage>
         updatedTranslations[i] = prefs.getString('translatedText${i + 1}_en') ??
             "Default Text ${i + 1}";
       }
-      print('Using English texts directly'); // Debug print
+      // Debug print
     }
 
     // Update state with new translations
@@ -533,13 +526,13 @@ class LandingPageState extends State<LandingPage>
       tutorialManager = TutorialManager(
         translatedTexts: translatedTexts,
         keys: [keyLanguageSelector, key1, key2, key3],
+        onUpdate: () => setState(() {}),
       );
-      print(
-          'Translations updated and TutorialManager initialized'); // Debug print
+      // Debug print
     });
 
     _restartTutorialIfNeeded();
-    print('Completed fetchAndSetTranslations'); // Debug print
+    // Debug print
   }
 
   @override
@@ -787,61 +780,6 @@ class LandingPageState extends State<LandingPage>
     );
   }
 
-  BoxDecoration _determineContainerDecoration() {
-    switch (currentSkin) {
-      case 1:
-        // First skin - solid color
-        return const BoxDecoration(color: Colors.blue);
-      case 2:
-        // Second skin - texture
-        return const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/texture1.jpg'),
-            fit: BoxFit.cover,
-          ),
-        );
-      case 3:
-        // Third skin - another solid color
-        return const BoxDecoration(color: Colors.green);
-      case 4:
-        // Fourth skin - another texture
-        return const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/texture2.jpg'),
-            fit: BoxFit.cover,
-          ),
-        );
-      case 5:
-        // Fifth skin - new solid color
-        return const BoxDecoration(color: Colors.deepPurple);
-      case 6:
-        // Sixth skin - new texture
-        return const BoxDecoration(
-          image: DecorationImage(
-            image:
-                AssetImage('assets/texture3.jpg'), // Ensure this asset exists
-            fit: BoxFit.cover,
-          ),
-        );
-      case 7:
-        // Seventh skin - another new solid color
-        return const BoxDecoration(color: Colors.orangeAccent);
-      case 8:
-        // Eighth skin - another new texture
-        return const BoxDecoration(
-          image: DecorationImage(
-            image:
-                AssetImage('assets/texture4.jpg'), // Ensure this asset exists
-            fit: BoxFit.cover,
-          ),
-        );
-      // Add more cases as needed for additional skins
-      default:
-        // Default case to fallback on
-        return const BoxDecoration(color: Colors.transparent);
-    }
-  }
-
   void _toggleSkin(bool isIncrementing) {
     setState(() {
       if (isIncrementing) {
@@ -1029,7 +967,8 @@ class LandingPageState extends State<LandingPage>
                                                         blurRadius: 10.0,
                                                         color: currentSkin
                                                             .textColorSwitchFalse,
-                                                        offset: Offset(0, 0),
+                                                        offset:
+                                                            const Offset(0, 0),
                                                       ),
                                                     ]
                                                   : [],
@@ -1077,7 +1016,7 @@ class LandingPageState extends State<LandingPage>
               ]),
             ),
           ]),
-          floatingActionButton: Stack(
+          floatingActionButton: const Stack(
             children: [
               Positioned(
                   right: 10, bottom: 5, child: StatisticsFloatingButton()),
@@ -1248,12 +1187,12 @@ class LandingPageState extends State<LandingPage>
                     color: currentSkin.specialTextColor,
                   ),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Container(
                   width: pillWidth,
                   height: pillHeight,
                   decoration: BoxDecoration(
-                    color: Color.fromARGB(128, 255, 255, 255),
+                    color: const Color.fromARGB(128, 255, 255, 255),
                     borderRadius: BorderRadius.circular(pillHeight / 2),
                   ),
                   alignment: Alignment.center,
@@ -1261,7 +1200,7 @@ class LandingPageState extends State<LandingPage>
                     alignment: Alignment.center,
                     children: [
                       AnimatedFlipCounter(
-                        duration: Duration(milliseconds: 500),
+                        duration: const Duration(milliseconds: 500),
                         value:
                             _prizePoolAmount, // Assuming this is defined elsewhere
                         textStyle: TextStyle(
@@ -1272,11 +1211,11 @@ class LandingPageState extends State<LandingPage>
                           fontFamily: 'Digital-7',
                           shadows: [
                             Shadow(
-                                offset: Offset(-1.5, -1.5),
+                                offset: const Offset(-1.5, -1.5),
                                 color: currentSkin.prizePoolTextColor
                                     .withOpacity(0.2)),
                             Shadow(
-                                offset: Offset(1.5, 1.5),
+                                offset: const Offset(1.5, 1.5),
                                 color: currentSkin.prizePoolTextColor
                                     .withOpacity(0.2)),
                           ],
