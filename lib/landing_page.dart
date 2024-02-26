@@ -188,7 +188,9 @@ class LandingPageState extends State<LandingPage>
   RewardedInterstitialAd? _rewardedInterstitialAd;
   bool _preventAd =
       false; // Flag to prevent ad from showing on consecutive guesses
-
+  bool _arrowsVisible = true;
+  late AnimationController _glowController; // Renamed for clarity
+  late Animation<double> _glowAnimation; // Renamed for clarity
   //INIT STATE <<<<<<<<<<<<<<<<<<<<
   @override
   void initState() {
@@ -221,6 +223,15 @@ class LandingPageState extends State<LandingPage>
       );
     });
 
+    _glowController = AnimationController(
+      duration: const Duration(seconds: 2),
+      vsync: this,
+    )..repeat(reverse: true);
+
+    _glowAnimation = Tween<double>(begin: 0.5, end: 1.0)
+        .animate(_glowController); // Use the controller for the glow effect
+
+    _glowController.repeat(reverse: true);
     // Check if the tutorial has been completed previously
   }
 
@@ -545,6 +556,7 @@ class LandingPageState extends State<LandingPage>
     _rewardedAd.dispose(); // Dispose of _rewardedAd safely
     _confettiController.dispose();
     WidgetsBinding.instance.removeObserver(this);
+    _glowController.dispose();
     super.dispose();
   }
 
@@ -555,6 +567,7 @@ class LandingPageState extends State<LandingPage>
       // App is resumed; this is a good time to reload ads if needed
       _initBannerAd(); // Reinitialize the banner ad
       _loadRewardedAd(); // Preemptively load a new rewarded ad
+      _fetchPrizePoolFromServer();
     }
   }
 
@@ -782,6 +795,7 @@ class LandingPageState extends State<LandingPage>
 
   void _toggleSkin(bool isIncrementing) {
     setState(() {
+      _arrowsVisible = false;
       if (isIncrementing) {
         // Increment the index and wrap around if necessary
         currentSkinIndex = (currentSkinIndex + 1) % skins.length;
@@ -817,111 +831,183 @@ class LandingPageState extends State<LandingPage>
             translatedTexts: translatedTexts,
             containerColor: currentSkin.specialTextColor,
           ),
-          body: Column(children: [
-            AnimatedContainer(
-              duration: const Duration(
-                  milliseconds: 1), // Duration of the color transition
-              color: currentSkin
-                  .backgroundColor, // This color will animate when containerColor changes
-            ),
-
-            // The rest of the content is in an Expanded widget
-            Expanded(
-              child: Stack(children: [
-                // Animated background container
-
-                GestureDetector(
-                  onHorizontalDragEnd: (DragEndDetails details) {
-                    // Check the velocity of the drag to determine swipe direction
-                    if (details.primaryVelocity! > 0) {
-                      // User swiped Left to Right
-                      _toggleSkin(
-                          false); // Call _toggleSkin to decrement the index
-                    } else if (details.primaryVelocity! < 0) {
-                      // User swiped Right to Left
-                      _toggleSkin(
-                          true); // Call _toggleSkin to increment the index
-                    }
-                  },
-                  child: AnimatedSwitcher(
-                    duration: const Duration(
-                        milliseconds: 1000), // Smooth transition duration
-                    child: Container(
-                      key: ValueKey<int>(
-                          currentSkinIndex), // Unique key based on current skin
-                      decoration: skins[currentSkinIndex]
-                          .decoration, // Use current skin's decoration
-                      width: screenSize.width,
-                      height: screenSize.height,
-                    ),
-                  ),
+          body: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () {
+              setState(() {
+                _arrowsVisible = false;
+                if (_arrowsVisible) {
+                  // Start or restart the glowing effect when arrows become visible
+                  _glowController.repeat(reverse: true);
+                } else {
+                  // Stop the animation when arrows are hidden
+                  _glowController.stop();
+                }
+              });
+            },
+            child: Column(
+              children: [
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 1),
+                  color: currentSkin.backgroundColor,
                 ),
+                Expanded(
+                  child: Stack(
+                    children: [
+                      // Animated background container
 
-                if (_isBannerAdReady)
-                  Positioned(
-                    top: 40, // Banner ad at the top
-                    child: SizedBox(
-                      width: screenSize.width,
-                      height: bannerAdHeight, // Adjust based on actual ad size
-                      child: AdWidget(ad: _bannerAd), // Your banner ad
-                    ),
-                  ),
+                      GestureDetector(
+                        onHorizontalDragEnd: (DragEndDetails details) {
+                          // Check the velocity of the drag to determine swipe direction
+                          if (details.primaryVelocity! > 0) {
+                            // User swiped Left to Right
+                            _toggleSkin(
+                                false); // Call _toggleSkin to decrement the index
+                          } else if (details.primaryVelocity! < 0) {
+                            // User swiped Right to Left
+                            _toggleSkin(
+                                true); // Call _toggleSkin to increment the index
+                          }
+                        },
+                        child: AnimatedSwitcher(
+                          duration: const Duration(
+                              milliseconds: 1000), // Smooth transition duration
+                          child: Container(
+                            key: ValueKey<int>(
+                                currentSkinIndex), // Unique key based on current skin
+                            decoration: skins[currentSkinIndex]
+                                .decoration, // Use current skin's decoration
+                            width: screenSize.width,
+                            height: screenSize.height,
+                          ),
+                        ),
+                      ),
 
-                Positioned(
-                  top: 33 +
-                      (_isBannerAdReady
-                          ? bannerAdHeight
-                          : 40), // Dynamically adjust based on ad readiness
-                  left: 20,
-                  child: Builder(
-                    builder: (context) => IconButton(
-                      icon: const Icon(Icons.menu, size: 30.0),
-                      onPressed: () => Scaffold.of(context).openDrawer(),
-                    ),
-                  ),
-                ),
+                      if (_isBannerAdReady)
+                        Positioned(
+                          top: 40, // Banner ad at the top
+                          child: SizedBox(
+                            width: screenSize.width,
+                            height:
+                                bannerAdHeight, // Adjust based on actual ad size
+                            child: AdWidget(ad: _bannerAd), // Your banner ad
+                          ),
+                        ),
 
-                Positioned(
-                  top: 33 +
-                      (_isBannerAdReady
-                          ? bannerAdHeight
-                          : 40), // Apply the same adjustment here
-                  right: 20,
-                  child:
-                      _buildLanguageSelector(), // Your language selector widget
-                ),
+                      Positioned(
+                        top: 33 +
+                            (_isBannerAdReady
+                                ? bannerAdHeight
+                                : 40), // Dynamically adjust based on ad readiness
+                        left: 20,
+                        child: Builder(
+                          builder: (context) => IconButton(
+                            icon: const Icon(Icons.menu, size: 30.0),
+                            onPressed: () => Scaffold.of(context).openDrawer(),
+                          ),
+                        ),
+                      ),
 
-                // Confetti Widget
-                Align(
-                  alignment: Alignment.topRight,
-                  child: ConfettiWidget(
-                    confettiController: _confettiController,
-                    blastDirectionality: BlastDirectionality.explosive,
-                    blastDirection: -math.pi / 1,
-                    particleDrag: 0.05,
-                    emissionFrequency: 0.05,
-                    numberOfParticles: 13,
-                    gravity: 0.01,
-                    colors: const [Colors.green],
-                    minBlastForce: 1,
-                    maxBlastForce:
-                        maxBlastForce, // Ensure this is defined in your state
-                  ),
-                ),
+                      Positioned(
+                        top: 33 +
+                            (_isBannerAdReady
+                                ? bannerAdHeight
+                                : 40), // Apply the same adjustment here
+                        right: 20,
+                        child:
+                            _buildLanguageSelector(), // Your language selector widget
+                      ),
 
-                Column(
-                  children: [
-                    Expanded(
-                      child: Center(
-                        child: SingleChildScrollView(
-                          child: Column(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                const TextCycleWidget(),
-                                _buildNumberInput(
-                                    screenSize, translatedTexts[1]),
-                                /* Text(
+                      // Confetti Widget
+                      Align(
+                        alignment: Alignment.topRight,
+                        child: ConfettiWidget(
+                          confettiController: _confettiController,
+                          blastDirectionality: BlastDirectionality.explosive,
+                          blastDirection: -math.pi / 1,
+                          particleDrag: 0.05,
+                          emissionFrequency: 0.05,
+                          numberOfParticles: 13,
+                          gravity: 0.01,
+                          colors: const [Colors.green],
+                          minBlastForce: 1,
+                          maxBlastForce:
+                              maxBlastForce, // Ensure this is defined in your state
+                        ),
+                      ),
+
+                      if (_arrowsVisible)
+                        Positioned(
+                          top: screenSize.height / 2 +
+                              200, // Adjusted for better alignment
+                          left: 0,
+                          right: 0,
+                          child: AnimatedBuilder(
+                            animation: _glowAnimation,
+                            builder: (context, child) {
+                              return Opacity(
+                                opacity: _glowAnimation.value,
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceEvenly,
+                                  children: <Widget>[
+                                    IconButton(
+                                      icon: Icon(Icons.chevron_left,
+                                          size: 60,
+                                          color: currentSkin.specialTextColor
+                                              .withOpacity(
+                                                  _glowAnimation.value)),
+                                      onPressed: () => _toggleSkin(false),
+                                    ),
+                                    Text(
+                                      "Swipe to change skins",
+                                      style: TextStyle(
+                                        fontFamily: 'Proxima',
+                                        fontWeight: FontWeight
+                                            .w700, // This applies the italic font with weight 700 based on your pubspec declaration
+                                        color: currentSkin.specialTextColor
+                                            .withOpacity(_glowAnimation.value),
+                                        fontSize: 20,
+                                        shadows: [
+                                          Shadow(
+                                            offset: Offset(0.0, 0.0),
+                                            blurRadius: 12.0,
+                                            color: currentSkin.specialTextColor
+                                                .withOpacity(
+                                                    _glowAnimation.value),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: Icon(Icons.chevron_right,
+                                          size: 60,
+                                          color: currentSkin.specialTextColor
+                                              .withOpacity(
+                                                  _glowAnimation.value)),
+                                      onPressed: () => _toggleSkin(true),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+
+                      Column(
+                        children: [
+                          Expanded(
+                            child: Center(
+                              child: SingleChildScrollView(
+                                child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    children: [
+                                      const TextCycleWidget(),
+                                      _buildNumberInput(
+                                          screenSize, translatedTexts[1]),
+                                      /* Text(
                                   translatedTexts[0], // Use translated text
                                   textAlign: TextAlign.center,
                                   style: const TextStyle(
@@ -932,90 +1018,95 @@ class LandingPageState extends State<LandingPage>
                                   ),
                                 ),*/
 
-                                // Modified Skip Button to show Rewarded Ad
-                                if (_timerStarted && _isRewardedAdReady)
-                                  TextButton(
-                                    onPressed: _onPressAdButton,
-                                    child: AnimatedSwitcher(
-                                      duration: const Duration(
-                                          milliseconds:
-                                              500), // Speed of fade effect
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize
-                                            .min, // To keep the row tight around its children
-                                        children: [
-                                          Icon(Icons.touch_app,
-                                              color: currentSkin
-                                                  .prizePoolTextColor),
-                                          const SizedBox(
-                                              width:
-                                                  5), // A little spacing between the icon and text
-                                          Text(
-                                            "Watch ad to guess again right now!",
-                                            key:
-                                                UniqueKey(), // Important for unique identification
-                                            style: TextStyle(
-                                              color: _isGreenText
-                                                  ? currentSkin
-                                                      .textColorSwitchTrue
-                                                  : currentSkin
-                                                      .textColorSwitchFalse,
-                                              fontSize: 18,
-                                              shadows: _isGreenText
-                                                  ? [
-                                                      Shadow(
-                                                        blurRadius: 10.0,
-                                                        color: currentSkin
+                                      // Modified Skip Button to show Rewarded Ad
+                                      if (_timerStarted && _isRewardedAdReady)
+                                        TextButton(
+                                          onPressed: _onPressAdButton,
+                                          child: AnimatedSwitcher(
+                                            duration: const Duration(
+                                                milliseconds:
+                                                    500), // Speed of fade effect
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize
+                                                  .min, // To keep the row tight around its children
+                                              children: [
+                                                Icon(Icons.touch_app,
+                                                    color: currentSkin
+                                                        .prizePoolTextColor),
+                                                const SizedBox(
+                                                    width:
+                                                        5), // A little spacing between the icon and text
+                                                Text(
+                                                  "Watch ad to guess again right now!",
+                                                  key:
+                                                      UniqueKey(), // Important for unique identification
+                                                  style: TextStyle(
+                                                    color: _isGreenText
+                                                        ? currentSkin
+                                                            .textColorSwitchTrue
+                                                        : currentSkin
                                                             .textColorSwitchFalse,
-                                                        offset:
-                                                            const Offset(0, 0),
-                                                      ),
-                                                    ]
-                                                  : [],
+                                                    fontSize: 18,
+                                                    shadows: _isGreenText
+                                                        ? [
+                                                            Shadow(
+                                                              blurRadius: 10.0,
+                                                              color: currentSkin
+                                                                  .textColorSwitchFalse,
+                                                              offset:
+                                                                  const Offset(
+                                                                      0, 0),
+                                                            ),
+                                                          ]
+                                                        : [],
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                           ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                              ]),
-                        ),
+                                        ),
+                                    ]),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
-                ),
 
-                //  PlayerDataWidget(key: playerDataWidgetKey),
+                      //  PlayerDataWidget(key: playerDataWidgetKey),
 
-                // Marquee Text Positioned
-                if (!isKeyboardOpen)
-                  Positioned(
-                    bottom: -10, // Adjust as needed
-                    child: SizedBox(
-                      key: key3,
-                      width: screenSize.width,
-                      height: 40, // Adjust the height as needed
-                      child: MarqueeText(
-                        text: '⚠️App still in the development!         ' * 20,
-                        style: TextStyle(
-                          color: currentSkin.specialTextColor
-                              .withOpacity(0.5), // 50% opacity
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                      // Marquee Text Positioned
+                      if (!isKeyboardOpen)
+                        Positioned(
+                          bottom: -10, // Adjust as needed
+                          child: SizedBox(
+                            key: key3,
+                            width: screenSize.width,
+                            height: 40, // Adjust the height as needed
+                            child: MarqueeText(
+                              text: '⚠️App still in the development!         ' *
+                                  20,
+                              style: TextStyle(
+                                color: currentSkin.specialTextColor
+                                    .withOpacity(0.5), // 50% opacity
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
+                      if (!isKeyboardOpen)
+                        // Only show the prize pool counter if the keyboard is not open
+                        _buildPrizePoolCounter(isKeyboardOpen),
+
+                      tutorialManager.isTutorialActive
+                          ? tutorialManager.buildTutorialOverlay(context)
+                          : const SizedBox.shrink(),
+                    ],
                   ),
-                if (!isKeyboardOpen)
-                  // Only show the prize pool counter if the keyboard is not open
-                  _buildPrizePoolCounter(isKeyboardOpen),
-
-                tutorialManager.isTutorialActive
-                    ? tutorialManager.buildTutorialOverlay(context)
-                    : const SizedBox.shrink(),
-              ]),
+                ),
+              ],
             ),
-          ]),
+          ),
           floatingActionButton: const Stack(
             children: [
               Positioned(

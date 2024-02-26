@@ -1,10 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 class LoadingScreen extends StatefulWidget {
-  const LoadingScreen({Key? key}) : super(key: key);
+  const LoadingScreen({super.key});
 
   @override
   _LoadingScreenState createState() => _LoadingScreenState();
@@ -13,8 +12,8 @@ class LoadingScreen extends StatefulWidget {
 class _LoadingScreenState extends State<LoadingScreen> {
   bool _showLoadingTips = false;
   Timer? _loadingTimer;
-  List<String> _visibleReasons = [];
-  List<double> _opacityLevels = []; // Track opacity for each reason
+  final List<String> _visibleReasons = [];
+  final List<double> _opacityLevels = []; // Track opacity for each reason
 
   final List<String> _loadingReasons = [
     "Something is not adding up🤔",
@@ -34,7 +33,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
     super.initState();
 
     // Start the timer to show tips after 10 seconds
-    _loadingTimer = Timer(Duration(seconds: 10), () {
+    _loadingTimer = Timer(const Duration(seconds: 10), () {
       setState(() {
         _showLoadingTips = true;
       });
@@ -57,7 +56,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
   }
 
   void _fadeInReason(int index) {
-    Timer(Duration(milliseconds: 100), () {
+    Timer(const Duration(milliseconds: 100), () {
       // Ensure opacity does not exceed 1.0
       if (_opacityLevels[index] < 1) {
         double newOpacity = _opacityLevels[index] + 0.1; // Increase opacity
@@ -76,7 +75,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           image: DecorationImage(
             image: AssetImage("assets/mainscreen.png"),
             fit: BoxFit.cover,
@@ -91,7 +90,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
   }
 
   Widget _buildLoadingIndicator() {
-    return CircularProgressIndicator(
+    return const CircularProgressIndicator(
       valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
     );
   }
@@ -109,11 +108,11 @@ class _LoadingScreenState extends State<LoadingScreen> {
 
         return AnimatedOpacity(
           opacity: opacity,
-          duration:
-              Duration(milliseconds: 500), // Control the speed of the fade in
+          duration: const Duration(
+              milliseconds: 500), // Control the speed of the fade in
           child: Container(
-            margin:
-                EdgeInsets.only(bottom: 8), // Add some spacing between items
+            margin: const EdgeInsets.only(
+                bottom: 8), // Add some spacing between items
             decoration: BoxDecoration(
               color: Colors.black45, // Semi-transparent background
               borderRadius: BorderRadius.circular(10), // Rounded corners
@@ -123,12 +122,12 @@ class _LoadingScreenState extends State<LoadingScreen> {
                 fit: BoxFit.scaleDown, // Shrink the text to fit on one line
                 child: Text(
                   reason,
-                  style: TextStyle(color: Colors.white, fontSize: 16),
+                  style: const TextStyle(color: Colors.white, fontSize: 16),
                   textAlign: TextAlign.center,
                 ),
               ),
               leading: (idx == 0 || idx == totalCount - 1)
-                  ? Icon(Icons.info_outline, color: Colors.white)
+                  ? const Icon(Icons.info_outline, color: Colors.white)
                   : null,
             ),
           ),

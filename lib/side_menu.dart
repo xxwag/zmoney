@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -85,11 +84,11 @@ class SideMenuDrawerState extends State<SideMenuDrawer> {
               children: [
                 // Use the VideoPlayerManager's controller if initialized
                 if (isControllerInitialized)
-                  VideoPlayer(videoPlayerController!)
+                  VideoPlayer(videoPlayerController)
                 else
                   Container(
                     color: containerColor,
-                    child: Center(
+                    child: const Center(
                         child:
                             CircularProgressIndicator()), // Show loading spinner
                   ),
@@ -137,7 +136,7 @@ class SideMenuDrawerState extends State<SideMenuDrawer> {
                 context,
                 MaterialPageRoute(
                     builder: (context) =>
-                        MoneyWithdrawalScreen()), // Use the actual constructor of your MoneyWithdrawalScreen
+                        const MoneyWithdrawalScreen()), // Use the actual constructor of your MoneyWithdrawalScreen
               );
             },
           ),
@@ -306,13 +305,15 @@ class SettingsPageState extends State<SettingsPage> {
 }
 
 class MoneyWithdrawalScreen extends StatefulWidget {
+  const MoneyWithdrawalScreen({super.key});
+
   @override
   _MoneyWithdrawalScreenState createState() => _MoneyWithdrawalScreenState();
 }
 
 class _MoneyWithdrawalScreenState extends State<MoneyWithdrawalScreen> {
   final TextEditingController _amountController = TextEditingController();
-  bool _isLoading = false;
+  final bool _isLoading = false;
   final _formKey = GlobalKey<FormState>();
   double _totalZcoins = 0.0;
   double _realMoneyValue = 0.0;
@@ -367,12 +368,12 @@ class _MoneyWithdrawalScreenState extends State<MoneyWithdrawalScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text("Payment Method Unavailable"),
+          title: const Text("Payment Method Unavailable"),
           content: Text(
               "The process for $methodName withdrawal is not ready yet. We are so sorry. Please try a different method."),
           actions: <Widget>[
             TextButton(
-              child: Text('OK'),
+              child: const Text('OK'),
               onPressed: () {
                 Navigator.of(context).pop(); // Close the dialog
               },
@@ -391,24 +392,24 @@ class _MoneyWithdrawalScreenState extends State<MoneyWithdrawalScreen> {
           child: Wrap(
             children: <Widget>[
               ListTile(
-                  leading: Icon(Icons.account_balance_wallet),
-                  title: Text('Bitcoin'),
+                  leading: const Icon(Icons.account_balance_wallet),
+                  title: const Text('Bitcoin'),
                   onTap: () => Navigator.pop(context, 'Bitcoin')),
               ListTile(
-                  leading: Icon(Icons.credit_card),
-                  title: Text('Mastercard'),
+                  leading: const Icon(Icons.credit_card),
+                  title: const Text('Mastercard'),
                   onTap: () => Navigator.pop(context, 'Mastercard')),
               ListTile(
-                  leading: Icon(Icons.credit_card),
-                  title: Text('Visa'),
+                  leading: const Icon(Icons.credit_card),
+                  title: const Text('Visa'),
                   onTap: () => Navigator.pop(context, 'Visa')),
               ListTile(
-                  leading: Icon(Icons.payment),
-                  title: Text('PayPal'),
+                  leading: const Icon(Icons.payment),
+                  title: const Text('PayPal'),
                   onTap: () => Navigator.pop(context, 'PayPal')),
               ListTile(
-                  leading: Icon(Icons.phone_android),
-                  title: Text('Google Pay'),
+                  leading: const Icon(Icons.phone_android),
+                  title: const Text('Google Pay'),
                   onTap: () => Navigator.pop(context, 'Google Pay')),
             ],
           ),
@@ -436,7 +437,9 @@ class _MoneyWithdrawalScreenState extends State<MoneyWithdrawalScreen> {
   void _initiateWithdrawal(String paymentMethod, BuildContext context) {
     // Here, you would integrate with the actual payment method's API or SDK.
     // This is a placeholder to simulate the transfer process.
-    print("Initiating transfer with: $paymentMethod");
+    if (kDebugMode) {
+      print("Initiating transfer with: $paymentMethod");
+    }
 
     // Simulate opening a transfer window or processing the payment.
     showDialog(
@@ -451,7 +454,7 @@ class _MoneyWithdrawalScreenState extends State<MoneyWithdrawalScreen> {
               Navigator.of(context).pop();
               _showSuccessDialog(100.0); // Placeholder for successful transfer
             },
-            child: Text('OK'),
+            child: const Text('OK'),
           ),
         ],
       ),
@@ -462,13 +465,13 @@ class _MoneyWithdrawalScreenState extends State<MoneyWithdrawalScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Withdrawal Successful'),
+        title: const Text('Withdrawal Successful'),
         content: Text(
             'You have successfully withdrawn \$${amountWithdrawn.toStringAsFixed(2)}'),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: Text('OK'),
+            child: const Text('OK'),
           ),
         ],
       ),
@@ -485,9 +488,10 @@ class _MoneyWithdrawalScreenState extends State<MoneyWithdrawalScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Money Withdrawal', style: TextStyle(color: Colors.white)),
+        title: const Text('Money Withdrawal',
+            style: TextStyle(color: Colors.white)),
         flexibleSpace: Container(
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             image: DecorationImage(
               image: AssetImage('assets/mainscreen.png'),
               fit: BoxFit.cover,
@@ -496,11 +500,11 @@ class _MoneyWithdrawalScreenState extends State<MoneyWithdrawalScreen> {
         ),
       ),
       body: Padding(
-        padding: EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
           child: _isLoading
-              ? Center(child: CircularProgressIndicator())
+              ? const Center(child: CircularProgressIndicator())
               : SingleChildScrollView(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.start,
@@ -509,7 +513,7 @@ class _MoneyWithdrawalScreenState extends State<MoneyWithdrawalScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 20),
                         child: Text(
                             'Available Balance: \$${_realMoneyValue.toStringAsFixed(2)} (${_totalZcoins.toStringAsFixed(0)} ƵCoins)',
-                            style: TextStyle(
+                            style: const TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.green)),
@@ -531,13 +535,13 @@ class _MoneyWithdrawalScreenState extends State<MoneyWithdrawalScreen> {
                           decoration: InputDecoration(
                             labelText: 'Amount to Withdraw (\$)',
                             hintText: 'Enter the amount in dollars',
-                            border: OutlineInputBorder(),
-                            prefixIcon: Icon(Icons.monetization_on),
+                            border: const OutlineInputBorder(),
+                            prefixIcon: const Icon(Icons.monetization_on),
                             filled: true,
                             fillColor: Colors.grey[200],
                           ),
-                          keyboardType:
-                              TextInputType.numberWithOptions(decimal: true),
+                          keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true),
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return 'Please enter an amount';
@@ -550,22 +554,22 @@ class _MoneyWithdrawalScreenState extends State<MoneyWithdrawalScreen> {
                       ),
                       Text(
                           'You will withdraw: \$${_amountController.text} (${_sliderValue.toStringAsFixed(0)}% of your balance, ${(_sliderValue / 100 * _totalZcoins).toStringAsFixed(0)} ƵCoins)',
-                          style: TextStyle(fontSize: 16)),
+                          style: const TextStyle(fontSize: 16)),
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 20),
                         child: Text(
                             'Remaining Balance: \$${remainingBalanceAfterWithdrawal.toStringAsFixed(2)} (${remainingZcoinsAfterWithdrawal.toStringAsFixed(0)} ƵCoins)',
-                            style: TextStyle(
+                            style: const TextStyle(
                                 fontSize: 16, color: Colors.redAccent)),
                       ),
                       ElevatedButton(
                         onPressed: () => _showPaymentOptions(context),
-                        child: Text('Choose Payment Method'),
                         style: ElevatedButton.styleFrom(
-                          primary: Colors.blueGrey,
-                          onPrimary: Colors.white,
-                          minimumSize: Size.fromHeight(50),
+                          foregroundColor: Colors.white,
+                          backgroundColor: Colors.blueGrey,
+                          minimumSize: const Size.fromHeight(50),
                         ),
+                        child: const Text('Choose Payment Method'),
                       ),
                     ],
                   ),
@@ -581,12 +585,12 @@ class CardPaymentForm extends StatefulWidget {
   final double selectedZcoins; // Amount of Zcoins selected for withdrawal
   final double selectedAmountInDollars; // Equivalent amount in real money
 
-  CardPaymentForm({
-    Key? key,
+  const CardPaymentForm({
+    super.key,
     required this.cardType,
     required this.selectedZcoins,
     required this.selectedAmountInDollars,
-  }) : super(key: key);
+  });
 
   @override
   _CardPaymentFormState createState() => _CardPaymentFormState();
@@ -619,7 +623,7 @@ class _CardPaymentFormState extends State<CardPaymentForm> {
           ),
           actions: <Widget>[
             TextButton(
-              child: Text('OK'),
+              child: const Text('OK'),
               onPressed: () {
                 Navigator.of(context).pop(); // Close the dialog
               },
@@ -663,7 +667,9 @@ class _CardPaymentFormState extends State<CardPaymentForm> {
     });
 
     // Print the request body for debugging
-    print("Request body: $requestBody");
+    if (kDebugMode) {
+      print("Request body: $requestBody");
+    }
 
     final response = await http.post(
       Uri.parse('${NgrokManager.ngrokUrl}/api/submitWithdrawal'),
@@ -693,7 +699,9 @@ class _CardPaymentFormState extends State<CardPaymentForm> {
       final data = jsonDecode(response.body);
       double currentTotalWinAmount =
           (playerData['total_win_amount'] as num).toDouble();
-      print(data);
+      if (kDebugMode) {
+        print(data);
+      }
       double newTotalWinAmount = currentTotalWinAmount - widget.selectedZcoins;
 
       playerData['total_win_amount'] = newTotalWinAmount;
@@ -715,11 +723,15 @@ class _CardPaymentFormState extends State<CardPaymentForm> {
     return Scaffold(
       appBar: AppBar(
         title: Text('${widget.cardType} Details'),
+        iconTheme: IconThemeData(
+          color: Colors.white, // Change this to your desired color
+        ),
+        // Other AppBar properties if needed
       ),
       body: Padding(
-        padding: EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16.0),
         child: _isLoading
-            ? Center(child: CircularProgressIndicator())
+            ? const Center(child: CircularProgressIndicator())
             : Form(
                 key: _formKey,
                 child: SingleChildScrollView(
@@ -729,11 +741,12 @@ class _CardPaymentFormState extends State<CardPaymentForm> {
                     children: [
                       Text(
                         'Withdrawal Amount: ${widget.selectedZcoins.toStringAsFixed(2)} Zcoins (\$${widget.selectedAmountInDollars.toStringAsFixed(2)})',
-                        style: TextStyle(
+                        style: const TextStyle(
                             fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                       TextFormField(
-                        decoration: InputDecoration(labelText: 'Holder Name'),
+                        decoration:
+                            const InputDecoration(labelText: 'Holder Name'),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'Please enter the holder\'s name';
@@ -743,7 +756,8 @@ class _CardPaymentFormState extends State<CardPaymentForm> {
                         onSaved: (value) => _holderName = value!,
                       ),
                       TextFormField(
-                        decoration: InputDecoration(labelText: 'Card Number'),
+                        decoration:
+                            const InputDecoration(labelText: 'Card Number'),
                         validator: (value) {
                           if (value == null ||
                               value.isEmpty ||
@@ -755,8 +769,8 @@ class _CardPaymentFormState extends State<CardPaymentForm> {
                         onSaved: (value) => _cardNumber = value!,
                       ),
                       TextFormField(
-                        decoration:
-                            InputDecoration(labelText: 'Expiry Date (MM/YY)'),
+                        decoration: const InputDecoration(
+                            labelText: 'Expiry Date (MM/YY)'),
                         validator: (value) {
                           if (value == null ||
                               value.isEmpty ||
@@ -769,7 +783,7 @@ class _CardPaymentFormState extends State<CardPaymentForm> {
                         onSaved: (value) => _expiryDate = value!,
                       ),
                       TextFormField(
-                        decoration: InputDecoration(labelText: 'CVV'),
+                        decoration: const InputDecoration(labelText: 'CVV'),
                         validator: (value) {
                           if (value == null ||
                               value.isEmpty ||
@@ -781,7 +795,7 @@ class _CardPaymentFormState extends State<CardPaymentForm> {
                         onSaved: (value) => _cvv = value!,
                       ),
                       TextFormField(
-                        decoration: InputDecoration(labelText: 'Email'),
+                        decoration: const InputDecoration(labelText: 'Email'),
                         validator: (value) {
                           if (value == null ||
                               value.isEmpty ||
@@ -793,11 +807,11 @@ class _CardPaymentFormState extends State<CardPaymentForm> {
                         onSaved: (value) => _email = value!,
                       ),
                       TextFormField(
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                             labelText: 'Variable Symbol (Optional)'),
                         onSaved: (value) => _variableSymbol = value ?? '',
                       ),
-                      SizedBox(
+                      const SizedBox(
                           height:
                               20), // Add some spacing before the submit button
                       ElevatedButton(
@@ -806,14 +820,14 @@ class _CardPaymentFormState extends State<CardPaymentForm> {
                             : () async {
                                 await _submitTicket();
                               },
-                        child: Text('Submit'),
                         style: ElevatedButton.styleFrom(
-                          primary: Theme.of(context)
+                          backgroundColor: Theme.of(context)
                               .primaryColor, // Use the primary color from the app's theme
-                          padding: EdgeInsets.symmetric(
+                          padding: const EdgeInsets.symmetric(
                               vertical:
                                   16.0), // Increase button's vertical padding
                         ),
+                        child: const Text('Submit'),
                       ),
                     ],
                   ),

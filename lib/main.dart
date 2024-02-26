@@ -205,26 +205,6 @@ class WelcomeScreenState extends State<WelcomeScreen>
         .addPostFrameCallback((_) => _revealWidgetsSequentially());
   }
 
-  void _showErrorDialog(String message) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Signup Error'),
-          content: Text(message),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('OK'),
-              onPressed: () {
-                Navigator.of(context).pop(); // Dismiss the dialog
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   Widget _buildToggleFormModeButton() {
     Color textColor = _isSignUpMode
         ? Colors.yellowAccent
@@ -387,24 +367,28 @@ class WelcomeScreenState extends State<WelcomeScreen>
   }
 
   Widget _buildSocialSignInButtons() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        _buildSignInButton(
-          'Google',
-          _signInWithGoogle,
-          icon: FontAwesomeIcons.google,
-          iconColor: Colors.blue, // Google color
-        ),
-        const SizedBox(width: 20), // Space between buttons
-        _buildSignInButton(
-          'GitHub',
-          _signInWithGitHub,
-          icon: FontAwesomeIcons.github,
-          iconColor:
-              Colors.white, // GitHub color, though default is already black
-        ),
-      ],
+    return Center(
+      // Use Center to keep the Wrap widget centered on the screen
+      child: Wrap(
+        alignment: WrapAlignment.center, // Center the buttons horizontally
+        spacing: 20, // Space between buttons horizontally
+        runSpacing: 20, // Space between buttons when wrapped to the next line
+        children: [
+          _buildSignInButton(
+            'Google',
+            _signInWithGoogle,
+            icon: FontAwesomeIcons.google,
+            iconColor: Colors.blue, // Google color
+          ),
+          _buildSignInButton(
+            'GitHub',
+            _signInWithGitHub,
+            icon: FontAwesomeIcons.github,
+            iconColor:
+                Colors.white, // GitHub color, though default is already black
+          ),
+        ],
+      ),
     );
   }
 
