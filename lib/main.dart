@@ -452,6 +452,19 @@ class WelcomeScreenState extends State<WelcomeScreen>
     );
   }
 
+  void _revealWidgetsSequentially() async {
+    for (int i = 0; i < _widgets.length; i++) {
+      final widgetData = _widgets[i];
+      final controller = widgetData['controller'] as AnimationController;
+      await Future.delayed(
+          const Duration(milliseconds: 500)); // Adjust delay as needed
+      setState(() {
+        widgetData['visible'] = true;
+      });
+      controller.forward();
+    }
+  }
+
   Widget _buildEmailTextField() {
     Color borderColor =
         _isSignUpMode ? Colors.yellowAccent : Colors.greenAccent;
@@ -513,19 +526,6 @@ class WelcomeScreenState extends State<WelcomeScreen>
     );
   }
 
-  void _revealWidgetsSequentially() async {
-    for (int i = 0; i < _widgets.length; i++) {
-      final widgetData = _widgets[i];
-      final controller = widgetData['controller'] as AnimationController;
-      await Future.delayed(
-          const Duration(milliseconds: 500)); // Adjust delay as needed
-      setState(() {
-        widgetData['visible'] = true;
-      });
-      controller.forward();
-    }
-  }
-
   Future<bool> _signUp(String email, String password) async {
     try {
       final bool result = await _channel.invokeMethod('signUp', {
@@ -543,16 +543,132 @@ class WelcomeScreenState extends State<WelcomeScreen>
     }
   }
 
+  Future<void> _handleSignUp() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+    if (email.isNotEmpty && password.isNotEmpty) {
+      _isAuthenticating = true; // Lock UI
+      try {
+        // Attempt to sign up the user with the provided credentials
+        final bool signUpSuccess = await _signUp(email, password);
+        if (signUpSuccess) {
+          // Sign-up successful, now sign in the user automatically with the same credentials
+          final bool signInSuccess = await _signIn(email, password);
+          if (signInSuccess) {
+            // Sign-in was successful, navigate to the next screen or update UI state as needed
+            _showSnackBar("Sign-up and sign-in successful.");
+            // For example, navigate to a home screen: Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => HomeScreen()));
+          } else {
+            // Handle sign-in failure if necessary
+            _showSnackBar(
+                "Sign-up successful, but sign-in failed. Please try to sign in.");
+          }
+        } else {
+          // Handle sign-up failure
+          _showSnackBar("Sign-up failed. Please try again.");
+        }
+      } on PlatformException catch (e) {
+        _showSnackBar(
+            _getErrorMessage(e.code)); // Use snack bar for error messages
+      } finally {
+        _isAuthenticating = false; // Unlock UI
+      }
+    } else {
+      _showSnackBar("Email and password cannot be empty.");
+    }
+  }
+
   Future<bool> _signIn(String email, String password) async {
+    _isAuthenticating = true; // Lock UI
+    bool signInSuccess = false;
     try {
-      final bool result = await _channel.invokeMethod('signIn', {
+      final Map<dynamic, dynamic> authDetails =
+          await _channel.invokeMethod('signIn', {
         'email': email,
         'password': password,
       });
-      return result;
-    } on PlatformException catch (e) {
-      _showSnackBar(_getSignInErrorMessage(e.code));
-      return false;
+
+      // Extract email, ID token, and Firebase user ID (as accessToken) from authDetails
+      final String? returnedEmail = authDetails['email'];
+      final String? idToken =
+          await FirebaseAuth.instance.currentUser?.getIdToken();
+
+      final String? firebaseUserId =
+          authDetails['accessToken']; // Firebase user ID is used as accessToken
+      // Print extracted details for debugging
+      print('Returned Email: $returnedEmail');
+      print('ID Token: $idToken');
+      print('Firebase User ID (as AccessToken): $firebaseUserId');
+
+      if (returnedEmail != null && idToken != null && firebaseUserId != null) {
+        // Use the returned credentials to approach the master endpoint
+        final response = await approachMasterEndpoint(
+            returnedEmail, idToken, firebaseUserId,
+            isFirebaseId: true);
+
+        if (response.statusCode == 200) {
+          var responseData = jsonDecode(response.body);
+          var jwtToken = responseData['token'];
+          await secureStorage.write(key: 'jwtToken', value: jwtToken);
+
+          final playerDataResponse = await verifyAndRetrieveData(jwtToken);
+          if (playerDataResponse.statusCode == 200) {
+            var playerData = jsonDecode(playerDataResponse.body)['playerData'];
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setString('playerData', jsonEncode(playerData));
+
+            Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (context) => const LandingPage()));
+            _showSnackBar("Sign-in successful.");
+            signInSuccess = true;
+          } else {
+            _showSnackBar("Error verifying token and retrieving data.");
+          }
+        } else {
+          _showSnackBar("Error contacting master endpoint.");
+        }
+      } else {
+        _showSnackBar("Authentication failed.");
+      }
+    } catch (error) {
+      _showSnackBar('Error during sign-in: $error');
+    } finally {
+      _isAuthenticating = false; // Unlock UI
+    }
+    return signInSuccess;
+  }
+
+  Future<http.Response> approachMasterEndpoint(
+      String email, String idToken, String token,
+      {bool isFirebaseId = false}) async {
+    return http.post(
+      Uri.parse('${NgrokManager.ngrokUrl}/api/masterEndpoint'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'email': email,
+        'idToken': idToken,
+        'token':
+            token, // Use a generic name like 'token' for both Firebase user ID and Google access token
+        'isFirebaseId':
+            isFirebaseId, // Indicates the type of token being passed
+      }),
+    );
+  }
+
+  void _handleSignIn() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+    if (email.isNotEmpty && password.isNotEmpty) {
+      final success = await _signIn(email, password);
+      if (success) {
+        // If _signIn is successful, additional navigation or success handling can be performed here
+
+        // _showSnackBar("Sign-in successful."); is already called within _signIn
+      } else {
+        // Error message handling is already done within _signIn
+      }
+    } else {
+      _showSnackBar("Email and password cannot be empty.");
     }
   }
 
@@ -595,22 +711,64 @@ class WelcomeScreenState extends State<WelcomeScreen>
     );
   }
 
-  Future<void> _handleSignUp() async {
-    final email = _emailController.text.trim();
-    final password = _passwordController.text.trim();
-    if (email.isNotEmpty && password.isNotEmpty) {
-      try {
-        // Assuming _signUp() interacts with Firebase or another auth service
-        final bool success = await _signUp(email, password);
-        if (success) {
-          _showSnackBar("Sign-up successful. Please verify your email.");
-          // Optionally navigate to a different screen or change UI state
-        }
-      } on PlatformException catch (e) {
-        _showSnackBar(_getErrorMessage(e.code));
+  Future<void> _signInWithGoogle() async {
+    _isAuthenticating = true; // Lock UI
+    try {
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) {
+        _showSnackBar("Google Sign-In was cancelled.");
+        _isAuthenticating = false; // Unlock UI
+        return;
       }
-    } else {
-      _showSnackBar("Email and password cannot be empty.");
+
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      UserCredential userCredential =
+          await FirebaseAuth.instance.signInWithCredential(credential);
+      if (userCredential.user != null) {
+        final response = await approachMasterEndpoint(
+          userCredential.user!.email!,
+          googleAuth.idToken!,
+          googleAuth.accessToken!,
+          isFirebaseId: false,
+        );
+
+        if (response.statusCode == 200) {
+          var responseData = jsonDecode(response.body);
+          var jwtToken = responseData['token'];
+          await secureStorage.write(key: 'jwtToken', value: jwtToken);
+
+          final playerDataResponse = await verifyAndRetrieveData(jwtToken);
+          if (playerDataResponse.statusCode == 200) {
+            var playerData = jsonDecode(playerDataResponse.body)['playerData'];
+            print('player data $playerData');
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setString('playerData', jsonEncode(playerData));
+
+            // Navigate to the next screen or update the state as necessary
+            Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (context) => const LandingPage()));
+            _showSnackBar("Sign-in successful.");
+          } else {
+            _showSnackBar("Error verifying token and retrieving data.");
+            _isAuthenticating = false; // Unlock UI
+          }
+        } else {
+          _showSnackBar("Error contacting master endpoint.");
+          _isAuthenticating = false; // Unlock UI
+        }
+      } else {
+        _showSnackBar("Authentication failed.");
+        _isAuthenticating = false; // Unlock UI
+      }
+    } catch (error) {
+      _showSnackBar('Error during Google Sign-In: $error');
+      _isAuthenticating = false; // Unlock UI
     }
   }
 
@@ -678,22 +836,6 @@ class WelcomeScreenState extends State<WelcomeScreen>
       // Include additional error handling as needed
       default:
         return 'An error occurred during sign-in. Please try again.';
-    }
-  }
-
-  void _handleSignIn() async {
-    final email = _emailController.text.trim();
-    final password = _passwordController.text.trim();
-    if (email.isNotEmpty && password.isNotEmpty) {
-      final success = await _signIn(email, password);
-      if (success) {
-        _showSnackBar("Sign-in successful.");
-        // Navigate to the next screen or show success message
-      } else {
-        // Error message is shown via _signIn method
-      }
-    } else {
-      _showSnackBar("Email and password cannot be empty.");
     }
   }
 
@@ -790,78 +932,6 @@ class WelcomeScreenState extends State<WelcomeScreen>
       _showSnackBar('GitHub Sign-In failed: $e');
       _isAuthenticating = false; // Unlock UI
     }
-  }
-
-  Future<void> _signInWithGoogle() async {
-    _isAuthenticating = true; // Lock UI
-    try {
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) {
-        _showSnackBar("Google Sign-In was cancelled.");
-        _isAuthenticating = false; // Unlock UI
-        return;
-      }
-
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-
-      UserCredential userCredential =
-          await FirebaseAuth.instance.signInWithCredential(credential);
-      if (userCredential.user != null) {
-        final response = await approachMasterEndpoint(
-          userCredential.user!.email!,
-          googleAuth.idToken!,
-          googleAuth.accessToken!,
-        );
-
-        if (response.statusCode == 200) {
-          var responseData = jsonDecode(response.body);
-          var jwtToken = responseData['token'];
-          await secureStorage.write(key: 'jwtToken', value: jwtToken);
-
-          final playerDataResponse = await verifyAndRetrieveData(jwtToken);
-          if (playerDataResponse.statusCode == 200) {
-            var playerData = jsonDecode(playerDataResponse.body)['playerData'];
-            final prefs = await SharedPreferences.getInstance();
-            await prefs.setString('playerData', jsonEncode(playerData));
-
-            // Navigate to the next screen or update the state as necessary
-            Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (context) => const LandingPage()));
-            _showSnackBar("Sign-in successful.");
-          } else {
-            _showSnackBar("Error verifying token and retrieving data.");
-            _isAuthenticating = false; // Unlock UI
-          }
-        } else {
-          _showSnackBar("Error contacting master endpoint.");
-          _isAuthenticating = false; // Unlock UI
-        }
-      } else {
-        _showSnackBar("Authentication failed.");
-        _isAuthenticating = false; // Unlock UI
-      }
-    } catch (error) {
-      _showSnackBar('Error during Google Sign-In: $error');
-      _isAuthenticating = false; // Unlock UI
-    }
-  }
-
-  Future<http.Response> approachMasterEndpoint(
-      String email, String idToken, String accessToken) async {
-    return http.post(
-      Uri.parse('${NgrokManager.ngrokUrl}/api/masterEndpoint'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'email': email,
-        'idToken': idToken,
-        'accessToken': accessToken,
-      }),
-    );
   }
 
   Future<http.Response> verifyAndRetrieveData(String jwtToken) async {

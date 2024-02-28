@@ -114,20 +114,75 @@ class MainActivity : FlutterActivity() {
             }
     }
 
-    private fun signIn(email: String, password: String, result: MethodChannel.Result) {
-        auth.signInWithEmailAndPassword(email, password)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    result.success(true)
-                } else {
-                    result.error("AUTH_ERROR", task.exception?.message, null)
+   private fun signIn(email: String, password: String, result: MethodChannel.Result) {
+    auth.signInWithEmailAndPassword(email, password)
+        .addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                // Once sign-in is successful, get the ID token
+                auth.currentUser?.getIdToken(true)?.addOnCompleteListener { idTask ->
+                    if (idTask.isSuccessful) {
+                        val idToken = idTask.result?.token
+                        // Additionally, get the Firebase user ID to use as an accessToken or equivalent
+                        val firebaseUserId = auth.currentUser?.uid
+                        
+                        // Prepare the authentication details including the Firebase user ID
+                        val authDetails = hashMapOf(
+                            "email" to email,
+                            "idToken" to idToken,
+                            "accessToken" to firebaseUserId // Using Firebase UID as accessToken
+                        )
+                        result.success(authDetails)
+                    } else {
+                        // Handle failure to get ID token
+                        result.error("TOKEN_ERROR", "Failed to obtain ID token", null)
+                    }
                 }
+            } else {
+                // Handle sign-in failure
+                result.error("AUTH_ERROR", task.exception?.message, null)
             }
-    }
+        }
+}
+
 
     private fun signOut(result: MethodChannel.Result) {
         auth.signOut()
         result.success(true)
+    }
+
+     private fun signIn(result: MethodChannel.Result) {
+        gamesSignInClient.signIn().addOnCompleteListener { task ->
+            val wasSuccessful = task.isSuccessful
+            Log.d(TAG, "signIn: ${task.isSuccessful}")
+            result.success(wasSuccessful)
+
+            logLoginEvent()
+
+            if (wasSuccessful) {
+                // Retrieve player ID from Google Play Games
+                getPlayerId()
+
+                // Initiate Google Sign-In to get the email
+                signInWithGoogle()
+            } else {
+                // Handle sign-in failure
+                Log.e(TAG, "Sign-in failed")
+            }
+        }
+    }
+
+     private fun handleSignInResult(completedTask: Task<GoogleSignInAccount>) {
+        try {
+            val account = completedTask.getResult(ApiException::class.java)
+            // Google Sign-In was successful, retrieve the email
+            val email = account?.email ?: ""
+
+            // You can now use the email along with the player ID
+            Log.d(TAG, "Google Sign-In email: $email")
+            // Send this info back to Flutter if needed
+        } catch (e: ApiException) {
+            Log.e(TAG, "Google Sign-In failed", e)
+        }
     }
 
 
@@ -160,26 +215,7 @@ private fun signInWithGooglePlayGames() {
     }
 
 
-    private fun signIn(result: MethodChannel.Result) {
-        gamesSignInClient.signIn().addOnCompleteListener { task ->
-            val wasSuccessful = task.isSuccessful
-            Log.d(TAG, "signIn: ${task.isSuccessful}")
-            result.success(wasSuccessful)
-
-            logLoginEvent()
-
-            if (wasSuccessful) {
-                // Retrieve player ID from Google Play Games
-                getPlayerId()
-
-                // Initiate Google Sign-In to get the email
-                signInWithGoogle()
-            } else {
-                // Handle sign-in failure
-                Log.e(TAG, "Sign-in failed")
-            }
-        }
-    }
+   
 
     private fun signInWithGoogle() {
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -205,19 +241,7 @@ private fun signInWithGooglePlayGames() {
         }
     }
 
-    private fun handleSignInResult(completedTask: Task<GoogleSignInAccount>) {
-        try {
-            val account = completedTask.getResult(ApiException::class.java)
-            // Google Sign-In was successful, retrieve the email
-            val email = account?.email ?: ""
-
-            // You can now use the email along with the player ID
-            Log.d(TAG, "Google Sign-In email: $email")
-            // Send this info back to Flutter if needed
-        } catch (e: ApiException) {
-            Log.e(TAG, "Google Sign-In failed", e)
-        }
-    }
+   
 
     private fun getPlayerInfo() {
     val playersClient = PlayGames.getPlayersClient(this)

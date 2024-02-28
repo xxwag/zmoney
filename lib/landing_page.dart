@@ -90,6 +90,7 @@ class LandingPageState extends State<LandingPage>
   String translatedText15 = 'Settings';
 
   double _prizePoolAmount = 100000; // Starting amount
+  double _conversionRatio = 0.1; // Adjusted for demonstration
 
 // To track the Go button lock state
   bool isButtonLocked = false; // Add this variable to your widget state
@@ -282,19 +283,22 @@ class LandingPageState extends State<LandingPage>
       final uri = Uri.parse('${NgrokManager.ngrokUrl}/api/prizePool');
       final response = await http.get(
         uri,
-        // Include the JWT token in the Authorization header
         headers: {
           'Authorization': 'Bearer $jwtToken',
         },
       );
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        if (data != null && data['prizePool'] != null) {
+        print(data);
+        if (data != null) {
           setState(() {
-            _prizePoolAmount = data['prizePool'].toDouble();
-            // Optionally, start local incrementation from the fetched value
+            _prizePoolAmount = data['prizePoolBase'].toDouble();
+            // Correctly update the class field _conversionRatio
+            _conversionRatio = data['conversionRatio'];
             _startSmoothPrizePoolIncrementation();
           });
+          print(
+              'Conversion ratio: $_conversionRatio'); // This should now print the updated value
         }
       } else {
         throw Exception('Failed to load prize pool from server');
@@ -1107,10 +1111,15 @@ class LandingPageState extends State<LandingPage>
               ],
             ),
           ),
-          floatingActionButton: const Stack(
+          floatingActionButton: Stack(
             children: [
               Positioned(
-                  right: 10, bottom: 5, child: StatisticsFloatingButton()),
+                  right: 10,
+                  bottom: 5,
+                  child: StatisticsFloatingButton(
+                    conversionRatio:
+                        _conversionRatio, // Ensure this is the current conversion ratio obtained from your logic
+                  )),
             ],
           ),
         ));
@@ -1399,7 +1408,7 @@ class LandingPageState extends State<LandingPage>
         if (isCorrect) {
           playerData['wins'] = ((playerData['wins'] ?? 0) as int) + 1;
           playerData['total_win_amount'] =
-              (playerData['total_win_amount'] ?? 0) + prizePoolAmount;
+              (playerData['total_win_amount'] ?? 0.0) + prizePoolAmount;
           if (prizePoolAmount >
               (playerData['highest_win_amount']?.toDouble() ?? 0.0)) {
             playerData['highest_win_amount'] = prizePoolAmount;
@@ -1774,7 +1783,9 @@ class LandingPageState extends State<LandingPage>
 }
 
 class PlayerDataWidget extends StatefulWidget {
-  const PlayerDataWidget({super.key});
+  final double conversionRatio;
+
+  const PlayerDataWidget({super.key, required this.conversionRatio});
 
   @override
   PlayerDataWidgetState createState() => PlayerDataWidgetState();
@@ -1795,8 +1806,18 @@ class PlayerDataWidgetState extends State<PlayerDataWidget> {
     final prefs = await SharedPreferences.getInstance();
     String? playerDataString = prefs.getString('playerData');
     if (playerDataString != null) {
+      Map<String, dynamic> tempPlayerData = jsonDecode(playerDataString);
+
+      // Ensuring 'total_win_amount' is treated as a double
+      if (tempPlayerData.containsKey('total_win_amount')) {
+        var totalWinAmount = tempPlayerData['total_win_amount'];
+        // Convert to double if it is not already
+        tempPlayerData['total_win_amount'] =
+            totalWinAmount is int ? totalWinAmount.toDouble() : totalWinAmount;
+      }
+
       setState(() {
-        playerData = jsonDecode(playerDataString);
+        playerData = tempPlayerData;
       });
     }
   }
@@ -1810,12 +1831,30 @@ class PlayerDataWidgetState extends State<PlayerDataWidget> {
 
   @override
   Widget build(BuildContext context) {
-    const double conversionRatio = 0.1; // Adjusted for demonstration
+    // Assuming playerData['total_win_amount'] and conversionRatio are correctly fetched/set
+    // Assuming playerData is a map
+    print('player data2: $playerData');
+
     final double totalWinAmount =
-        ((playerData['total_win_amount'] as num?)?.toDouble() ?? 0.0);
+        (playerData['total_win_amount'] as double?) ?? 0.1;
 
-    final double realMoneyValue = totalWinAmount * conversionRatio;
+    final double totalWinAmount2 =
+        (playerData['total_win_amount'] as double?) ?? 0.1;
+    print('Converted Total Win Amount: $totalWinAmount');
+    print('Converted Total Win Amount 2: $totalWinAmount2');
+    print(
+        'Original Total Win Amount String: ${playerData['total_win_amount'].toString()}');
+// Calculate the initial real money value
+    final double conversionRatio =
+        widget.conversionRatio ?? 0.1; // Default to 0.0 if not provided
+    final double initialRealMoneyValue =
+        conversionRatio * 0.60; // Adjusted formula
 
+    print('Initial Real Money Value: $initialRealMoneyValue');
+
+// Calculate 60% of the initial real money value
+    final double realMoneyValue = initialRealMoneyValue;
+    print('Real Money Value: $realMoneyValue');
     List<String> lastGuesses =
         playerData['last_guesses']?.toString().split(',') ?? [];
 
@@ -1854,12 +1893,12 @@ class PlayerDataWidgetState extends State<PlayerDataWidget> {
               _buildSectionTitle("Earnings"),
               _buildAmountRow("Total Win Amount:", totalWinAmount,
                   leadingIcon: Icons.account_balance_wallet),
-              _buildAmountRow("Real Money Value:", realMoneyValue,
+              _buildAmountRowWithExplanation(
+                  "Real Money Value:", realMoneyValue,
                   leadingIcon: Icons.monetization_on, isCurrency: true),
               const Divider(),
               _buildSectionTitle("Highest Win"),
-              _buildAmountRow("Highest Win Amount:",
-                  (playerData['highest_win_amount'] as int?)?.toDouble() ?? 0.0,
+              _buildAmountRow("Highest Win Amount:", totalWinAmount,
                   leadingIcon: Icons.emoji_events),
               const Divider(),
               _buildSectionTitle("Last Guesses"),
@@ -1883,6 +1922,31 @@ class PlayerDataWidgetState extends State<PlayerDataWidget> {
     );
   }
 
+  Widget _buildAmountRowWithExplanation(String title, double amount,
+      {bool isCurrency = false, IconData? leadingIcon}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildAmountRow(title, amount,
+            isCurrency: isCurrency, leadingIcon: leadingIcon),
+        Padding(
+          padding: const EdgeInsets.only(top: 8.0),
+          child: Text(
+            "current revenue + your score * your total win amount",
+            style: TextStyle(
+              fontFamily: 'Proxima',
+              fontSize: 12, // Adjust the size as needed
+              fontStyle:
+                  FontStyle.italic, // Use italic for the explanation if desired
+              color: Colors
+                  .grey, // Use a subtle color to indicate this is an explanation
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildHighlightedInfo({required String title, required String value}) {
     return Column(
       children: [
@@ -1894,38 +1958,44 @@ class PlayerDataWidgetState extends State<PlayerDataWidget> {
       ],
     );
   }
-}
 
-Widget _buildSectionTitle(String title) {
-  return Padding(
-    padding: const EdgeInsets.symmetric(vertical: 8.0),
-    child: Text(
-      title,
-      style: const TextStyle(
-          fontSize: 20, fontWeight: FontWeight.bold, color: Colors.blueAccent),
-    ),
-  );
-}
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Text(
+        title,
+        style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.blueAccent),
+      ),
+    );
+  }
 
-Widget _buildAmountRow(String title, double amount,
-    {bool isCurrency = false, IconData? leadingIcon}) {
-  return ListTile(
-    leading: leadingIcon != null ? Icon(leadingIcon) : null,
-    title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-    subtitle: Text(
-      isCurrency
-          ? '\$${amount.toStringAsFixed(2)}'
-          : '${amount.toString()} Coins',
-      style: const TextStyle(
-          color: Colors.green, fontWeight: FontWeight.bold, fontSize: 16),
-    ),
-  );
+  Widget _buildAmountRow(String title, double amount,
+      {bool isCurrency = false, IconData? leadingIcon}) {
+    return ListTile(
+      leading: leadingIcon != null ? Icon(leadingIcon) : null,
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+      subtitle: Text(
+        isCurrency
+            ? '\$${amount.toStringAsFixed(2)}'
+            : '${amount.toString()} Coins',
+        style: const TextStyle(
+            color: Colors.green, fontWeight: FontWeight.bold, fontSize: 16),
+      ),
+    );
+  }
 }
-
 // Assuming PlayerDataWidget is defined elsewhere in your code
 
 class StatisticsFloatingButton extends StatefulWidget {
-  const StatisticsFloatingButton({super.key});
+  final double conversionRatio; // Add conversionRatio as a field
+
+  const StatisticsFloatingButton({
+    super.key,
+    required this.conversionRatio, // Require it as a named parameter
+  });
 
   @override
   State<StatisticsFloatingButton> createState() =>
@@ -2031,8 +2101,10 @@ class _StatisticsFloatingButtonState extends State<StatisticsFloatingButton>
                             ),
                             automaticallyImplyLeading: false,
                           ),
-                          const Expanded(
-                            child: PlayerDataWidget(),
+                          Expanded(
+                            child: PlayerDataWidget(
+                                conversionRatio: widget
+                                    .conversionRatio), // Use widget.conversionRatio here
                           ),
                         ],
                       ),
