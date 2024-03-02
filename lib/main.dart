@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 import 'package:firebase_ui_auth/firebase_ui_auth.dart';
-import 'package:firebase_ui_oauth_facebook/firebase_ui_oauth_facebook.dart';
+
 import 'package:firebase_ui_oauth_google/firebase_ui_oauth_google.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
@@ -20,6 +20,8 @@ import 'package:oauth2/oauth2.dart' as oauth2;
 import 'package:http/http.dart' as http;
 import 'package:flutter_appauth/flutter_appauth.dart';
 import 'package:video_player/video_player.dart';
+import 'package:zmoney/fukk_widgets/language_selector.dart';
+import 'package:zmoney/fukk_widgets/translator.dart';
 import 'package:zmoney/loading_screen.dart';
 import 'package:zmoney/ngrok.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -27,11 +29,13 @@ import 'landing_page.dart';
 import 'firebase_options.dart';
 import 'package:flutter/services.dart';
 import 'package:games_services/games_services.dart';
+import 'package:auto_localization/auto_localization.dart';
+
+final translator =
+    Translator(currentLanguage: 'en'); // Set initial language as needed
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // await clearSharedPreferences();
 
   String envFileName = ".env";
   await dotenv.load(fileName: envFileName);
@@ -55,7 +59,6 @@ void main() async {
       GoogleProvider(
           clientId:
               '446412900874-ifkm836l5ftprj362groq3q3gd5brq3c.apps.googleusercontent.com'),
-      FacebookProvider(clientId: '939946717700321'),
     ]);
 
     await MobileAds.instance.initialize();
@@ -79,10 +82,28 @@ void main() async {
   } else {
     homeScreen = const WelcomeScreen();
   }
+
+  String userLanguage = getPreferredLanguage();
+  // await clearSharedPreferences();
+  print(userLanguage);
+  final String preferredLanguage = 'en'; // Example language code
+  translator.setCurrentLanguage(preferredLanguage);
+
+  await AutoLocalization.init(
+    appLanguage: 'en', // Default language
+    userLanguage: 'it', // userLanguage
+  );
+  GameAuth.getAuthCode(
+      '446412900874-ahqkgka4tmdssv5saom7ofpfpv0kl00v.apps.googleusercontent.com');
   GameAuth.signIn();
+
   Future.delayed(const Duration(seconds: 3), () {
     runApp(MyApp(homeScreen: homeScreen));
   });
+}
+
+String getPreferredLanguage() {
+  return WidgetsBinding.instance.window.locale.languageCode;
 }
 
 Future<http.Response> verifyAndRetrieveData(String jwtToken) async {
@@ -119,7 +140,7 @@ class AuthGate extends StatelessWidget {
           return SignInScreen(
             // Email and password provider is included by default
             providers: [
-              FacebookProvider(clientId: '939946717700321'),
+              // FacebookProvider(clientId: '939946717700321'),
               // Specify other providers here
               GoogleProvider(
                 clientId:
@@ -151,8 +172,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-// ... Rest of your code for PlayGamesService, WelcomeScreen, etc. ...
-
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
 
@@ -165,6 +184,7 @@ class WelcomeScreenState extends State<WelcomeScreen>
   final GoogleSignIn _googleSignIn = GoogleSignIn(scopes: ['email']);
   User? currentUser;
   bool _isPasswordVisible = false;
+  bool _isPasswordValid = false; // New state variable
   bool isSigningInWithGoogle = true; // Initially, try to sign in with Google
   bool showAlternativeOptions =
       false; // Show skip and OAuth2 only if Google sign-in fails
@@ -172,11 +192,15 @@ class WelcomeScreenState extends State<WelcomeScreen>
   final FlutterSecureStorage secureStorage = const FlutterSecureStorage();
   final FlutterAppAuth _appAuth = const FlutterAppAuth();
   static const _channel = MethodChannel('com.gg.zmoney/auth');
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
+
   List<Map<String, dynamic>> _widgets = [];
   bool _isSignUpMode = true; // false for sign-in mode, true for sign-up mode
   bool _isAuthenticating = false; // New variable to track authentication state
+
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
 
   final Map<String, Map<String, String>> oAuth2Providers = {
     'google': {
@@ -203,20 +227,47 @@ class WelcomeScreenState extends State<WelcomeScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) => _closeKeyboard());
     WidgetsBinding.instance
         .addPostFrameCallback((_) => _revealWidgetsSequentially());
+    _passwordController.addListener(_updatePasswordValidity);
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
   }
 
   Widget _buildToggleFormModeButton() {
-    Color textColor = _isSignUpMode
-        ? Colors.yellowAccent
-        : Colors.greenAccent; // Example colors
-    return TextButton(
-      onPressed: _toggleFormMode,
-      child: Text(
-        _isSignUpMode
-            ? "Already have an account? Sign in here."
-            : "Don't have an account? Register here.",
-        style: TextStyle(color: textColor),
-      ),
+    // Define the keys for the translations
+    const String signInKey = "Already have an account? Sign in here.";
+    final String signUpKey = "Don't have an account? Register here.";
+
+    // Determine the current key based on the sign-up mode
+    final String currentKey = _isSignUpMode ? signInKey : signUpKey;
+
+    Color textColor = _isSignUpMode ? Colors.yellowAccent : Colors.greenAccent;
+
+    return FutureBuilder<String>(
+      future: translator
+          .translate(currentKey), // Fetch the translation asynchronously
+      builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
+        // Check if the translation is loaded
+        if (snapshot.connectionState == ConnectionState.done &&
+            snapshot.hasData) {
+          // Translation is loaded, use it
+          return TextButton(
+            onPressed: _toggleFormMode,
+            child: Text(
+              snapshot.data!, // Use the translated text
+              style: TextStyle(color: textColor),
+            ),
+          );
+        } else {
+          // Translation is not yet loaded or an error occurred, show a placeholder or error message
+          return CircularProgressIndicator(); // Or some other placeholder widget
+        }
+      },
     );
   }
 
@@ -338,7 +389,16 @@ class WelcomeScreenState extends State<WelcomeScreen>
       body: Stack(
         fit: StackFit.expand,
         children: [
-          const AnimatedBackgroundScreen(), // Use your animated background here
+          const AnimatedBackgroundScreen(),
+          Positioned(
+            top: 20, // Adjust as needed
+            right: 20, // Adjust as needed
+            child: LanguageSelectorWidget(
+              onLanguageChanged: (String newLanguageCode) {
+                _initWidgetsAndAnimations2(); // Re-initialize widgets and animations
+              },
+            ), // Language selector widget with callback
+          ),
           Center(
             child: SingleChildScrollView(
               child: Column(
@@ -367,6 +427,10 @@ class WelcomeScreenState extends State<WelcomeScreen>
   }
 
   Widget _buildSocialSignInButtons() {
+    // Define the keys for the translations
+    final String googleKey = "Sign in with Google";
+    final String githubKey = "Sign in with GitHub";
+
     return Center(
       // Use Center to keep the Wrap widget centered on the screen
       child: Wrap(
@@ -374,18 +438,40 @@ class WelcomeScreenState extends State<WelcomeScreen>
         spacing: 20, // Space between buttons horizontally
         runSpacing: 20, // Space between buttons when wrapped to the next line
         children: [
-          _buildSignInButton(
-            'Google',
-            _signInWithGoogle,
-            icon: FontAwesomeIcons.google,
-            iconColor: Colors.blue, // Google color
+          FutureBuilder<String>(
+            future: translator.translate(
+                googleKey), // Fetch the translation asynchronously for Google
+            builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
+              if (snapshot.connectionState == ConnectionState.done &&
+                  snapshot.hasData) {
+                return _buildSignInButton(
+                  snapshot.data!, // Use the translated text
+                  _signInWithGoogle,
+                  icon: FontAwesomeIcons.google,
+                  iconColor: Colors.blue, // Google color
+                );
+              } else {
+                return CircularProgressIndicator(); // Or some other placeholder widget
+              }
+            },
           ),
-          _buildSignInButton(
-            'GitHub',
-            _signInWithGitHub,
-            icon: FontAwesomeIcons.github,
-            iconColor:
-                Colors.white, // GitHub color, though default is already black
+          FutureBuilder<String>(
+            future: translator.translate(
+                githubKey), // Fetch the translation asynchronously for GitHub
+            builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
+              if (snapshot.connectionState == ConnectionState.done &&
+                  snapshot.hasData) {
+                return _buildSignInButton(
+                  snapshot.data!, // Use the translated text
+                  _signInWithGitHub,
+                  icon: FontAwesomeIcons.github,
+                  iconColor: Colors
+                      .white, // GitHub color, though default is already black
+                );
+              } else {
+                return CircularProgressIndicator(); // Or some other placeholder widget
+              }
+            },
           ),
         ],
       ),
@@ -394,37 +480,52 @@ class WelcomeScreenState extends State<WelcomeScreen>
 
   Widget _buildAuthActionButton() {
     bool isButtonDisabled = _isAuthenticating;
-    Color buttonColor =
-        _isSignUpMode ? Colors.blueAccent : Colors.lightGreen; // Example colors
-    // Define the vertical padding value
-    double verticalPadding = 8.0;
+    Color buttonColor = _isSignUpMode ? Colors.blueAccent : Colors.lightGreen;
+
+    // Define keys for the translations
+    final String signUpKey = "Sign Up";
+    final String signInKey = "Sign In";
+
+    // Determine the current action text based on the sign-up mode
+    final String currentActionKey = _isSignUpMode ? signUpKey : signInKey;
+
     return Padding(
-      padding: EdgeInsets.only(
-          top: verticalPadding,
-          bottom: verticalPadding), // Apply external padding
-      child: ElevatedButton.icon(
-        icon: Icon(
-          _isSignUpMode
-              ? FontAwesomeIcons.userPlus
-              : FontAwesomeIcons.rightFromBracket,
-          size: 24,
-        ),
-        label: Text(_isSignUpMode ? 'Sign Up' : 'Sign In'),
-        onPressed: isButtonDisabled
-            ? null
-            : (_isSignUpMode ? _handleSignUp : _handleSignIn),
-        style: ElevatedButton.styleFrom(
-          foregroundColor: Colors.white,
-          backgroundColor: buttonColor, // Icon and text color
-          minimumSize: const Size(double.infinity, 50),
-          padding: const EdgeInsets.symmetric(
-              horizontal: 20,
-              vertical: 10), // Internal padding around the icon and text
-          shape: RoundedRectangleBorder(
-            borderRadius:
-                BorderRadius.circular(30), // Rounded corners for the button
-          ),
-        ),
+      padding: EdgeInsets.symmetric(vertical: 8.0), // Apply external padding
+      child: FutureBuilder<String>(
+        future: translator.translate(
+            currentActionKey), // Fetch the translation asynchronously
+        builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
+          if (snapshot.connectionState == ConnectionState.done &&
+              snapshot.hasData) {
+            // Translation is loaded, use it
+            return ElevatedButton.icon(
+              icon: Icon(
+                _isSignUpMode
+                    ? FontAwesomeIcons.userPlus
+                    : FontAwesomeIcons.rightFromBracket,
+                size: 24,
+              ),
+              label: Text(snapshot.data!), // Use the translated text
+              onPressed: isButtonDisabled
+                  ? null
+                  : (_isSignUpMode ? _handleSignUp : _handleSignIn),
+              style: ElevatedButton.styleFrom(
+                foregroundColor: Colors.white,
+                backgroundColor: buttonColor, // Icon and text color
+                minimumSize: const Size(double.infinity, 50),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(
+                      30), // Rounded corners for the button
+                ),
+              ),
+            );
+          } else {
+            // Translation is not yet loaded or an error occurred, show a placeholder or error message
+            return CircularProgressIndicator(); // Or some other placeholder widget
+          }
+        },
       ),
     );
   }
@@ -468,79 +569,158 @@ class WelcomeScreenState extends State<WelcomeScreen>
   Widget _buildEmailTextField() {
     Color borderColor =
         _isSignUpMode ? Colors.yellowAccent : Colors.greenAccent;
-    return TextField(
-      key: ValueKey(
-          _isSignUpMode), // This forces the widget to rebuild on toggle
-      controller: _emailController,
-      decoration: InputDecoration(
-        labelText: '',
-        hintText: 'Enter your email',
-        border: const OutlineInputBorder(),
-        focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: borderColor, width: 2.0),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderSide:
-              BorderSide(color: borderColor.withOpacity(0.5), width: 1.0),
-        ),
-        prefixIcon: const Icon(Icons.email),
-        filled: true, // Enable background color fill
-        fillColor: Colors.white.withOpacity(0.5), // Semi-transparent white
-      ),
-      keyboardType: TextInputType.emailAddress,
+
+    return FutureBuilder<String>(
+      // Asynchronously fetch the translated text
+      future: translator.translate('Enter your email'),
+      builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
+        // Determine the text to display: either the translation or a default/fallback text
+        String displayText =
+            snapshot.hasData ? snapshot.data! : 'Enter your email';
+
+        return TextField(
+          key: ValueKey(
+              _isSignUpMode), // This forces the widget to rebuild on toggle
+          controller: _emailController,
+          decoration: InputDecoration(
+            labelText: '',
+            hintText: displayText, // Use the translated or fallback text
+            border: const OutlineInputBorder(),
+            focusedBorder: OutlineInputBorder(
+              borderSide: BorderSide(color: borderColor, width: 2.0),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderSide:
+                  BorderSide(color: borderColor.withOpacity(0.5), width: 1.0),
+            ),
+            prefixIcon: const Icon(Icons.email),
+            filled: true,
+            fillColor: Colors.white.withOpacity(0.5),
+          ),
+          keyboardType: TextInputType.emailAddress,
+        );
+      },
     );
+  }
+
+  void _updatePasswordValidity() {
+    final password = _passwordController.text;
+    // Update the state based on password validity
+    final isValid = _validatePassword(password) ==
+        null; // Reuse your existing validation logic
+    setState(() {
+      _isPasswordValid = isValid;
+      _initWidgetsAndAnimations2();
+    });
   }
 
   Widget _buildPasswordTextField() {
     Color borderColor =
         _isSignUpMode ? Colors.yellowAccent : Colors.greenAccent;
-    return TextField(
-      key: ValueKey(
-          _isSignUpMode), // This forces the widget to rebuild on toggle
-      controller: _passwordController,
-      decoration: InputDecoration(
-        labelText: '',
-        hintText: 'Enter your password',
-        border: const OutlineInputBorder(),
-        focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: borderColor, width: 2.0),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderSide:
-              BorderSide(color: borderColor.withOpacity(0.5), width: 1.0),
-        ),
-        prefixIcon: const Icon(Icons.lock),
-        suffixIcon: IconButton(
-          icon: Icon(
-              _isPasswordVisible ? Icons.visibility : Icons.visibility_off),
-          onPressed: () {
-            setState(() {
-              _isPasswordVisible = !_isPasswordVisible;
-            });
-          },
-        ),
-        filled: true, // Enable background color fill
-        fillColor: Colors.white.withOpacity(0.5), // Semi-transparent white
-      ),
-      obscureText: !_isPasswordVisible,
+
+    // Translate the hints for password fields
+    final String passwordHintKey = 'Choose a strong password';
+    final String confirmPasswordHintKey = 'Confirm your password';
+
+    // Translate the error message for the confirm password field
+    final String confirmPasswordErrorKey = 'Passwords do not match';
+
+    Widget passwordField = FutureBuilder<String>(
+      future: translator.translate(passwordHintKey),
+      builder: (context, snapshot) {
+        return TextFormField(
+          key: const ValueKey('password'),
+          controller: _passwordController,
+          decoration: _buildInputDecoration(
+              snapshot.hasData ? snapshot.data! : '', borderColor),
+          obscureText: !_isPasswordVisible,
+          validator: _validatePassword,
+        );
+      },
+    );
+
+    Widget confirmPasswordField = _isSignUpMode && _isPasswordValid
+        ? FutureBuilder<List<String>>(
+            future: Future.wait([
+              translator.translate(confirmPasswordHintKey),
+              translator.translate(confirmPasswordErrorKey),
+            ]),
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                return TextFormField(
+                  key: const ValueKey('confirmPassword'),
+                  controller: _confirmPasswordController,
+                  decoration:
+                      _buildInputDecoration(snapshot.data![0], borderColor),
+                  obscureText: !_isPasswordVisible,
+                  validator: (value) {
+                    if (value != _passwordController.text) {
+                      return snapshot
+                          .data![1]; // 'Passwords do not match' error message
+                    }
+                    return null;
+                  },
+                );
+              } else {
+                return CircularProgressIndicator(); // Loading indicator or placeholder
+              }
+            },
+          )
+        : Container();
+
+    return Column(
+      children: [
+        passwordField,
+        if (_isSignUpMode && _isPasswordValid) const SizedBox(height: 10),
+        if (_isSignUpMode && _isPasswordValid) confirmPasswordField,
+      ],
     );
   }
 
-  Future<bool> _signUp(String email, String password) async {
-    try {
-      final bool result = await _channel.invokeMethod('signUp', {
-        'email': email,
-        'password': password,
-      });
-      if (result) {
-        _showSnackBar("Sign-up successful. Please verify your email.");
-      }
-      return result;
-    } on PlatformException catch (e) {
-      _showSnackBar(
-          _getErrorMessage(e.code)); // Use snack bar for error messages
-      return false;
+// Validator method for the password
+  String? _validatePassword(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Please enter a password'; // Ensures a password is entered
     }
+    if (!RegExp(r'^(?=.*[A-Z]).+$').hasMatch(value)) {
+      return 'Password must contain at least one uppercase letter'; // Checks for uppercase letter
+    }
+    if (!RegExp(r'^(?=.*\d).+$').hasMatch(value)) {
+      return 'Password must contain at least one number'; // Checks for digit
+    }
+    if (value.length < 6) {
+      return 'Password must be at least 6 characters long'; // Checks for length
+    }
+    return null; // Returns null if the input passes all validations
+  }
+
+//// Helper method to build input decoration with a functional visibility toggle
+  InputDecoration _buildInputDecoration(String hintText, Color borderColor) {
+    return InputDecoration(
+      labelText: '',
+      hintText: hintText,
+      border: const OutlineInputBorder(),
+      focusedBorder: OutlineInputBorder(
+        borderSide: BorderSide(color: borderColor, width: 2.0),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderSide: BorderSide(color: borderColor.withOpacity(0.5), width: 1.0),
+      ),
+      prefixIcon: const Icon(Icons.lock),
+      suffixIcon: IconButton(
+        icon:
+            Icon(_isPasswordVisible ? Icons.visibility : Icons.visibility_off),
+        onPressed: () {
+          setState(() {
+            // Toggle the password visibility
+            _isPasswordVisible = !_isPasswordVisible;
+            _initWidgetsAndAnimations2();
+          });
+        },
+      ),
+      filled: true,
+      fillColor: Colors.white.withOpacity(0.5),
+    );
   }
 
   Future<void> _handleSignUp() async {
@@ -556,25 +736,25 @@ class WelcomeScreenState extends State<WelcomeScreen>
           final bool signInSuccess = await _signIn(email, password);
           if (signInSuccess) {
             // Sign-in was successful, navigate to the next screen or update UI state as needed
-            _showSnackBar("Sign-up and sign-in successful.");
+            await _showSnackBar("Sign-up and sign-in successful.");
             // For example, navigate to a home screen: Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => HomeScreen()));
           } else {
             // Handle sign-in failure if necessary
-            _showSnackBar(
+            await _showSnackBar(
                 "Sign-up successful, but sign-in failed. Please try to sign in.");
           }
         } else {
           // Handle sign-up failure
-          _showSnackBar("Sign-up failed. Please try again.");
+          await _showSnackBar("Sign-up failed. Please try again.");
         }
       } on PlatformException catch (e) {
-        _showSnackBar(
+        await _showSnackBar(
             _getErrorMessage(e.code)); // Use snack bar for error messages
       } finally {
         _isAuthenticating = false; // Unlock UI
       }
     } else {
-      _showSnackBar("Email and password cannot be empty.");
+      await _showSnackBar("Email and password cannot be empty.");
     }
   }
 
@@ -595,10 +775,6 @@ class WelcomeScreenState extends State<WelcomeScreen>
 
       final String? firebaseUserId =
           authDetails['accessToken']; // Firebase user ID is used as accessToken
-      // Print extracted details for debugging
-      print('Returned Email: $returnedEmail');
-      print('ID Token: $idToken');
-      print('Firebase User ID (as AccessToken): $firebaseUserId');
 
       if (returnedEmail != null && idToken != null && firebaseUserId != null) {
         // Use the returned credentials to approach the master endpoint
@@ -619,19 +795,19 @@ class WelcomeScreenState extends State<WelcomeScreen>
 
             Navigator.of(context).pushReplacement(
                 MaterialPageRoute(builder: (context) => const LandingPage()));
-            _showSnackBar("Sign-in successful.");
+            await _showSnackBar("Sign-in successful.");
             signInSuccess = true;
           } else {
-            _showSnackBar("Error verifying token and retrieving data.");
+            await _showSnackBar("Error verifying token and retrieving data.");
           }
         } else {
-          _showSnackBar("Error contacting master endpoint.");
+          await _showSnackBar("Error contacting master endpoint.");
         }
       } else {
-        _showSnackBar("Authentication failed.");
+        await _showSnackBar("Authentication failed.");
       }
     } catch (error) {
-      _showSnackBar('Error during sign-in: $error');
+      await _showSnackBar("error_during_signin:$error");
     } finally {
       _isAuthenticating = false; // Unlock UI
     }
@@ -668,7 +844,7 @@ class WelcomeScreenState extends State<WelcomeScreen>
         // Error message handling is already done within _signIn
       }
     } else {
-      _showSnackBar("Email and password cannot be empty.");
+      await _showSnackBar("Email and password cannot be empty.");
     }
   }
 
@@ -689,7 +865,7 @@ class WelcomeScreenState extends State<WelcomeScreen>
           size: iconSize, // Icon size
         ),
         label: Text(
-          "Sign in with $providerName",
+          providerName,
           style: const TextStyle(
             fontSize: 12,
             color: /*iconColor ??*/ Colors.white, // Icon color
@@ -716,7 +892,7 @@ class WelcomeScreenState extends State<WelcomeScreen>
     try {
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
-        _showSnackBar("Google Sign-In was cancelled.");
+        await _showSnackBar("Google Sign-In was cancelled.");
         _isAuthenticating = false; // Unlock UI
         return;
       }
@@ -753,21 +929,21 @@ class WelcomeScreenState extends State<WelcomeScreen>
             // Navigate to the next screen or update the state as necessary
             Navigator.of(context).pushReplacement(
                 MaterialPageRoute(builder: (context) => const LandingPage()));
-            _showSnackBar("Sign-in successful.");
+            await _showSnackBar("Sign-in successful.");
           } else {
-            _showSnackBar("Error verifying token and retrieving data.");
+            await _showSnackBar("Error verifying token and retrieving data.");
             _isAuthenticating = false; // Unlock UI
           }
         } else {
-          _showSnackBar("Error contacting master endpoint.");
+          await _showSnackBar("Error contacting master endpoint.");
           _isAuthenticating = false; // Unlock UI
         }
       } else {
-        _showSnackBar("Authentication failed.");
+        await _showSnackBar("Authentication failed.");
         _isAuthenticating = false; // Unlock UI
       }
     } catch (error) {
-      _showSnackBar('Error during Google Sign-In: $error');
+      await _showSnackBar('Error during Google Sign-In: $error');
       _isAuthenticating = false; // Unlock UI
     }
   }
@@ -816,7 +992,9 @@ class WelcomeScreenState extends State<WelcomeScreen>
     }
   }
 
-  void _showSnackBar(String message) {
+  Future<void> _showSnackBar(String messageKey) async {
+    // Assuming you have a method to translate messages based on a key
+    final String message = await translator.translate(messageKey);
     final snackBar = SnackBar(content: Text(message));
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
@@ -839,17 +1017,19 @@ class WelcomeScreenState extends State<WelcomeScreen>
     }
   }
 
-  Future<bool> signUp(String email, String password) async {
+  Future<bool> _signUp(String email, String password) async {
     try {
       final bool result = await _channel.invokeMethod('signUp', {
         'email': email,
         'password': password,
       });
+      if (result) {
+        await _showSnackBar("signup_successful_verify_email");
+      }
       return result;
     } on PlatformException catch (e) {
-      if (kDebugMode) {
-        print("Failed to sign up: ${e.message}");
-      }
+      await _showSnackBar(
+          e.code); // Assuming your error messages are also translated
       return false;
     }
   }
@@ -862,7 +1042,7 @@ class WelcomeScreenState extends State<WelcomeScreen>
     _isAuthenticating = true; // Lock UI
     final providerConfig = oAuth2Providers['github'];
     if (providerConfig == null) {
-      _showSnackBar('GitHub provider configuration not found');
+      await _showSnackBar('GitHub provider configuration not found');
       _isAuthenticating = false; // Unlock UI
       return;
     }
@@ -911,25 +1091,25 @@ class WelcomeScreenState extends State<WelcomeScreen>
 
               Navigator.of(context).pushReplacement(
                   MaterialPageRoute(builder: (context) => const LandingPage()));
-              _showSnackBar("GitHub Sign-in successful.");
+              await _showSnackBar("GitHub Sign-in successful.");
             } else {
-              _showSnackBar("Error verifying token and retrieving data.");
+              await _showSnackBar("Error verifying token and retrieving data.");
               _isAuthenticating = false; // Unlock UI
             }
           } else {
-            _showSnackBar("Error contacting master endpoint.");
+            await _showSnackBar("Error contacting master endpoint.");
             _isAuthenticating = false; // Unlock UI
           }
         } else {
-          _showSnackBar("Authentication failed.");
+          await _showSnackBar("Authentication failed.");
           _isAuthenticating = false; // Unlock UI
         }
       } else {
-        _showSnackBar("GitHub Sign-In aborted by user.");
+        await _showSnackBar("GitHub Sign-In aborted by user.");
         _isAuthenticating = false; // Unlock UI
       }
     } catch (e) {
-      _showSnackBar('GitHub Sign-In failed: $e');
+      await _showSnackBar('GitHub Sign-In failed: $e');
       _isAuthenticating = false; // Unlock UI
     }
   }
@@ -950,17 +1130,36 @@ class WelcomeScreenState extends State<WelcomeScreen>
   // Add the missing _buildSkipButton method here
   // ignore: unused_element
   Widget _buildSkipButton() {
+    // Define the key for the translation
+    final String skipButtonKey =
+        "You should probably login, as it might be hard to later cash your winnings. But you can help friends to penetrate the number and skip the login here";
+
     return Visibility(
       visible:
           showAlternativeOptions, // Only show if alternative options should be displayed
-      child: TextButton(
-        onPressed: () {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const LandingPage()),
-          );
+      child: FutureBuilder<String>(
+        future: translator
+            .translate(skipButtonKey), // Fetch the translation asynchronously
+        builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
+          // Check if the translation is loaded
+          if (snapshot.connectionState == ConnectionState.done &&
+              snapshot.hasData) {
+            // Translation is loaded, use it
+            return TextButton(
+              onPressed: () {
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (context) => const LandingPage()),
+                );
+              },
+              child: Text(
+                snapshot.data!, // Use the translated text
+              ),
+            );
+          } else {
+            // Translation is not yet loaded or an error occurred, show a placeholder or error message
+            return CircularProgressIndicator(); // Or some other placeholder widget
+          }
         },
-        child: const Text(
-            'You should probably login, as it might be hard to later cash your winnings. But you can help friends to penetrate the number and skip the login here'),
       ),
     );
   }

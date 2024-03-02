@@ -12,7 +12,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:zmoney/fukk_widgets/language_selector.dart';
 import 'package:zmoney/fukk_widgets/skin.dart';
+import 'package:zmoney/fukk_widgets/translator.dart';
 import 'package:zmoney/marquee.dart';
 import 'package:zmoney/ngrok.dart';
 import 'package:animated_flip_counter/animated_flip_counter.dart';
@@ -21,6 +23,9 @@ import 'package:zmoney/text_cycle.dart';
 import 'package:zmoney/tutorial_steps.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:intl/intl.dart'; // Import intl package
+
+final translator =
+    Translator(currentLanguage: 'en'); // Set initial language as needed
 
 // Import the necessary library
 
@@ -68,26 +73,9 @@ class LandingPageState extends State<LandingPage>
   GlobalKey key3 = GlobalKey();
   GlobalKey keyLanguageSelector = GlobalKey();
   // Add more keys as needed
-  String _selectedLanguageCode = 'en'; // Default language code
+// Default language code
 
-  List<String> translatedTexts =
-      List.filled(15, '', growable: false); // Expanded to 15
-
-  String translatedText1 = 'How Much?';
-  String translatedText2 = 'Enter numbers';
-  String translatedText3 = 'Go!';
-  String translatedText4 = 'Ready';
-  String translatedText5 = 'Time remaining';
-  String translatedText6 = 'Money withdrawal';
-  String translatedText7 = 'Your current prize:';
-  String translatedText8 = 'Here you can enter numbers.';
-  String translatedText9 = 'Enter numbers in this field.';
-  String translatedText10 = 'Select your language here';
-  String translatedText11 = 'Game Menu';
-  String translatedText12 = 'How to play: Enter numbers & test your luck.';
-  String translatedText13 = 'You can win various prices, including real money.';
-  String translatedText14 = 'Account inventory';
-  String translatedText15 = 'Settings';
+  List<String> translatedTexts = []; // Make it an empty, growable list
 
   double _prizePoolAmount = 100000; // Starting amount
   double _conversionRatio = 0.1; // Adjusted for demonstration
@@ -192,17 +180,18 @@ class LandingPageState extends State<LandingPage>
   bool _arrowsVisible = true;
   late AnimationController _glowController; // Renamed for clarity
   late Animation<double> _glowAnimation; // Renamed for clarity
+
   //INIT STATE <<<<<<<<<<<<<<<<<<<<
   @override
   void initState() {
     super.initState();
-
+    initializeTranslations();
     WidgetsBinding.instance.addObserver(this); // Add the observer
     _initBannerAd();
     _loadRewardedAd();
     _loadRewardedInterstitialAd();
 
-    fetchAndSetTranslations(_selectedLanguageCode);
+    // fetchAndSetTranslations(_selectedLanguageCode);
     _checkTutorialCompletion();
     _fetchPrizePoolFromServer();
     _confettiController = ConfettiController();
@@ -214,14 +203,6 @@ class LandingPageState extends State<LandingPage>
       if (FocusScope.of(context).hasFocus) {
         FocusScope.of(context).unfocus();
       }
-    });
-
-    setState(() {
-      tutorialManager = TutorialManager(
-        translatedTexts: translatedTexts,
-        keys: [keyLanguageSelector, key1, key2, key3],
-        onUpdate: () => setState(() {}),
-      );
     });
 
     _glowController = AnimationController(
@@ -249,6 +230,52 @@ class LandingPageState extends State<LandingPage>
         },
       ),
     );
+  }
+
+  Future<void> initializeTranslations() async {
+    print(
+        'Initializing translations. Current list length: ${translatedTexts.length}');
+    List<String> keys = [
+      'How Much?',
+      'Enter your lucky number',
+      'Submit your guess here!',
+      'Ready',
+      'Time remaining',
+      'Money withdrawal',
+      'Your current prize:',
+      'Here you can enter numbers.',
+      'Enter numbers in this field.',
+      'Select your language here',
+      'Game Menu',
+      'How to play: Enter numbers & test your luck.',
+      'You can win various prices, including real money.',
+      'Account inventory',
+      'Settings',
+      'Try swiping here', // Ensure there's a comma here
+      'Current reward:'
+      // Add more keys as needed
+    ];
+
+    // Assuming `translator` is your instance of the Translator class
+    List<Future<String>> translationFutures =
+        keys.map((key) => translator.translate(key)).toList();
+
+    // Wait for all translations to complete
+    List<String> results = await Future.wait(translationFutures);
+
+    // Once all futures are resolved, update your state
+    setState(() {
+      translatedTexts =
+          results; // This list now directly reflects the keys translated
+
+      tutorialManager = TutorialManager(
+        translatedTexts: translatedTexts,
+        keys: [keyLanguageSelector, key1, key2, key3],
+        onUpdate: () => setState(() {}),
+      );
+    });
+    print(
+        'Translations initialized. New list length: ${translatedTexts.length}');
   }
 
   Future<void> _showRewardedInterstitialAd() async {
@@ -312,24 +339,24 @@ class LandingPageState extends State<LandingPage>
   }
 
   void _startSmoothPrizePoolIncrementation() {
-    // Server increments between 100 and 600 every 5 seconds. Calculate the average increment per second.
     const averageIncrementPerUpdate = (100 + 600) / 2;
-    const updateIntervalSeconds = 1; // Server update interval
-    const averageIncrementPerSecond =
-        averageIncrementPerUpdate / updateIntervalSeconds;
+    // Halving the increment rate in addition to halving the speed
+    const updateIntervalSeconds =
+        2; // Considering this as the basis for speed reduction
+    const averageIncrementPerSecond = averageIncrementPerUpdate /
+        updateIntervalSeconds /
+        2; // Halving the increment rate
 
-    // Calculate increment amount per interval for smooth updates
+    // Further adjusting the increment amount per interval for half-rate updates
     _incrementAmountPerInterval =
-        averageIncrementPerSecond * (_smoothUpdateIntervalMs / 1000.0);
+        averageIncrementPerSecond * (_smoothUpdateIntervalMs / 1000.0) / 2;
 
-    // Initialize or reset the smooth incrementation timer
+    // Initialize or reset the smooth incrementation timer to 10 seconds, with the new half-rate adjustment
     _smoothIncrementationTimer?.cancel();
     _smoothIncrementationTimer = Timer.periodic(
-        Duration(milliseconds: _smoothUpdateIntervalMs), (timer) {
+        Duration(milliseconds: _smoothUpdateIntervalMs * 2), (timer) {
       setState(() {
-        // Smoothly increment the prize pool amount
         _prizePoolAmount += _incrementAmountPerInterval;
-        // Ensure the prize pool amount doesn't exceed a maximum value, if necessary
       });
     });
   }
@@ -348,20 +375,6 @@ class LandingPageState extends State<LandingPage>
       return Future.value(false);
     }
     return Future.value(true);
-  }
-
-  void _restartTutorialIfNeeded() {
-    if (_showTutorial) {
-      // Call a method on the TutorialManager to reset and initialize the steps
-      tutorialManager.initializeTutorialSteps(
-          translatedTexts, [keyLanguageSelector, key1, key2]);
-
-      // Reset tutorial step and make tutorial visible
-      setState(() {
-        tutorialManager.currentStep = 0;
-        _showTutorial = true;
-      });
-    }
   }
 
 /*
@@ -420,136 +433,6 @@ class LandingPageState extends State<LandingPage>
     }
   }
 
-  Future<String> combineEnglishTextsForTranslation(
-      SharedPreferences prefs) async {
-    const separator = "999666"; // Unique separator
-    List<String> texts = [];
-
-    // Predefined list of default English texts
-    List<String> defaultTexts = [
-      translatedText1,
-      translatedText2,
-      translatedText3,
-      translatedText4,
-      translatedText5,
-      translatedText6,
-      translatedText7,
-      translatedText8,
-      translatedText9,
-      translatedText10,
-      translatedText11,
-      translatedText12,
-      translatedText13,
-      translatedText14,
-      translatedText15
-    ];
-
-    // Checking and creating SharedPreferences entries if they don't exist
-    for (int i = 1; i <= defaultTexts.length; i++) {
-      String key = 'translatedText$i' '_en'; // Corrected key format
-      if (!prefs.containsKey(key)) {
-        // If the key doesn't exist, set the default English text
-        await prefs.setString(key, defaultTexts[i - 1]);
-      }
-      // Fetching the text from SharedPreferences
-      String text = prefs.getString(key) ?? "Default Text $i";
-      texts.add(text);
-    }
-
-    // After fetching, print each translated text
-    for (int i = 0; i < texts.length; i++) {}
-
-    return texts.join(separator);
-  }
-
-  Future<String> translateText(String text, String toLang,
-      {String fromLang = 'auto'}) async {
-    var url = Uri.parse('https://libretranslate.de/translate');
-    // Debug print
-    try {
-      var response = await http.post(
-        url,
-        headers: {"Content-Type": "application/json"},
-        body: json.encode({
-          "q": text,
-          "source": fromLang,
-          "target": toLang,
-          "format": "text",
-          "api_key": "" // Include the API key if you have one
-        }),
-      );
-
-      // Debug print
-
-      if (response.statusCode == 200) {
-        var decodedResponse =
-            utf8.decode(response.bodyBytes); // Explicit UTF-8 decoding
-        // Debug print
-        var data = json.decode(decodedResponse);
-        return data['translatedText'];
-      } else {
-        // Debug print
-        return text; // Return original text on failure
-      }
-    } catch (e) {
-      // Debug print
-      return text; // Return original text on error
-    }
-  }
-
-  Future<void> fetchAndSetTranslations(String targetLanguageCode) async {
-    // Debug print
-
-    final prefs = await SharedPreferences.getInstance();
-
-    // Use the original English texts as a base for translation
-    String combinedEnglishTexts =
-        await combineEnglishTextsForTranslation(prefs);
-
-    // Debug print
-
-    List<String> updatedTranslations = List.filled(15, '', growable: false);
-
-    if (targetLanguageCode != 'en') {
-      // Translate English texts to the target language
-      String translatedCombinedTexts =
-          await translateText(combinedEnglishTexts, targetLanguageCode);
-      List<String> individualTranslations =
-          translatedCombinedTexts.split("999666");
-
-      // Debug print
-
-      // Ensure there are enough elements in the list
-      for (int i = 0;
-          i < individualTranslations.length && i < updatedTranslations.length;
-          i++) {
-        updatedTranslations[i] = individualTranslations[i].trim();
-      }
-    } else {
-      // Use English texts directly
-      for (int i = 0; i < updatedTranslations.length; i++) {
-        updatedTranslations[i] = prefs.getString('translatedText${i + 1}_en') ??
-            "Default Text ${i + 1}";
-      }
-      // Debug print
-    }
-
-    // Update state with new translations
-    setState(() {
-      translatedTexts = updatedTranslations;
-      // Initialize or update tutorialManager here
-      tutorialManager = TutorialManager(
-        translatedTexts: translatedTexts,
-        keys: [keyLanguageSelector, key1, key2, key3],
-        onUpdate: () => setState(() {}),
-      );
-      // Debug print
-    });
-
-    _restartTutorialIfNeeded();
-    // Debug print
-  }
-
   @override
   void dispose() {
     _timer
@@ -573,59 +456,6 @@ class LandingPageState extends State<LandingPage>
       _loadRewardedAd(); // Preemptively load a new rewarded ad
       _fetchPrizePoolFromServer();
     }
-  }
-
-  Widget _buildLanguageSelector() {
-    Map<String, String> languages = {
-      'en': 'English',
-      'cs': 'Czechia',
-      'fr': 'French',
-      'zh': 'Chinese',
-      'da': 'Danish',
-      'nl': 'Dutch',
-      'de': 'German',
-      'el': 'Greek',
-      'it': 'Italian',
-      'ja': 'Japanese',
-      'lt': 'Lithuanian',
-      'nb': 'Norwegian',
-      // 'pl': 'Polish',
-      'pt': 'Portuguese',
-      'ro': 'Romanian',
-      'es': 'Spanish',
-
-      // Add other supported languages here
-    };
-
-    Skin currentSkin = skins[currentSkinIndex];
-
-    return DropdownButton<String>(
-      key: keyLanguageSelector, // Assign the GlobalKey here
-      value: _selectedLanguageCode,
-      focusColor: currentSkin.buttonColor,
-      icon: Icon(
-        Icons.arrow_downward,
-        color: currentSkin.textColor,
-      ),
-      elevation: 16,
-      dropdownColor: currentSkin.buttonColor,
-      style: TextStyle(color: currentSkin.textColor),
-      underline: Container(height: 2, color: currentSkin.specialTextColor),
-      onChanged: (String? newValue) {
-        if (newValue != null && newValue != _selectedLanguageCode) {
-          setState(() {
-            _selectedLanguageCode = newValue;
-          });
-          fetchAndSetTranslations(newValue); // Fetch new translations
-        }
-      },
-      items: languages.entries.map<DropdownMenuItem<String>>((entry) {
-        return DropdownMenuItem<String>(
-          value: entry.key,
-          child: Text(entry.value),
-        );
-      }).toList(),
-    );
   }
 
   void _loadRewardedAd() {
@@ -753,50 +583,6 @@ class LandingPageState extends State<LandingPage>
     super.didChangeDependencies();
   }
 
-  Widget _buildNumberInput(Size screenSize, String hintText) {
-    return SizedBox(
-      width: screenSize.width * 0.8,
-      child: Container(
-        width: screenSize.width * 0.8,
-        padding: const EdgeInsets.symmetric(horizontal: 10),
-        decoration: ShapeDecoration(
-          color: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
-        child: TextField(
-          key: key1, // Assign the GlobalKey here
-          controller: _numberController,
-          keyboardType: TextInputType.number,
-          inputFormatters: [
-            FilteringTextInputFormatter.digitsOnly,
-            LengthLimitingTextInputFormatter(7),
-          ],
-          decoration: InputDecoration(
-            border: InputBorder.none,
-            hintText: hintText, // Use the translated text
-            contentPadding: const EdgeInsets.fromLTRB(10, 12, 10,
-                10), // Adjust padding to center the hint text vertically
-            suffixIcon:
-                _buildGoButton(screenSize, translatedTexts[2], isButtonLocked),
-            suffixIconConstraints: const BoxConstraints(
-                minWidth: 48, minHeight: 22), // Adjust icon size
-          ),
-          textAlign: TextAlign.center, // Horizontally centers the text
-          style: const TextStyle(
-            fontSize: 23.0, // Font size, adjusted to match _buildGoButton
-            fontWeight: FontWeight.bold, // Bold font
-            color: Colors.black, // Text color
-            letterSpacing: 1.2, // Letter spacing
-            fontFamily: 'Inter', // Keep the same font family
-          ),
-          onTap: _playConfettiAnimation, // Play confetti on interaction
-        ),
-      ),
-    );
-  }
-
   void _toggleSkin(bool isIncrementing) {
     setState(() {
       _arrowsVisible = false;
@@ -906,7 +692,8 @@ class LandingPageState extends State<LandingPage>
                         left: 20,
                         child: Builder(
                           builder: (context) => IconButton(
-                            icon: const Icon(Icons.menu, size: 30.0),
+                            icon: Icon(Icons.menu,
+                                color: currentSkin.textColor, size: 30.0),
                             onPressed: () => Scaffold.of(context).openDrawer(),
                           ),
                         ),
@@ -916,12 +703,23 @@ class LandingPageState extends State<LandingPage>
                         top: 33 +
                             (_isBannerAdReady
                                 ? bannerAdHeight
-                                : 40), // Apply the same adjustment here
+                                : 40), // Dynamically adjust based on ad readiness
                         right: 20,
-                        child:
-                            _buildLanguageSelector(), // Your language selector widget
-                      ),
+                        child: LanguageSelectorWidget(
+                          onLanguageChanged: (String newLanguageCode) {
+                            initializeTranslations();
 
+                            setState(() {});
+                          },
+                          dropdownColor: currentSkin.buttonColor,
+                          textColor:
+                              currentSkin.buttonTextColor, // Custom text color
+                          iconColor:
+                              currentSkin.specialTextColor, // Custom icon color
+                          underlineColor: currentSkin
+                              .backgroundColor, // Custom underline color
+                        ),
+                      ),
                       // Confetti Widget
                       Align(
                         alignment: Alignment.topRight,
@@ -964,7 +762,7 @@ class LandingPageState extends State<LandingPage>
                                       onPressed: () => _toggleSkin(false),
                                     ),
                                     Text(
-                                      "Swipe to change skins",
+                                      translatedTexts[15],
                                       style: TextStyle(
                                         fontFamily: 'Proxima',
                                         fontWeight: FontWeight
@@ -1021,7 +819,9 @@ class LandingPageState extends State<LandingPage>
                                     fontWeight: FontWeight.w800,
                                   ),
                                 ),*/
-
+                                      const SizedBox(height: 16),
+                                      _buildGoButton(screenSize,
+                                          translatedTexts[2], isButtonLocked),
                                       // Modified Skip Button to show Rewarded Ad
                                       if (_timerStarted && _isRewardedAdReady)
                                         TextButton(
@@ -1156,8 +956,10 @@ class LandingPageState extends State<LandingPage>
           maxHeight: 50, // Maximum width of the button
         ),
         decoration: BoxDecoration(
-          // Use the determined button color
-          color: buttonColor,
+          // Use the determined button color with some opacity for semi-transparency
+          color: buttonColor.withOpacity(0.5), // Adjust opacity as needed
+          borderRadius: BorderRadius.circular(
+              25), // Creates a pill shape for the rounded background
         ),
         child: _isWaitingForResponse
             ? const CircularProgressIndicator()
@@ -1186,11 +988,56 @@ class LandingPageState extends State<LandingPage>
                       fontWeight: FontWeight.bold, // Bold font
                       color: Colors.black, // Text color
                       letterSpacing: 1.2, // Letter spacing
-                      // Add other styling attributes as needed
                     ),
                   ),
                 ],
               ),
+      ),
+    );
+  }
+
+  Widget _buildNumberInput(Size screenSize, String hintText) {
+    return SizedBox(
+      width: screenSize.width * 0.8, // Adjust the width as needed
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              decoration: ShapeDecoration(
+                color: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: TextField(
+                controller: _numberController,
+                keyboardType: TextInputType.number,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(7),
+                ],
+                decoration: InputDecoration(
+                  border: InputBorder.none,
+                  hintText: hintText,
+                  contentPadding: const EdgeInsets.fromLTRB(10, 12, 10, 10),
+                  hintStyle: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey, // Hint text color
+                  ),
+                ),
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14.0, // Consider making this responsive if possible
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                  letterSpacing: 1.2,
+                  fontFamily: 'Inter',
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1280,7 +1127,7 @@ class LandingPageState extends State<LandingPage>
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Text(
-                  "Current Reward:",
+                  translatedTexts[16],
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -1406,6 +1253,7 @@ class LandingPageState extends State<LandingPage>
         // Update guess count and potentially other fields based on guess correctness
         playerData['total_guesses'] = (playerData['total_guesses'] ?? 0) + 1;
         if (isCorrect) {
+          _preventAd = true;
           playerData['wins'] = ((playerData['wins'] ?? 0) as int) + 1;
           playerData['total_win_amount'] =
               (playerData['total_win_amount'] ?? 0.0) + prizePoolAmount;
@@ -1844,11 +1692,12 @@ class PlayerDataWidgetState extends State<PlayerDataWidget> {
     print('Converted Total Win Amount 2: $totalWinAmount2');
     print(
         'Original Total Win Amount String: ${playerData['total_win_amount'].toString()}');
+    print(widget.conversionRatio);
 // Calculate the initial real money value
     final double conversionRatio =
-        widget.conversionRatio ?? 0.1; // Default to 0.0 if not provided
+        widget.conversionRatio; // Default to 0.0 if not provided
     final double initialRealMoneyValue =
-        conversionRatio * 0.60; // Adjusted formula
+        (totalWinAmount * conversionRatio) * 0.60; // Adjusted formula
 
     print('Initial Real Money Value: $initialRealMoneyValue');
 
@@ -1870,38 +1719,72 @@ class PlayerDataWidgetState extends State<PlayerDataWidget> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    // Wins
-                    _buildHighlightedInfo(
-                      title: "Wins",
-                      value: playerData['wins']?.toString() ?? '0',
-                    ), // Total Guesses
-                    _buildHighlightedInfo(
-                        title: "Total Guesses",
-                        value: playerData['total_guesses'].toString()),
+                    FutureBuilder<String>(
+                      future: translator.translate("Wins"),
+                      builder: (context, snapshot) => _buildHighlightedInfo(
+                          title: snapshot.data ?? "Wins",
+                          value: playerData['wins']?.toString() ?? '0'),
+                    ),
+                    FutureBuilder<String>(
+                      future: translator.translate("Total Guesses"),
+                      builder: (context, snapshot) => _buildHighlightedInfo(
+                          title: snapshot.data ?? "Total Guesses",
+                          value:
+                              playerData['total_guesses']?.toString() ?? '0'),
+                    ),
                   ],
                 ),
               ),
               if (userEmail != null)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8.0),
-                  child: Text(
-                    "Logged in as: $userEmail",
-                    style: const TextStyle(
-                        fontSize: 16, fontStyle: FontStyle.italic),
+                  child: FutureBuilder<String>(
+                    future: translator.translate("Logged in as"),
+                    builder: (context, snapshot) {
+                      String loggedInText = snapshot.data ?? "Logged in as";
+                      return Text(
+                        "$loggedInText: $userEmail",
+                        style: const TextStyle(
+                            fontSize: 16, fontStyle: FontStyle.italic),
+                      );
+                    },
                   ),
                 ),
-              _buildSectionTitle("Earnings"),
-              _buildAmountRow("Total Win Amount:", totalWinAmount,
-                  leadingIcon: Icons.account_balance_wallet),
-              _buildAmountRowWithExplanation(
-                  "Real Money Value:", realMoneyValue,
-                  leadingIcon: Icons.monetization_on, isCurrency: true),
+              FutureBuilder<String>(
+                future: translator.translate("Earnings"),
+                builder: (context, snapshot) =>
+                    _buildSectionTitle(snapshot.data ?? "Earnings"),
+              ),
+              FutureBuilder<String>(
+                future: translator.translate("Total Win Amount"),
+                builder: (context, snapshot) => _buildAmountRow(
+                    snapshot.data ?? "Total Win Amount:", totalWinAmount,
+                    leadingIcon: Icons.account_balance_wallet),
+              ),
+              FutureBuilder<String>(
+                future: translator.translate("Real Money Value"),
+                builder: (context, snapshot) => _buildAmountRowWithExplanation(
+                    snapshot.data ?? "Real Money Value:", realMoneyValue,
+                    leadingIcon: Icons.monetization_on, isCurrency: true),
+              ),
               const Divider(),
-              _buildSectionTitle("Highest Win"),
-              _buildAmountRow("Highest Win Amount:", totalWinAmount,
-                  leadingIcon: Icons.emoji_events),
+              FutureBuilder<String>(
+                future: translator.translate("Highest Win"),
+                builder: (context, snapshot) =>
+                    _buildSectionTitle(snapshot.data ?? "Highest Win"),
+              ),
+              FutureBuilder<String>(
+                future: translator.translate("Highest Win Amount"),
+                builder: (context, snapshot) => _buildAmountRow(
+                    snapshot.data ?? "Highest Win Amount:", totalWinAmount,
+                    leadingIcon: Icons.emoji_events),
+              ),
               const Divider(),
-              _buildSectionTitle("Last Guesses"),
+              FutureBuilder<String>(
+                future: translator.translate("Last Guesses"),
+                builder: (context, snapshot) =>
+                    _buildSectionTitle(snapshot.data ?? "Last Guesses"),
+              ),
               lastGuesses.isNotEmpty
                   ? Column(
                       children: lastGuesses
@@ -1913,8 +1796,12 @@ class PlayerDataWidgetState extends State<PlayerDataWidget> {
                               ))
                           .toList(),
                     )
-                  : const Text("No last guesses available",
-                      style: TextStyle(fontSize: 16)),
+                  : FutureBuilder<String>(
+                      future: translator.translate("No last guesses available"),
+                      builder: (context, snapshot) => Text(
+                          snapshot.data ?? "No last guesses available",
+                          style: const TextStyle(fontSize: 16)),
+                    ),
             ],
           ),
         ),
