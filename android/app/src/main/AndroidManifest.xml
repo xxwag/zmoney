@@ -1,11 +1,14 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.gg.zmoney"> <!-- Replace with your package name -->
+
     <!-- Correct placement of uses-permission -->
     <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
-     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
-     <uses-permission android:name="android.permission.INTERNET"/>
-     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
         android:label="How Much?"
@@ -15,13 +18,16 @@
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-4652990815059289~7790651680"/>
-           
-           
-        <meta-data
-    android:name="com.google.android.gms.version"
-    android:value="@integer/google_play_services_version" />
 
-        
+        <!-- Google Play Games Services App ID -->
+        <meta-data android:name="com.google.android.gms.games.APP_ID"
+            android:value="@string/app_id"/> <!-- Make sure you have this app_id string defined in your strings.xml -->
+
+        <!-- Required for Google Play Services -->
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version"/> <!-- This should automatically be resolved by the Google Play services library -->
+
         <activity
             android:name=".MainActivity"
             android:resizeableActivity="true"
@@ -30,45 +36,28 @@
             android:theme="@style/LaunchTheme"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"
-            android:windowSoftInputMode="adjustResize">
+           >
 
             <!-- Meta-data for the Flutter theme -->
             <meta-data
                 android:name="io.flutter.embedding.android.NormalTheme"
                 android:resource="@style/NormalTheme" />
 
-                 <meta-data android:name="com.google.android.gms.games.APP_ID"
-               android:value="@string/game_services_project_id"/>
+            <!-- Meta-data for Google Sign In -->
+            <meta-data
+                android:name="com.google.android.gms.signin"
+                android:value="@string/default_web_client_id" />
 
-               <meta-data
-    android:name="com.google.android.gms.version"
-    android:value="@integer/google_play_services_version" />
-
-  <meta-data
-              android:name="io.flutter.embedding.android.SplashScreenDrawable"
-              android:resource="@drawable/launch_background"
-              />
+            <!-- Default and OAuth redirection intent filters -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
-            
-     <meta-data
-        android:name="com.google.android.gms.signin"
-        android:value="@string/default_web_client_id" />
-
-            <!-- Default intent filter for the main launcher activity -->
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
-
-            <!-- Intent filter for OAuth redirection -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                  <data android:scheme="com.gg.zmoney" android:host="oauth2redirect" />
+                <data android:scheme="com.gg.zmoney" android:host="oauth2redirect" />
             </intent-filter>
         </activity>
 

@@ -1,7 +1,20 @@
 <!-- res/values/strings.xml -->
 <resources>
+ <string name="package_name" translatable="false">com.gg.zmoney</string>
   <!-- Replace 0000000000 with your game’s project id. Example value shown above.  -->
   <string name="hello_world"> Big Gang Shit </string>
    <string translatable="false"  name="default_web_client_id">446412900874-ifkm836l5ftprj362groq3q3gd5brq3c.apps.googleusercontent.com</string>
   <string translatable="false"  name="game_services_project_id">446412900874</string>
+    
+
+      <!--app_id-->
+  <string name="app_id" translatable="false">446412900874</string>
+  <!--package_name-->
+
+  <!--achievement Your First Guess-->
+  <string name="achievement_your_first_guess" translatable="false">CgkIipShgv8MEAIQCA</string>
+  <!--event Money louder!-->
+  <string name="event_money_louder" translatable="false">CgkIipShgv8MEAIQCQ</string>
+  <!--leaderboard Winner contest-->
+  <string name="leaderboard_winner_contest" translatable="false">CgkIipShgv8MEAIQAg</string>
 </resources>

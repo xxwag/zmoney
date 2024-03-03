@@ -6,7 +6,6 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.common.api.ApiException
-
 import com.google.android.gms.common.ConnectionResult
 
 
@@ -36,6 +35,7 @@ class MainActivity : FlutterActivity() {
     private val TAG = "MainActivity"
     private lateinit var firebaseAnalytics: FirebaseAnalytics
     private lateinit var gamesSignInClient: GamesSignInClient
+    
     private lateinit var auth: FirebaseAuth
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -78,6 +78,15 @@ class MainActivity : FlutterActivity() {
                 initializeUMP()
                 result.success(null)
             }
+            "unlockAchievement" -> {
+            val achievementId = call.argument<String>("achievementId")
+            if (achievementId != null) {
+                unlockAchievement(achievementId)
+                result.success(true)
+            } else {
+                result.error("INVALID_ARGUMENT", "Achievement ID is required", null)
+            }
+        }
             else -> result.notImplemented()
         }
     }
@@ -101,6 +110,12 @@ class MainActivity : FlutterActivity() {
             }
         }
     }
+
+  private fun unlockAchievement(achievementId: String) {
+    PlayGames.getAchievementsClient(this).unlock(achievementId)
+    Log.d(TAG, "Achievement unlocked: $achievementId")
+}
+
     
 
      private fun signUp(email: String, password: String, result: MethodChannel.Result) {

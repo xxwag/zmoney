@@ -4,6 +4,7 @@ import 'dart:math' as math; // Import the math library
 import 'dart:math';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:games_services/games_services.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:confetti/confetti.dart';
@@ -45,7 +46,7 @@ class LandingPageState extends State<LandingPage>
   int _remainingTime = 600;
   late bool _timerStarted = false;
   late BannerAd _bannerAd;
-  late RewardedAd _rewardedAd;
+  RewardedAd? _rewardedAd; // Declare _rewardedAd as nullable
   bool _isRewardedAdReady = false;
 // Add a new boolean to track if the timer has finished.
   bool _timerFinished = false;
@@ -63,7 +64,7 @@ class LandingPageState extends State<LandingPage>
   final int _smoothUpdateIntervalMs = 5000; // Update every 100 milliseconds
 
 // To keep track of tutorial steps
-  late ConfettiController _confettiController; // ConfettiController
+  late ConfettiController _confettiController; // ConfettiControllerpla
   int randomAnimationType = 1; // Default to 1 or any valid animation type
   // GlobalKeys for target widgets
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
@@ -75,7 +76,25 @@ class LandingPageState extends State<LandingPage>
   // Add more keys as needed
 // Default language code
 
-  List<String> translatedTexts = []; // Make it an empty, growable list
+  List<String> translatedTexts = [
+    'How Much?',
+    'Enter your lucky number',
+    'Submit your guess here!',
+    'Ready',
+    'Time remaining',
+    'Money withdrawal',
+    'Your current prize:',
+    'Here you can enter numbers.',
+    'Enter numbers in this field.',
+    'Select your language here',
+    'Game Menu',
+    'How to play: Enter numbers & test your luck.',
+    'You can win various prices, including real money.',
+    'Account inventory',
+    'Settings',
+    'Try swiping here', // Ensure there's a comma here
+    'Current reward:'
+  ]; // Make it an empty, growable list
 
   double _prizePoolAmount = 100000; // Starting amount
   double _conversionRatio = 0.1; // Adjusted for demonstration
@@ -180,7 +199,7 @@ class LandingPageState extends State<LandingPage>
   bool _arrowsVisible = true;
   late AnimationController _glowController; // Renamed for clarity
   late Animation<double> _glowAnimation; // Renamed for clarity
-
+  static const platform = MethodChannel('com.gg.zmoney/game_services');
   //INIT STATE <<<<<<<<<<<<<<<<<<<<
   @override
   void initState() {
@@ -214,6 +233,8 @@ class LandingPageState extends State<LandingPage>
         .animate(_glowController); // Use the controller for the glow effect
 
     _glowController.repeat(reverse: true);
+    // Attempt to sign in to Game Services
+    unlockAchievement('CgkIipShgv8MEAIQCA');
     // Check if the tutorial has been completed previously
   }
 
@@ -440,7 +461,9 @@ class LandingPageState extends State<LandingPage>
     _smoothIncrementationTimer
         ?.cancel(); // Cancel the smooth incrementation timer
     _bannerAd.dispose(); // Dispose of _bannerAd safely
-    _rewardedAd.dispose(); // Dispose of _rewardedAd safely
+    _rewardedAd?.dispose();
+    _rewardedAd = null; // Then set _rewardedAd to null to clean up references
+
     _confettiController.dispose();
     WidgetsBinding.instance.removeObserver(this);
     _glowController.dispose();
@@ -451,32 +474,37 @@ class LandingPageState extends State<LandingPage>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
     if (state == AppLifecycleState.resumed) {
-      // App is resumed; this is a good time to reload ads if needed
-      _initBannerAd(); // Reinitialize the banner ad
-      _loadRewardedAd(); // Preemptively load a new rewarded ad
+      // Only initialize or load ads when the app resumes to avoid unnecessary memory usage
+      _isBannerAdReady ? null : _initBannerAd(); // Conditional loading
+      _isRewardedAdReady ? null : _loadRewardedAd(); // Conditional loading
       _fetchPrizePoolFromServer();
     }
   }
 
   void _loadRewardedAd() {
-    RewardedAd.load(
-      adUnitId: 'ca-app-pub-4652990815059289/8386402654',
-      request: const AdRequest(),
-      rewardedAdLoadCallback: RewardedAdLoadCallback(
-        onAdLoaded: (RewardedAd ad) {
-          _rewardedAd = ad;
-          _isRewardedAdReady = true;
-        },
-        onAdFailedToLoad: (LoadAdError error) {
-          if (kDebugMode) {
-            print('RewardedAd failed to load: $error');
-          }
-          _isRewardedAdReady = false;
-          _retryLoadRewardedAd;
-          // Consider implementing a retry mechanism here with exponential backoff
-        },
-      ),
-    );
+    if (!_isRewardedAdReady && _rewardedAd == null) {
+      RewardedAd.load(
+        adUnitId: 'ca-app-pub-4652990815059289/8386402654',
+        request: const AdRequest(),
+        rewardedAdLoadCallback: RewardedAdLoadCallback(
+          onAdLoaded: (RewardedAd ad) {
+            setState(() {
+              _rewardedAd = ad;
+              _isRewardedAdReady = true;
+            });
+          },
+          onAdFailedToLoad: (LoadAdError error) {
+            if (kDebugMode) {
+              print('RewardedAd failed to load: $error');
+            }
+            setState(() {
+              _isRewardedAdReady = false;
+            });
+            _retryLoadRewardedAd();
+          },
+        ),
+      );
+    }
   }
 
   // Function to handle the press of the ad button
@@ -492,7 +520,7 @@ class LandingPageState extends State<LandingPage>
 
   void _showRewardedAd() {
     if (_isRewardedAdReady) {
-      _rewardedAd.show(
+      _rewardedAd?.show(
         onUserEarnedReward: (AdWithoutView ad, RewardItem reward) {
           // User has earned the reward. Implement any logic needed when a reward is earned.
           // Example: Call a method to skip timer or unlock content
@@ -502,7 +530,7 @@ class LandingPageState extends State<LandingPage>
         },
       );
 
-      _rewardedAd.fullScreenContentCallback = FullScreenContentCallback(
+      _rewardedAd?.fullScreenContentCallback = FullScreenContentCallback(
         onAdDismissedFullScreenContent: (AdWithoutView ad) {
           // Dispose of the ad when it's dismissed to free up resources
           ad.dispose();
@@ -901,10 +929,6 @@ class LandingPageState extends State<LandingPage>
                       if (!isKeyboardOpen)
                         // Only show the prize pool counter if the keyboard is not open
                         _buildPrizePoolCounter(isKeyboardOpen),
-
-                      tutorialManager.isTutorialActive
-                          ? tutorialManager.buildTutorialOverlay(context)
-                          : const SizedBox.shrink(),
                     ],
                   ),
                 ),
@@ -927,13 +951,11 @@ class LandingPageState extends State<LandingPage>
 
   Widget _buildGoButton(Size screenSize, String buttonText, bool isLocked) {
     // Define the default and loading button colors
+    Skin currentSkin = skins[currentSkinIndex];
     const defaultColor =
         Colors.transparent; // Change to your desired default color
     const loadingColor =
         Colors.transparent; // Change to your desired loading color
-
-    // Determine the button color based on the lock state
-    final buttonColor = isLocked ? loadingColor : defaultColor;
 
     return GestureDetector(
       onTap: () {
@@ -950,44 +972,48 @@ class LandingPageState extends State<LandingPage>
         }
       },
       child: Container(
-        key: key2, // Assign the GlobalKey here
-        padding: const EdgeInsets.all(0),
-        constraints: const BoxConstraints(
-          maxHeight: 50, // Maximum width of the button
-        ),
+        padding: const EdgeInsets.symmetric(
+            horizontal: 20, vertical: 10), // Uniform padding
         decoration: BoxDecoration(
-          // Use the determined button color with some opacity for semi-transparency
-          color: buttonColor.withOpacity(0.5), // Adjust opacity as needed
-          borderRadius: BorderRadius.circular(
-              25), // Creates a pill shape for the rounded background
+          color: Colors.white
+              .withOpacity(0.2), // Slight transparency for the background
+          borderRadius: BorderRadius.circular(25), // Pill-shaped border radius
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.25), // Shadow with 25% opacity
+              spreadRadius: 0,
+              blurRadius: 4,
+              offset: Offset(0, 4), // Vertically displaced shadow
+            ),
+          ],
         ),
         child: _isWaitingForResponse
             ? const CircularProgressIndicator()
             : Row(
-                mainAxisSize: MainAxisSize
-                    .min, // Ensures the Row only takes up necessary space
+                mainAxisSize:
+                    MainAxisSize.min, // Row size adjusts to its content
                 children: [
                   if (isLocked)
-                    const Icon(
-                      Icons.lock, // Lock icon
-                      color: Colors.black, // Icon color
-                      size: 23.0, // Icon size
+                    Icon(
+                      Icons.lock, // Lock icon indicating the button is locked
+                      color: Colors.black,
+                      size: 23.0,
                     ),
                   if (isLocked)
                     const SizedBox(
-                        width:
-                            5), // Adds spacing between the icon and text if locked
+                        width: 5), // Space between the icon and text if locked
                   Text(
                     _timerStarted
                         ? '${_remainingTime ~/ 60}:${(_remainingTime % 60).toString().padLeft(2, '0')}'
                         : isLocked
                             ? ""
-                            : buttonText, // Show remaining time or buttonText
-                    style: const TextStyle(
-                      fontSize: 23.0, // Font size
-                      fontWeight: FontWeight.bold, // Bold font
-                      color: Colors.black, // Text color
-                      letterSpacing: 1.2, // Letter spacing
+                            : buttonText,
+                    style: TextStyle(
+                      fontSize: 23.0,
+                      fontWeight: FontWeight.bold,
+                      color: currentSkin
+                          .specialTextColor, // Adjusted for dynamic color usage
+                      letterSpacing: 1.2,
                     ),
                   ),
                 ],
@@ -1034,6 +1060,7 @@ class LandingPageState extends State<LandingPage>
                   letterSpacing: 1.2,
                   fontFamily: 'Inter',
                 ),
+                onTap: _playConfettiAnimation, // Play confetti on interaction
               ),
             ),
           ),
@@ -1271,8 +1298,20 @@ class LandingPageState extends State<LandingPage>
             guesses.join(','); // Convert list back to string and save
 
         await prefs.setString('playerData', jsonEncode(playerData));
-
         // Refresh UI and PlayerDataWidget
+
+        double actualPrizePool =
+            double.parse(result['actualPrizePool'].toString());
+        // Now submit this actualPrizePool value as the score
+        try {
+          await Leaderboards.submitScore(
+              score: Score(
+                  androidLeaderboardID: 'CgkIipShgv8MEAIQAg',
+                  value: actualPrizePool.toInt()));
+          print("Score submitted successfully to the leaderboard.");
+        } catch (e) {
+          print("Failed to submit score: $e");
+        }
         setState(() {
           _isWaitingForResponse = false;
           isButtonLocked = true;
@@ -1294,6 +1333,16 @@ class LandingPageState extends State<LandingPage>
         _isWaitingForResponse = false;
       });
       _showServerNotRunningDialog();
+    }
+  }
+
+  Future<void> unlockAchievement(String achievementId) async {
+    try {
+      final bool result = await platform
+          .invokeMethod('unlockAchievement', {'achievementId': achievementId});
+      print("Achievement unlock result: $result");
+    } on PlatformException catch (e) {
+      print("Failed to unlock achievement: '${e.message}'.");
     }
   }
 
@@ -1677,6 +1726,22 @@ class PlayerDataWidgetState extends State<PlayerDataWidget> {
     });
   }
 
+  void _showAchievements() async {
+    try {
+      await GamesServices.showAchievements();
+    } catch (e) {
+      print('Error showing achievements: $e');
+    }
+  }
+
+  void _showLeaderboard() async {
+    try {
+      await GamesServices.showLeaderboards(); // Use your actual leaderboard ID
+    } catch (e) {
+      print('Error showing leaderboard: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // Assuming playerData['total_win_amount'] and conversionRatio are correctly fetched/set
@@ -1714,6 +1779,19 @@ class PlayerDataWidgetState extends State<PlayerDataWidget> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  ElevatedButton(
+                    onPressed: _showAchievements,
+                    child: Text('Achievements'),
+                  ),
+                  ElevatedButton(
+                    onPressed: _showLeaderboard,
+                    child: Text('Leaderboard'),
+                  ),
+                ],
+              ),
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Row(

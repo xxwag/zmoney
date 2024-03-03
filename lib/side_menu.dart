@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:games_services/games_services.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:video_player/video_player.dart';
@@ -243,6 +244,7 @@ class SettingsPageState extends State<SettingsPage> {
       await _googleSignIn
           .signOut(); // Or use disconnect() if you want to revoke access completely
       await FirebaseAuth.instance.signOut();
+    
       if (kDebugMode) {
         print("Signed out of Google");
       }

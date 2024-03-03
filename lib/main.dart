@@ -36,7 +36,7 @@ final translator =
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
+  GamesServices.signIn();
   String envFileName = ".env";
   await dotenv.load(fileName: envFileName);
 
@@ -91,16 +91,15 @@ void main() async {
 
   await AutoLocalization.init(
     appLanguage: 'en', // Default language
-    userLanguage: 'it', // userLanguage
+    userLanguage: userLanguage, // userLanguage
   );
-  GameAuth.getAuthCode(
-      '446412900874-ahqkgka4tmdssv5saom7ofpfpv0kl00v.apps.googleusercontent.com');
-  GameAuth.signIn();
 
   Future.delayed(const Duration(seconds: 3), () {
     runApp(MyApp(homeScreen: homeScreen));
   });
 }
+
+
 
 String getPreferredLanguage() {
   return WidgetsBinding.instance.window.locale.languageCode;
@@ -1309,6 +1308,7 @@ class _AnimatedBackgroundScreenState extends State<AnimatedBackgroundScreen>
   void dispose() {
     _imageSwitchController.dispose();
     _imageMoveController.dispose();
+    _videoController.dispose();
     super.dispose();
   }
 }
