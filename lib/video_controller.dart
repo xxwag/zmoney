@@ -6,31 +6,34 @@ class VideoBackgroundScreen extends StatefulWidget {
   final String imageAsset;
 
   const VideoBackgroundScreen({
-    super.key, // Updated to Key? to allow for nullable keys
+    super.key,
     required this.videoAsset,
     required this.imageAsset,
   });
 
   @override
-  _VideoBackgroundScreenState createState() => _VideoBackgroundScreenState();
+  VideoBackgroundScreenState createState() => VideoBackgroundScreenState();
 }
 
-class _VideoBackgroundScreenState extends State<VideoBackgroundScreen> {
+class VideoBackgroundScreenState extends State<VideoBackgroundScreen> {
   late VideoPlayerController _controller;
   bool _isVideoInitialized = false;
 
   @override
   void initState() {
     super.initState();
+    // Initialize the VideoPlayerController with an asset source.
     _controller = VideoPlayerController.asset(widget.videoAsset)
       ..initialize().then((_) {
         setState(() {
+          // The video is now ready to be played.
           _isVideoInitialized = true;
         });
+        // Optionally start playing the video automatically.
         _controller.play();
+        // Loop the video indefinitely.
         _controller.setLooping(true);
       }).catchError((error) {
-        print("Error initializing video: $error");
         setState(() {
           _isVideoInitialized = false;
         });
@@ -39,18 +42,20 @@ class _VideoBackgroundScreenState extends State<VideoBackgroundScreen> {
 
   @override
   void dispose() {
+    // Ensure the controller is disposed to free up resources.
     _controller.dispose();
     super.dispose();
   }
 
   Widget _buildVideo() {
     if (_isVideoInitialized) {
+      // The video is ready and can be displayed.
       return AspectRatio(
         aspectRatio: _controller.value.aspectRatio,
         child: VideoPlayer(_controller),
       );
     } else {
-      // Backup image as a fallback
+      // Display a backup image while the video is not ready.
       return Image.asset(widget.imageAsset, fit: BoxFit.cover);
     }
   }
@@ -61,7 +66,7 @@ class _VideoBackgroundScreenState extends State<VideoBackgroundScreen> {
       backgroundColor: Colors.black,
       body: SizedBox.expand(
         child: FittedBox(
-          fit: BoxFit.cover, // Ensures the content covers the space
+          fit: BoxFit.cover,
           child: _buildVideo(),
         ),
       ),

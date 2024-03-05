@@ -4,7 +4,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:games_services/games_services.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:video_player/video_player.dart';
@@ -244,7 +243,7 @@ class SettingsPageState extends State<SettingsPage> {
       await _googleSignIn
           .signOut(); // Or use disconnect() if you want to revoke access completely
       await FirebaseAuth.instance.signOut();
-    
+
       if (kDebugMode) {
         print("Signed out of Google");
       }
@@ -255,7 +254,7 @@ class SettingsPageState extends State<SettingsPage> {
     }
 
     // Navigate to WelcomeScreen if the context is still mounted
-    if (context.mounted) {
+    if (mounted) {
       Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const WelcomeScreen()));
     }
@@ -304,16 +303,22 @@ class SettingsPageState extends State<SettingsPage> {
       ),
     );
   }
+
+  @override
+  void dispose() {
+    // Dispose any controllers and listeners here
+    super.dispose();
+  }
 }
 
 class MoneyWithdrawalScreen extends StatefulWidget {
   const MoneyWithdrawalScreen({super.key});
 
   @override
-  _MoneyWithdrawalScreenState createState() => _MoneyWithdrawalScreenState();
+  MoneyWithdrawalScreenState createState() => MoneyWithdrawalScreenState();
 }
 
-class _MoneyWithdrawalScreenState extends State<MoneyWithdrawalScreen> {
+class MoneyWithdrawalScreenState extends State<MoneyWithdrawalScreen> {
   final TextEditingController _amountController = TextEditingController();
   final bool _isLoading = false;
   final _formKey = GlobalKey<FormState>();
@@ -326,6 +331,12 @@ class _MoneyWithdrawalScreenState extends State<MoneyWithdrawalScreen> {
   void initState() {
     super.initState();
     _loadPlayerData();
+  }
+
+  @override
+  void dispose() {
+    // Dispose any controllers and listeners here
+    super.dispose();
   }
 
   Future<void> _loadPlayerData() async {
@@ -351,8 +362,8 @@ class _MoneyWithdrawalScreenState extends State<MoneyWithdrawalScreen> {
     });
   }
 
-  void _navigateToCardForm(BuildContext context, String cardType,
-      double selectedZcoins, double selectedAmountInDollars) {
+  void _navigateToCardForm(
+      String cardType, double selectedZcoins, double selectedAmountInDollars) {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -365,25 +376,25 @@ class _MoneyWithdrawalScreenState extends State<MoneyWithdrawalScreen> {
     );
   }
 
-  void _showUnfinishedMethodDialog(BuildContext context, String methodName) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text("Payment Method Unavailable"),
-          content: Text(
-              "The process for $methodName withdrawal is not ready yet. We are so sorry. Please try a different method."),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('OK'),
-              onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
-              },
-            ),
-          ],
-        );
-      },
-    );
+  void _showUnfinishedMethodDialog(String methodName) {
+    if (mounted) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text("Payment Method Unavailable"),
+            content: Text(
+                "The process for $methodName withdrawal is not ready yet. We are so sorry. Please try a different method."),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('OK'),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ],
+          );
+        },
+      );
+    }
   }
 
   void _showPaymentOptions(BuildContext context) async {
@@ -420,7 +431,13 @@ class _MoneyWithdrawalScreenState extends State<MoneyWithdrawalScreen> {
     );
 
     if (paymentMethod != null) {
-      if (paymentMethod == 'Mastercard' || paymentMethod == 'Visa') {
+      // Check if the payment method is one of the unfinished ones
+      if (paymentMethod == 'Bitcoin' || paymentMethod == 'PayPal') {
+        // Call the dialog for unfinished methods
+        if (mounted) {
+          _showUnfinishedMethodDialog(paymentMethod);
+        }
+      } else if (paymentMethod == 'Mastercard' || paymentMethod == 'Visa') {
         // Calculate the selected amount in Zcoins and its equivalent in real money
         final double selectedAmountInDollars =
             double.parse(_amountController.text);
@@ -428,39 +445,48 @@ class _MoneyWithdrawalScreenState extends State<MoneyWithdrawalScreen> {
 
         // Now pass these values to _navigateToCardForm
         _navigateToCardForm(
-            context, paymentMethod, selectedZcoins, selectedAmountInDollars);
+            paymentMethod, selectedZcoins, selectedAmountInDollars);
       } else if (paymentMethod == 'Google Pay') {
-        _initiateWithdrawal(paymentMethod, context);
+        _initiateWithdrawal(paymentMethod);
       }
       // Additional conditions for other payment methods can be added here.
     }
   }
 
-  void _initiateWithdrawal(String paymentMethod, BuildContext context) {
+  void _initiateWithdrawal(String paymentMethod) {
     // Here, you would integrate with the actual payment method's API or SDK.
     // This is a placeholder to simulate the transfer process.
     if (kDebugMode) {
       print("Initiating transfer with: $paymentMethod");
     }
 
-    // Simulate opening a transfer window or processing the payment.
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('$paymentMethod Transfer'),
-        content:
-            Text('Simulating a transfer request window for $paymentMethod.'),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              _showSuccessDialog(100.0); // Placeholder for successful transfer
-            },
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
+    // Since this method is now part of the State class, we can use the context directly.
+    // However, we use it within a condition that checks if the widget is still mounted
+    // to ensure we don't try to show a dialog for a widget that's no longer in the tree.
+    if (mounted) {
+      showDialog(
+        context: context, // Use the State's context directly
+        builder: (context) => AlertDialog(
+          title: Text('$paymentMethod Transfer'),
+          content:
+              Text('Simulating a transfer request window for $paymentMethod.'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                // It's safe to use context here because it's tied to the dialog, which is modal and has its own context scope.
+                Navigator.of(context).pop();
+                // Check again if the widget is still mounted before updating the UI or navigating.
+                if (mounted) {
+                  _showSuccessDialog(
+                      100.0); // Placeholder for successful transfer
+                }
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+    }
   }
 
   void _showSuccessDialog(double amountWithdrawn) {
@@ -595,10 +621,10 @@ class CardPaymentForm extends StatefulWidget {
   });
 
   @override
-  _CardPaymentFormState createState() => _CardPaymentFormState();
+  CardPaymentFormState createState() => CardPaymentFormState();
 }
 
-class _CardPaymentFormState extends State<CardPaymentForm> {
+class CardPaymentFormState extends State<CardPaymentForm> {
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false; // Add this line
 
@@ -715,9 +741,10 @@ class _CardPaymentFormState extends State<CardPaymentForm> {
       await _showDialog('Failed',
           'Failed to submit withdrawal request. Please try again later.');
     }
-
-    Navigator.of(context)
-        .pop(); // Close the CardPaymentForm after dialog confirmation
+    if (mounted) {
+      Navigator.of(context)
+          .pop(); // Close the CardPaymentForm after dialog confirmation
+    }
   }
 
   @override
@@ -725,7 +752,7 @@ class _CardPaymentFormState extends State<CardPaymentForm> {
     return Scaffold(
       appBar: AppBar(
         title: Text('${widget.cardType} Details'),
-        iconTheme: IconThemeData(
+        iconTheme: const IconThemeData(
           color: Colors.white, // Change this to your desired color
         ),
         // Other AppBar properties if needed

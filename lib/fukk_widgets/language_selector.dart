@@ -26,9 +26,6 @@ class LanguageSelectorWidget extends StatefulWidget {
 }
 
 class _LanguageSelectorWidgetState extends State<LanguageSelectorWidget> {
-  String _selectedLanguageCode = translator.currentLanguage;
-  int _translationVersion = 0;
-
 // Assuming you have a method to update the language in AutoLocalization
   void updateLanguage(String languageCode) async {
     await AutoLocalization.init(
@@ -43,19 +40,28 @@ class _LanguageSelectorWidgetState extends State<LanguageSelectorWidget> {
       'en': 'English',
       'cs': 'Czech',
       'fr': 'French',
-      'zh': 'Chinese',
+      'zh-CN': 'Chinese', // Updated for BCP-47
+      'zh-TW': 'Chinese-s', // Updated for BCP-47
+      'ja': 'Japanese',
       'da': 'Danish',
       'nl': 'Dutch',
       'de': 'German',
       'el': 'Greek',
       'it': 'Italian',
-      'ja': 'Japanese',
+
       'lt': 'Lithuanian',
       'nb': 'Norwegian',
-      // 'pl': 'Polish',
+      'pl': 'Polish', // Added back as it's widely spoken
       'pt': 'Portuguese',
       'ro': 'Romanian',
+      'ru': 'Russian', // Added as it's widely spoken
       'es': 'Spanish',
+      'sv': 'Swedish', // Added as it's widely used in Scandinavia
+      'tr': 'Turkish', // Added as it's widely spoken
+      'ar': 'Arabic', // Added as it's one of the top spoken languages globally
+      'hi': 'Hindi', // Added as it's one of the top spoken languages in India
+      'ko':
+          'Korean', // Added as it's widely used in technology and entertainment
       // Add other supported languages here
     };
 
@@ -69,7 +75,6 @@ class _LanguageSelectorWidgetState extends State<LanguageSelectorWidget> {
       onChanged: (String? newValue) {
         if (newValue != null) {
           setState(() {
-            _selectedLanguageCode = newValue;
             translator.setCurrentLanguage(newValue);
           });
           widget.onLanguageChanged(newValue); // Existing callback

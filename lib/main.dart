@@ -6,9 +6,9 @@ import 'package:firebase_ui_auth/firebase_ui_auth.dart';
 
 import 'package:firebase_ui_oauth_google/firebase_ui_oauth_google.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/gestures.dart';
+
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
+
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -20,6 +20,7 @@ import 'package:oauth2/oauth2.dart' as oauth2;
 import 'package:http/http.dart' as http;
 import 'package:flutter_appauth/flutter_appauth.dart';
 import 'package:video_player/video_player.dart';
+
 import 'package:zmoney/fukk_widgets/language_selector.dart';
 import 'package:zmoney/fukk_widgets/translator.dart';
 import 'package:zmoney/loading_screen.dart';
@@ -85,8 +86,7 @@ void main() async {
 
   String userLanguage = getPreferredLanguage();
   // await clearSharedPreferences();
-  print(userLanguage);
-  final String preferredLanguage = 'en'; // Example language code
+  const String preferredLanguage = 'en'; // Example language code
   translator.setCurrentLanguage(preferredLanguage);
 
   await AutoLocalization.init(
@@ -99,10 +99,8 @@ void main() async {
   });
 }
 
-
-
 String getPreferredLanguage() {
-  return WidgetsBinding.instance.window.locale.languageCode;
+  return PlatformDispatcher.instance.locales.first.languageCode;
 }
 
 Future<http.Response> verifyAndRetrieveData(String jwtToken) async {
@@ -240,7 +238,7 @@ class WelcomeScreenState extends State<WelcomeScreen>
   Widget _buildToggleFormModeButton() {
     // Define the keys for the translations
     const String signInKey = "Already have an account? Sign in here.";
-    final String signUpKey = "Don't have an account? Register here.";
+    const String signUpKey = "Don't have an account? Register here.";
 
     // Determine the current key based on the sign-up mode
     final String currentKey = _isSignUpMode ? signInKey : signUpKey;
@@ -264,7 +262,7 @@ class WelcomeScreenState extends State<WelcomeScreen>
           );
         } else {
           // Translation is not yet loaded or an error occurred, show a placeholder or error message
-          return CircularProgressIndicator(); // Or some other placeholder widget
+          return const CircularProgressIndicator(); // Or some other placeholder widget
         }
       },
     );
@@ -427,8 +425,8 @@ class WelcomeScreenState extends State<WelcomeScreen>
 
   Widget _buildSocialSignInButtons() {
     // Define the keys for the translations
-    final String googleKey = "Sign in with Google";
-    final String githubKey = "Sign in with GitHub";
+    const String googleKey = "Sign in with Google";
+    const String githubKey = "Sign in with GitHub";
 
     return Center(
       // Use Center to keep the Wrap widget centered on the screen
@@ -450,7 +448,7 @@ class WelcomeScreenState extends State<WelcomeScreen>
                   iconColor: Colors.blue, // Google color
                 );
               } else {
-                return CircularProgressIndicator(); // Or some other placeholder widget
+                return const CircularProgressIndicator(); // Or some other placeholder widget
               }
             },
           ),
@@ -468,7 +466,7 @@ class WelcomeScreenState extends State<WelcomeScreen>
                       .white, // GitHub color, though default is already black
                 );
               } else {
-                return CircularProgressIndicator(); // Or some other placeholder widget
+                return const CircularProgressIndicator(); // Or some other placeholder widget
               }
             },
           ),
@@ -482,14 +480,15 @@ class WelcomeScreenState extends State<WelcomeScreen>
     Color buttonColor = _isSignUpMode ? Colors.blueAccent : Colors.lightGreen;
 
     // Define keys for the translations
-    final String signUpKey = "Sign Up";
-    final String signInKey = "Sign In";
+    const String signUpKey = "Sign Up";
+    const String signInKey = "Sign In";
 
     // Determine the current action text based on the sign-up mode
     final String currentActionKey = _isSignUpMode ? signUpKey : signInKey;
 
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 8.0), // Apply external padding
+      padding:
+          const EdgeInsets.symmetric(vertical: 8.0), // Apply external padding
       child: FutureBuilder<String>(
         future: translator.translate(
             currentActionKey), // Fetch the translation asynchronously
@@ -522,7 +521,7 @@ class WelcomeScreenState extends State<WelcomeScreen>
             );
           } else {
             // Translation is not yet loaded or an error occurred, show a placeholder or error message
-            return CircularProgressIndicator(); // Or some other placeholder widget
+            return const CircularProgressIndicator(); // Or some other placeholder widget
           }
         },
       ),
@@ -618,11 +617,11 @@ class WelcomeScreenState extends State<WelcomeScreen>
         _isSignUpMode ? Colors.yellowAccent : Colors.greenAccent;
 
     // Translate the hints for password fields
-    final String passwordHintKey = 'Choose a strong password';
-    final String confirmPasswordHintKey = 'Confirm your password';
+    const String passwordHintKey = 'Choose a strong password';
+    const String confirmPasswordHintKey = 'Confirm your password';
 
     // Translate the error message for the confirm password field
-    final String confirmPasswordErrorKey = 'Passwords do not match';
+    const String confirmPasswordErrorKey = 'Passwords do not match';
 
     Widget passwordField = FutureBuilder<String>(
       future: translator.translate(passwordHintKey),
@@ -661,7 +660,7 @@ class WelcomeScreenState extends State<WelcomeScreen>
                   },
                 );
               } else {
-                return CircularProgressIndicator(); // Loading indicator or placeholder
+                return const CircularProgressIndicator(); // Loading indicator or placeholder
               }
             },
           )
@@ -791,11 +790,14 @@ class WelcomeScreenState extends State<WelcomeScreen>
             var playerData = jsonDecode(playerDataResponse.body)['playerData'];
             final prefs = await SharedPreferences.getInstance();
             await prefs.setString('playerData', jsonEncode(playerData));
+            if (context.mounted) {
+              // ignore: use_build_context_synchronously
+              Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (context) => const LandingPage()));
 
-            Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (context) => const LandingPage()));
-            await _showSnackBar("Sign-in successful.");
-            signInSuccess = true;
+              await _showSnackBar("Sign-in successful.");
+              signInSuccess = true;
+            }
           } else {
             await _showSnackBar("Error verifying token and retrieving data.");
           }
@@ -917,18 +919,20 @@ class WelcomeScreenState extends State<WelcomeScreen>
           var responseData = jsonDecode(response.body);
           var jwtToken = responseData['token'];
           await secureStorage.write(key: 'jwtToken', value: jwtToken);
+          if (context.mounted) {
+            final playerDataResponse = await verifyAndRetrieveData(jwtToken);
+            if (playerDataResponse.statusCode == 200) {
+              var playerData =
+                  jsonDecode(playerDataResponse.body)['playerData'];
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.setString('playerData', jsonEncode(playerData));
 
-          final playerDataResponse = await verifyAndRetrieveData(jwtToken);
-          if (playerDataResponse.statusCode == 200) {
-            var playerData = jsonDecode(playerDataResponse.body)['playerData'];
-            print('player data $playerData');
-            final prefs = await SharedPreferences.getInstance();
-            await prefs.setString('playerData', jsonEncode(playerData));
-
-            // Navigate to the next screen or update the state as necessary
-            Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (context) => const LandingPage()));
-            await _showSnackBar("Sign-in successful.");
+              // Navig if (context.mounted) {ate to the next screen or update the state as necessary
+              // ignore: use_build_context_synchronously
+              Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (context) => const LandingPage()));
+              await _showSnackBar("Sign-in successful.");
+            }
           } else {
             await _showSnackBar("Error verifying token and retrieving data.");
             _isAuthenticating = false; // Unlock UI
@@ -994,25 +998,11 @@ class WelcomeScreenState extends State<WelcomeScreen>
   Future<void> _showSnackBar(String messageKey) async {
     // Assuming you have a method to translate messages based on a key
     final String message = await translator.translate(messageKey);
-    final snackBar = SnackBar(content: Text(message));
-    ScaffoldMessenger.of(context).showSnackBar(snackBar);
-  }
 
-  String _getSignInErrorMessage(String code) {
-    switch (code) {
-      case 'user-not-found':
-        return 'No user found for that email.';
-      case 'wrong-password':
-        return 'Wrong password provided for that user.';
-      case 'user-disabled':
-        return 'The user account has been disabled by an administrator.';
-      case 'too-many-requests':
-        return 'Too many requests. Try again later.';
-      case 'operation-not-allowed':
-        return 'Signing in with Email and Password is not enabled.';
-      // Include additional error handling as needed
-      default:
-        return 'An error occurred during sign-in. Please try again.';
+    // After the async gap, check if the widget is still mounted before using `context`
+    if (mounted) {
+      final snackBar = SnackBar(content: Text(message));
+      ScaffoldMessenger.of(context).showSnackBar(snackBar);
     }
   }
 
@@ -1088,8 +1078,11 @@ class WelcomeScreenState extends State<WelcomeScreen>
               final prefs = await SharedPreferences.getInstance();
               await prefs.setString('playerData', jsonEncode(playerData));
 
-              Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (context) => const LandingPage()));
+              if (mounted) {
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (context) => const LandingPage()),
+                );
+              }
               await _showSnackBar("GitHub Sign-in successful.");
             } else {
               await _showSnackBar("Error verifying token and retrieving data.");
@@ -1130,7 +1123,7 @@ class WelcomeScreenState extends State<WelcomeScreen>
   // ignore: unused_element
   Widget _buildSkipButton() {
     // Define the key for the translation
-    final String skipButtonKey =
+    const String skipButtonKey =
         "You should probably login, as it might be hard to later cash your winnings. But you can help friends to penetrate the number and skip the login here";
 
     return Visibility(
@@ -1156,7 +1149,7 @@ class WelcomeScreenState extends State<WelcomeScreen>
             );
           } else {
             // Translation is not yet loaded or an error occurred, show a placeholder or error message
-            return CircularProgressIndicator(); // Or some other placeholder widget
+            return const CircularProgressIndicator(); // Or some other placeholder widget
           }
         },
       ),
@@ -1168,11 +1161,11 @@ class AnimatedBackgroundScreen extends StatefulWidget {
   const AnimatedBackgroundScreen({super.key});
 
   @override
-  _AnimatedBackgroundScreenState createState() =>
-      _AnimatedBackgroundScreenState();
+  AnimatedBackgroundScreenState createState() =>
+      AnimatedBackgroundScreenState();
 }
 
-class _AnimatedBackgroundScreenState extends State<AnimatedBackgroundScreen>
+class AnimatedBackgroundScreenState extends State<AnimatedBackgroundScreen>
     with TickerProviderStateMixin {
   late AnimationController _imageSwitchController;
   late AnimationController
@@ -1187,10 +1180,10 @@ class _AnimatedBackgroundScreenState extends State<AnimatedBackgroundScreen>
   void initState() {
     super.initState();
 
-    _videoController = VideoPlayerController.network(
+    _videoController = VideoPlayerController.networkUrl(
       // 'https://video-previews.elements.envatousercontent.com/files/92826da3-9606-49ad-8d4e-8412d4fdd21a/video_preview_h264.mp4'
-      'https://assets.mixkit.co/videos/preview/mixkit-stock-market-exchange-and-forex-prices-background-47006-large.mp4', // Direct video file URL
-      //'http://www.zahasmaster.pro/video/main.mp4'
+      Uri.parse(
+          'https://assets.mixkit.co/videos/preview/mixkit-stock-market-exchange-and-forex-prices-background-47006-large.mp4'), // Convert String URL to Uri
       //'https://www.zahasmaster.pro/video/main2.mp4'
     )..initialize().then((_) {
         setState(
@@ -1321,41 +1314,4 @@ class OAuth2LoginResult {
   final oauth2.Credentials credential;
 
   OAuth2LoginResult(this.status, this.errorMessage, this.credential);
-}
-
-class GoogleSignInView extends StatelessWidget {
-  const GoogleSignInView({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    // This is used in the platform side to register the view.
-    const String viewType = '<platform-view-type>';
-    // Pass parameters to the platform side.
-    final Map<String, dynamic> creationParams = <String, dynamic>{};
-
-    return PlatformViewLink(
-      viewType: viewType,
-      surfaceFactory: (context, controller) {
-        return AndroidViewSurface(
-          controller: controller as AndroidViewController,
-          gestureRecognizers: const <Factory<OneSequenceGestureRecognizer>>{},
-          hitTestBehavior: PlatformViewHitTestBehavior.opaque,
-        );
-      },
-      onCreatePlatformView: (params) {
-        return PlatformViewsService.initSurfaceAndroidView(
-          id: params.id,
-          viewType: viewType,
-          layoutDirection: TextDirection.ltr,
-          creationParams: creationParams,
-          creationParamsCodec: const StandardMessageCodec(),
-          onFocus: () {
-            params.onFocusChanged(true);
-          },
-        )
-          ..addOnPlatformViewCreatedListener(params.onPlatformViewCreated)
-          ..create();
-      },
-    );
-  }
 }

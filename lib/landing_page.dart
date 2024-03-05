@@ -24,6 +24,7 @@ import 'package:zmoney/text_cycle.dart';
 import 'package:zmoney/tutorial_steps.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:intl/intl.dart'; // Import intl package
+import 'package:auto_size_text/auto_size_text.dart';
 
 final translator =
     Translator(currentLanguage: 'en'); // Set initial language as needed
@@ -51,7 +52,7 @@ class LandingPageState extends State<LandingPage>
 // Add a new boolean to track if the timer has finished.
   bool _timerFinished = false;
   bool _isBannerAdReady = false;
-  bool _showTutorial = true; // State to manage tutorial visibility
+// State to manage tutorial visibility
 // State for party animation
   final TextEditingController _numberController = TextEditingController();
   late TutorialManager tutorialManager;
@@ -206,12 +207,12 @@ class LandingPageState extends State<LandingPage>
     super.initState();
     initializeTranslations();
     WidgetsBinding.instance.addObserver(this); // Add the observer
-    _initBannerAd();
-    _loadRewardedAd();
+    if (!kDebugMode && !kProfileMode) {
+      _initBannerAd();
+      _loadRewardedAd();
+    }
     _loadRewardedInterstitialAd();
 
-    // fetchAndSetTranslations(_selectedLanguageCode);
-    _checkTutorialCompletion();
     _fetchPrizePoolFromServer();
     _confettiController = ConfettiController();
     //_confettiController.play();
@@ -234,7 +235,7 @@ class LandingPageState extends State<LandingPage>
 
     _glowController.repeat(reverse: true);
     // Attempt to sign in to Game Services
-    unlockAchievement('CgkIipShgv8MEAIQCA');
+
     // Check if the tutorial has been completed previously
   }
 
@@ -254,8 +255,6 @@ class LandingPageState extends State<LandingPage>
   }
 
   Future<void> initializeTranslations() async {
-    print(
-        'Initializing translations. Current list length: ${translatedTexts.length}');
     List<String> keys = [
       'How Much?',
       'Enter your lucky number',
@@ -295,8 +294,6 @@ class LandingPageState extends State<LandingPage>
         onUpdate: () => setState(() {}),
       );
     });
-    print(
-        'Translations initialized. New list length: ${translatedTexts.length}');
   }
 
   Future<void> _showRewardedInterstitialAd() async {
@@ -337,7 +334,6 @@ class LandingPageState extends State<LandingPage>
       );
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        print(data);
         if (data != null) {
           setState(() {
             _prizePoolAmount = data['prizePoolBase'].toDouble();
@@ -345,8 +341,7 @@ class LandingPageState extends State<LandingPage>
             _conversionRatio = data['conversionRatio'];
             _startSmoothPrizePoolIncrementation();
           });
-          print(
-              'Conversion ratio: $_conversionRatio'); // This should now print the updated value
+          // This should now print the updated value
         }
       } else {
         throw Exception('Failed to load prize pool from server');
@@ -466,7 +461,7 @@ class LandingPageState extends State<LandingPage>
 
     _confettiController.dispose();
     WidgetsBinding.instance.removeObserver(this);
-    _glowController.dispose();
+
     super.dispose();
   }
 
@@ -757,7 +752,7 @@ class LandingPageState extends State<LandingPage>
                           blastDirection: -math.pi / 1,
                           particleDrag: 0.05,
                           emissionFrequency: 0.05,
-                          numberOfParticles: 13,
+                          numberOfParticles: 7,
                           gravity: 0.01,
                           colors: const [Colors.green],
                           minBlastForce: 1,
@@ -800,7 +795,7 @@ class LandingPageState extends State<LandingPage>
                                         fontSize: 20,
                                         shadows: [
                                           Shadow(
-                                            offset: Offset(0.0, 0.0),
+                                            offset: const Offset(0.0, 0.0),
                                             blurRadius: 12.0,
                                             color: currentSkin.specialTextColor
                                                 .withOpacity(
@@ -949,139 +944,47 @@ class LandingPageState extends State<LandingPage>
         ));
   }
 
-  Widget _buildGoButton(Size screenSize, String buttonText, bool isLocked) {
-    // Define the default and loading button colors
-    Skin currentSkin = skins[currentSkinIndex];
-    const defaultColor =
-        Colors.transparent; // Change to your desired default color
-    const loadingColor =
-        Colors.transparent; // Change to your desired loading color
-
-    return GestureDetector(
-      onTap: () {
-        if (!isLocked && !_isWaitingForResponse && !_timerStarted) {
-          submitGuess();
-        } else if (isLocked && _timerFinished) {
-          // Optionally handle a tap when the button is locked but the timer finished
-          setState(() {
-            _timerFinished = false; // Reset timer finished state
-          });
-        } else if (isLocked) {
-          // If button is locked, skip the timer
-          skipTimer();
-        }
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-            horizontal: 20, vertical: 10), // Uniform padding
-        decoration: BoxDecoration(
-          color: Colors.white
-              .withOpacity(0.2), // Slight transparency for the background
-          borderRadius: BorderRadius.circular(25), // Pill-shaped border radius
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.25), // Shadow with 25% opacity
-              spreadRadius: 0,
-              blurRadius: 4,
-              offset: Offset(0, 4), // Vertically displaced shadow
-            ),
-          ],
-        ),
-        child: _isWaitingForResponse
-            ? const CircularProgressIndicator()
-            : Row(
-                mainAxisSize:
-                    MainAxisSize.min, // Row size adjusts to its content
-                children: [
-                  if (isLocked)
-                    Icon(
-                      Icons.lock, // Lock icon indicating the button is locked
-                      color: Colors.black,
-                      size: 23.0,
-                    ),
-                  if (isLocked)
-                    const SizedBox(
-                        width: 5), // Space between the icon and text if locked
-                  Text(
-                    _timerStarted
-                        ? '${_remainingTime ~/ 60}:${(_remainingTime % 60).toString().padLeft(2, '0')}'
-                        : isLocked
-                            ? ""
-                            : buttonText,
-                    style: TextStyle(
-                      fontSize: 23.0,
-                      fontWeight: FontWeight.bold,
-                      color: currentSkin
-                          .specialTextColor, // Adjusted for dynamic color usage
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                ],
-              ),
-      ),
-    );
-  }
-
   Widget _buildNumberInput(Size screenSize, String hintText) {
     return SizedBox(
-      width: screenSize.width * 0.8, // Adjust the width as needed
-      child: Row(
-        children: [
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              decoration: ShapeDecoration(
-                color: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              child: TextField(
-                controller: _numberController,
-                keyboardType: TextInputType.number,
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                  LengthLimitingTextInputFormatter(7),
-                ],
-                decoration: InputDecoration(
-                  border: InputBorder.none,
-                  hintText: hintText,
-                  contentPadding: const EdgeInsets.fromLTRB(10, 12, 10, 10),
-                  hintStyle: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey, // Hint text color
-                  ),
-                ),
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14.0, // Consider making this responsive if possible
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                  letterSpacing: 1.2,
-                  fontFamily: 'Inter',
-                ),
-                onTap: _playConfettiAnimation, // Play confetti on interaction
-              ),
-            ),
+      width: screenSize.width * 0.8,
+      child: Container(
+        width: screenSize.width * 0.8,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        decoration: ShapeDecoration(
+          color: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
           ),
-        ],
+        ),
+        child: TextField(
+          key: key1, // Assign the GlobalKey here
+          controller: _numberController,
+          keyboardType: TextInputType.number,
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+            LengthLimitingTextInputFormatter(7),
+          ],
+          decoration: InputDecoration(
+            border: InputBorder.none,
+            hintText: hintText, // Use the translated text
+            contentPadding: const EdgeInsets.fromLTRB(10, 12, 10,
+                10), // Adjust padding to center the hint text vertically
+
+            suffixIconConstraints: const BoxConstraints(
+                minWidth: 48, minHeight: 22), // Adjust icon size
+          ),
+          textAlign: TextAlign.center, // Horizontally centers the text
+          style: const TextStyle(
+            fontSize: 15.0, // Font size, adjusted to match _buildGoButton
+            fontWeight: FontWeight.bold, // Bold font
+            color: Colors.black, // Text color
+            letterSpacing: 1.2, // Letter spacing
+            fontFamily: 'Inter', // Keep the same font family
+          ),
+          onTap: _playConfettiAnimation, // Play confetti on interaction
+        ),
       ),
     );
-  }
-
-  void skipTimer() {
-    if (_timerStarted && _remainingTime > 0) {
-      setState(() {
-        _remainingTime -= 120; // Decrease the timer by 2 minutes
-        if (_remainingTime <= 0) {
-          _timer?.cancel();
-          _remainingTime = 0;
-          _timerFinished = true;
-          _timerStarted = false;
-          isButtonLocked = false; // Unlock the Go button here as well
-        }
-      });
-    }
   }
 
   void startTimer() {
@@ -1207,21 +1110,99 @@ class LandingPageState extends State<LandingPage>
     );
   }
 
+  Widget _buildGoButton(Size screenSize, String buttonText, bool isLocked) {
+    // Define the default and loading button colors
+    Skin currentSkin = skins[currentSkinIndex];
+    // Change to your desired default color
+    // Change to your desired loading color
+    Color color1 = currentSkin.textColor;
+
+    return GestureDetector(
+      onTapDown: (TapDownDetails details) {
+        setState(() {
+          color1 = currentSkin.textColor
+              .withOpacity(0.7); // Button is being pressed down
+        });
+      },
+      onTap: () {
+        _playConfettiAnimation();
+        if (!isLocked && !_isWaitingForResponse && !_timerStarted) {
+          submitGuess();
+        } else if (isLocked && _timerFinished) {
+          // Optionally handle a tap when the button is locked but the timer finished
+          setState(() {
+            _timerFinished = false; // Reset timer finished state
+          });
+        }
+      },
+      child: Container(
+        width: screenSize.width * 0.8,
+        padding: const EdgeInsets.symmetric(
+            horizontal: 20, vertical: 10), // Uniform padding
+        decoration: BoxDecoration(
+          color:
+              color1.withOpacity(0.2), // Slight transparency for the background
+          borderRadius: BorderRadius.circular(25), // Pill-shaped border radius
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.25), // Shadow with 25% opacity
+              spreadRadius: 0,
+              blurRadius: 4,
+              offset: const Offset(0, 4), // Vertically displaced shadow
+            ),
+          ],
+        ),
+        child: _isWaitingForResponse
+            ? const CircularProgressIndicator()
+            : Center(
+                child: Row(
+                  mainAxisSize:
+                      MainAxisSize.min, // Row size adjusts to its content
+                  children: [
+                    if (isLocked)
+                      Icon(
+                        Icons.lock, // Lock icon indicating the button is locked
+                        color: currentSkin.textColor,
+                        size: 23.0,
+                      ),
+                    if (isLocked)
+                      const SizedBox(
+                          width:
+                              5), // Space between the icon and text if locked
+                    Expanded(
+                      // This wraps the AutoSizeText to prevent overflow
+                      child: AutoSizeText(
+                        _timerStarted
+                            ? '${_remainingTime ~/ 60}:${(_remainingTime % 60).toString().padLeft(2, '0')}'
+                            : isLocked
+                                ? ""
+                                : buttonText,
+                        style: TextStyle(
+                          fontSize: 23.0, // Start size before auto-sizing
+                          fontWeight: FontWeight.bold,
+                          color: currentSkin
+                              .specialTextColor, // Adjusted for dynamic color usage
+                          letterSpacing: 1.2,
+                        ),
+                        textAlign: TextAlign.center,
+                        minFontSize: 10, // Minimum text size
+                        maxFontSize: 23,
+                        maxLines: 1, // Ensure text does not wrap
+                        overflow: TextOverflow
+                            .ellipsis, // Handles cases where text can't scale down enough
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+      ),
+    );
+  }
+
   Future<void> submitGuess() async {
     // Assuming NgrokManager.fetchNgrokData() and _numberController are defined elsewhere correctly
     //await NgrokManager.fetchNgrokData();
     String guessStr = _numberController.text;
-
-    // Implement the 33% chance logic and check the _preventAd flag
-    if (!_preventAd && Random().nextInt(3) == 0) {
-      // Approximately 33% chance
-      await _showRewardedInterstitialAd();
-    } else {
-      // If an ad was shown last time, reset the flag to allow showing ads again
-      if (_preventAd) {
-        _preventAd = false;
-      }
-    }
 
     if (guessStr.isEmpty) {
       _showEmptyTextFieldNotification();
@@ -1280,6 +1261,7 @@ class LandingPageState extends State<LandingPage>
         // Update guess count and potentially other fields based on guess correctness
         playerData['total_guesses'] = (playerData['total_guesses'] ?? 0) + 1;
         if (isCorrect) {
+          unlockAchievement('CgkIipShgv8MEAIQCA');
           _preventAd = true;
           playerData['wins'] = ((playerData['wins'] ?? 0) as int) + 1;
           playerData['total_win_amount'] =
@@ -1303,15 +1285,12 @@ class LandingPageState extends State<LandingPage>
         double actualPrizePool =
             double.parse(result['actualPrizePool'].toString());
         // Now submit this actualPrizePool value as the score
-        try {
-          await Leaderboards.submitScore(
-              score: Score(
-                  androidLeaderboardID: 'CgkIipShgv8MEAIQAg',
-                  value: actualPrizePool.toInt()));
-          print("Score submitted successfully to the leaderboard.");
-        } catch (e) {
-          print("Failed to submit score: $e");
-        }
+
+        await Leaderboards.submitScore(
+            score: Score(
+                androidLeaderboardID: 'CgkIipShgv8MEAIQAg',
+                value: actualPrizePool.toInt()));
+
         setState(() {
           _isWaitingForResponse = false;
           isButtonLocked = true;
@@ -1332,6 +1311,17 @@ class LandingPageState extends State<LandingPage>
       setState(() {
         _isWaitingForResponse = false;
       });
+
+      // Implement the 33% chance logic and check the _preventAd flag
+      if (!_preventAd && Random().nextInt(3) == 0) {
+        // Approximately 33% chance
+        await _showRewardedInterstitialAd();
+      } else {
+        // If an ad was shown last time, reset the flag to allow showing ads again
+        if (_preventAd) {
+          _preventAd = false;
+        }
+      }
       _showServerNotRunningDialog();
     }
   }
@@ -1340,9 +1330,13 @@ class LandingPageState extends State<LandingPage>
     try {
       final bool result = await platform
           .invokeMethod('unlockAchievement', {'achievementId': achievementId});
-      print("Achievement unlock result: $result");
-    } on PlatformException catch (e) {
-      print("Failed to unlock achievement: '${e.message}'.");
+      if (kDebugMode) {
+        print(result);
+      }
+    } on PlatformException {
+      if (kDebugMode) {
+        print('achievement error');
+      }
     }
   }
 
@@ -1382,7 +1376,9 @@ class LandingPageState extends State<LandingPage>
                     });
 
                     t.cancel();
-                    Navigator.of(context).pop(true);
+                    if (context.mounted) {
+                      Navigator.of(context).pop(true);
+                    }
                   }
                 }
               } catch (e) {
@@ -1391,7 +1387,9 @@ class LandingPageState extends State<LandingPage>
             } else {
               // Ngrok URL not fetched or empty
               t.cancel();
-              Navigator.of(context).pop(false);
+              if (context.mounted) {
+                Navigator.of(context).pop(false);
+              }
             }
           });
         }
@@ -1534,7 +1532,6 @@ class LandingPageState extends State<LandingPage>
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                RedemptionAnimation(), // Assuming this is a custom widget for the animation
                 const SizedBox(height: 24),
                 const Text(
                   'Congratulations!',
@@ -1668,15 +1665,6 @@ class LandingPageState extends State<LandingPage>
       ),
     );
   }
-
-  void _checkTutorialCompletion() async {
-    final prefs = await SharedPreferences.getInstance();
-    // This retrieves the boolean value, defaulting to false if not set
-    final tutorialCompleted = prefs.getBool('tutorialCompleted') ?? false;
-    setState(() {
-      _showTutorial = !tutorialCompleted;
-    });
-  }
 }
 
 class PlayerDataWidget extends StatefulWidget {
@@ -1727,48 +1715,29 @@ class PlayerDataWidgetState extends State<PlayerDataWidget> {
   }
 
   void _showAchievements() async {
-    try {
-      await GamesServices.showAchievements();
-    } catch (e) {
-      print('Error showing achievements: $e');
-    }
+    await GamesServices.showAchievements();
   }
 
   void _showLeaderboard() async {
-    try {
-      await GamesServices.showLeaderboards(); // Use your actual leaderboard ID
-    } catch (e) {
-      print('Error showing leaderboard: $e');
-    }
+    await GamesServices.showLeaderboards(); // Use your actual leaderboard ID
   }
 
   @override
   Widget build(BuildContext context) {
     // Assuming playerData['total_win_amount'] and conversionRatio are correctly fetched/set
     // Assuming playerData is a map
-    print('player data2: $playerData');
 
     final double totalWinAmount =
         (playerData['total_win_amount'] as double?) ?? 0.1;
 
-    final double totalWinAmount2 =
-        (playerData['total_win_amount'] as double?) ?? 0.1;
-    print('Converted Total Win Amount: $totalWinAmount');
-    print('Converted Total Win Amount 2: $totalWinAmount2');
-    print(
-        'Original Total Win Amount String: ${playerData['total_win_amount'].toString()}');
-    print(widget.conversionRatio);
 // Calculate the initial real money value
     final double conversionRatio =
         widget.conversionRatio; // Default to 0.0 if not provided
     final double initialRealMoneyValue =
         (totalWinAmount * conversionRatio) * 0.60; // Adjusted formula
 
-    print('Initial Real Money Value: $initialRealMoneyValue');
-
 // Calculate 60% of the initial real money value
     final double realMoneyValue = initialRealMoneyValue;
-    print('Real Money Value: $realMoneyValue');
     List<String> lastGuesses =
         playerData['last_guesses']?.toString().split(',') ?? [];
 
@@ -1784,11 +1753,11 @@ class PlayerDataWidgetState extends State<PlayerDataWidget> {
                 children: [
                   ElevatedButton(
                     onPressed: _showAchievements,
-                    child: Text('Achievements'),
+                    child: const Text('Achievements'),
                   ),
                   ElevatedButton(
                     onPressed: _showLeaderboard,
-                    child: Text('Leaderboard'),
+                    child: const Text('Leaderboard'),
                   ),
                 ],
               ),
@@ -1894,8 +1863,8 @@ class PlayerDataWidgetState extends State<PlayerDataWidget> {
       children: [
         _buildAmountRow(title, amount,
             isCurrency: isCurrency, leadingIcon: leadingIcon),
-        Padding(
-          padding: const EdgeInsets.only(top: 8.0),
+        const Padding(
+          padding: EdgeInsets.only(top: 8.0),
           child: Text(
             "current revenue + your score * your total win amount",
             style: TextStyle(
@@ -2096,55 +2065,5 @@ class _StatisticsFloatingButtonState extends State<StatisticsFloatingButton>
   void dispose() {
     _animationController.dispose();
     super.dispose();
-  }
-}
-
-class RedemptionAnimation extends StatefulWidget {
-  @override
-  _RedemptionAnimationState createState() => _RedemptionAnimationState();
-}
-
-class _RedemptionAnimationState extends State<RedemptionAnimation> {
-  int _iconIndex = 0;
-  final List<IconData> _icons = [
-    Icons.account_balance_wallet, // Representing the wallet
-    Icons.sync_alt, // Representing the transfer action
-    Icons.account_balance, // Representing the bank
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    _startAnimation();
-  }
-
-  void _startAnimation() async {
-    while (true) {
-      await Future.delayed(
-          const Duration(seconds: 1)); // Change icon every second
-      if (mounted) {
-        setState(() {
-          _iconIndex =
-              (_iconIndex + 1) % _icons.length; // Cycle through the icons
-        });
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 500),
-      transitionBuilder: (Widget child, Animation<double> animation) {
-        return ScaleTransition(scale: animation, child: child);
-      },
-      child: Icon(
-        _icons[_iconIndex],
-        key: ValueKey<int>(
-            _iconIndex), // Ensure AnimatedSwitcher sees this as a new child
-        size: 60.0,
-        color: Colors.green[500],
-      ),
-    );
   }
 }
