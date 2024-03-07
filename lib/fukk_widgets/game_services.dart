@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -6,7 +8,7 @@ import 'package:games_services/games_services.dart';
 void main() => runApp(const App());
 
 class App extends StatefulWidget {
-  const App({Key? key}) : super(key: key);
+  const App({super.key});
 
   @override
   AppState createState() => AppState();

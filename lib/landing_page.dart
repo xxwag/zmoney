@@ -1,18 +1,24 @@
+// ignore_for_file: deprecated_member_use
+
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math' as math; // Import the math library
-import 'dart:math';
 
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:games_services/games_services.dart';
 import 'package:http/http.dart' as http;
 
+import 'package:path/path.dart' as p;
 import 'package:confetti/confetti.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:zmoney/fukk_widgets/app_assets.dart';
 import 'package:zmoney/fukk_widgets/language_selector.dart';
 import 'package:zmoney/fukk_widgets/skin.dart';
 import 'package:zmoney/fukk_widgets/translator.dart';
@@ -94,7 +100,10 @@ class LandingPageState extends State<LandingPage>
     'Account inventory',
     'Settings',
     'Try swiping here', // Ensure there's a comma here
-    'Current reward:'
+    'Current reward:',
+    'Application still under heavy development!   ',
+    'Rules',
+    'Game Menu',
   ]; // Make it an empty, growable list
 
   double _prizePoolAmount = 100000; // Starting amount
@@ -112,6 +121,7 @@ class LandingPageState extends State<LandingPage>
   bool useTexture = false; // Flag to toggle between color and texture
   int currentSkin = 1; // Default skin. Adjust based on how many skins you have.
   int currentSkinIndex = 0; // Default to the first skin
+
   List<Skin> skins = [
     Skin(
       backgroundColor: Colors.black,
@@ -193,6 +203,7 @@ class LandingPageState extends State<LandingPage>
       ),
     ),
   ];
+  late Directory directory; // To hold the application directory path
 
   RewardedInterstitialAd? _rewardedInterstitialAd;
   bool _preventAd =
@@ -201,10 +212,13 @@ class LandingPageState extends State<LandingPage>
   late AnimationController _glowController; // Renamed for clarity
   late Animation<double> _glowAnimation; // Renamed for clarity
   static const platform = MethodChannel('com.gg.zmoney/game_services');
+
   //INIT STATE <<<<<<<<<<<<<<<<<<<<
   @override
   void initState() {
     super.initState();
+    _initSkinsAndDirectory();
+
     initializeTranslations();
     WidgetsBinding.instance.addObserver(this); // Add the observer
     if (!kDebugMode && !kProfileMode) {
@@ -217,14 +231,6 @@ class LandingPageState extends State<LandingPage>
     _confettiController = ConfettiController();
     //_confettiController.play();
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      FocusScope.of(context).unfocus();
-      FocusScope.of(_scaffoldKey.currentContext!).unfocus();
-      if (FocusScope.of(context).hasFocus) {
-        FocusScope.of(context).unfocus();
-      }
-    });
-
     _glowController = AnimationController(
       duration: const Duration(seconds: 2),
       vsync: this,
@@ -235,8 +241,102 @@ class LandingPageState extends State<LandingPage>
 
     _glowController.repeat(reverse: true);
     // Attempt to sign in to Game Services
-
+    // Initialize VideoPlayerManager
+    VideoPlayerManager().init().then((_) {
+      // Now it's safe to use VideoPlayerManager, maybe set a flag to indicate readiness
+    });
     // Check if the tutorial has been completed previously
+  }
+
+  Future<void> _initSkinsAndDirectory() async {
+    directory =
+        await getApplicationDocumentsDirectory(); // This sets the directory before using it
+    skins = _createSkins(); // Now it's safe to call _createSkins()
+    setState(() {}); // Trigger rebuild with initialized skins
+  }
+
+  List<Skin> _createSkins() {
+    return [
+      Skin(
+        backgroundColor: Colors.black,
+        prizePoolTextColor: Colors.lightGreen,
+        textColor: Colors.white,
+        specialTextColor: Colors
+            .white, // Assuming you've added this property based on previous instructions
+        buttonColor: Colors.black,
+        buttonTextColor: Colors.white,
+        textColorSwitchTrue: Colors.lightGreenAccent, // True condition color
+        textColorSwitchFalse: Colors.lightGreen, // False condition color
+        decoration: const BoxDecoration(color: Colors.black),
+      ),
+      Skin(
+        backgroundColor: Colors.white,
+        prizePoolTextColor: Colors.blueAccent,
+        textColor: Colors.white,
+        specialTextColor: Colors.white, // Example special text color
+        buttonColor: Colors.black,
+        buttonTextColor: Colors.white,
+        textColorSwitchTrue: Colors.lightGreenAccent, // True condition color
+        textColorSwitchFalse: Colors.lightGreen, // False condition color
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: FileImage(File('${directory.path}/textures/texture1.jpg')),
+            fit: BoxFit.cover,
+          ),
+        ),
+      ),
+      Skin(
+        backgroundColor: const Color(0xFF4A2040), // Dark Amethyst
+        prizePoolTextColor: const Color(0xFFE0B0FF), // Mauve
+        textColor: const Color(0xFFF8E8FF), // Very Pale Purple
+        specialTextColor: const Color(0xFFDEC0E6), // Thistle
+        buttonColor: const Color(0xFF6A417A), // Medium Amethyst
+        buttonTextColor: const Color(0xFFF8E8FF), // Very Pale Purple
+        textColorSwitchTrue: const Color(0xFFCDA4DE), // Pastel Violet
+        textColorSwitchFalse: const Color(0xFFB0A8B9), // Greyish Lavender
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: FileImage(File('${directory.path}/textures/texture2.jpg')),
+            fit: BoxFit.cover,
+          ),
+        ),
+      ),
+      Skin(
+        backgroundColor: const Color(0xFF0B3D2E), // Dark Green
+        prizePoolTextColor: Colors.white, // Bright Green
+        textColor: const Color(0xFFE9E4D0), // Light Beige
+        specialTextColor: const Color(0xFFD1E8D2), // Pale Green
+        buttonColor: const Color(0xFF507C59), // Moss Green
+        buttonTextColor: const Color(0xFFE9E4D0), // Light Beige
+        textColorSwitchTrue: const Color(0xFFD1E8D2), // Pale Green
+        textColorSwitchFalse: const Color(0xFF6C8E67), // Sage Green
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: FileImage(File('${directory.path}/textures/texture3.jpg')),
+            fit: BoxFit.cover,
+          ),
+        ),
+      ),
+      Skin(
+        backgroundColor: Colors.brown[800]!, // Deep wood color
+        prizePoolTextColor: Colors.white, // Warm amber for highlights
+        textColor: Colors.white, // High contrast for readability
+        specialTextColor: Colors.white, // Earthy orange for special texts
+        buttonColor:
+            Colors.green[800]!, // Dark green for buttons, resembling forest
+        buttonTextColor:
+            Colors.white, // White text for clear readability on buttons
+        textColorSwitchTrue: Colors.amber, // Warm amber for true state
+        textColorSwitchFalse:
+            Colors.brown[600]!, // Slightly lighter wood color for false
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: FileImage(File('${directory.path}/textures/texture4.jpg')),
+            fit: BoxFit.cover,
+          ),
+        ),
+      ),
+    ];
   }
 
   void _loadRewardedInterstitialAd() {
@@ -272,7 +372,10 @@ class LandingPageState extends State<LandingPage>
       'Account inventory',
       'Settings',
       'Try swiping here', // Ensure there's a comma here
-      'Current reward:'
+      'Current reward:',
+      'Application still under heavy development!   ',
+      'Rules',
+      'Game Menu',
       // Add more keys as needed
     ];
 
@@ -332,8 +435,10 @@ class LandingPageState extends State<LandingPage>
           'Authorization': 'Bearer $jwtToken',
         },
       );
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        print(data);
         if (data != null) {
           setState(() {
             _prizePoolAmount = data['prizePoolBase'].toDouble();
@@ -592,15 +697,6 @@ class LandingPageState extends State<LandingPage>
     }
   }
 
-  void precacheTextures() {
-    // Preload each texture
-    precacheImage(const AssetImage('assets/texture1.jpg'), context);
-    precacheImage(const AssetImage('assets/texture2.jpg'), context);
-    // Add more as needed
-    precacheImage(const AssetImage('assets/texture3.jpg'), context);
-    precacheImage(const AssetImage('assets/texture4.jpg'), context);
-  }
-
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -621,7 +717,6 @@ class LandingPageState extends State<LandingPage>
 
   @override
   Widget build(BuildContext context) {
-    precacheTextures(); // Call your precaching method here
     var screenSize = MediaQuery.of(context).size;
     var isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
 
@@ -910,8 +1005,7 @@ class LandingPageState extends State<LandingPage>
                             width: screenSize.width,
                             height: 40, // Adjust the height as needed
                             child: MarqueeText(
-                              text: '⚠️App still in the development!         ' *
-                                  20,
+                              text: ('${translatedTexts[17]}⚠️' * 20),
                               style: TextStyle(
                                 color: currentSkin.specialTextColor
                                     .withOpacity(0.5), // 50% opacity
@@ -1256,7 +1350,7 @@ class LandingPageState extends State<LandingPage>
         final String playerDataJson = prefs.getString('playerData') ?? '{}';
         var playerData = jsonDecode(playerDataJson);
         double prizePoolAmount =
-            _prizePoolAmount; // Assuming this is already a double
+            _prizePoolAmount.toDouble(); // Assuming this is already a double
 
         // Update guess count and potentially other fields based on guess correctness
         playerData['total_guesses'] = (playerData['total_guesses'] ?? 0) + 1;
@@ -1313,7 +1407,7 @@ class LandingPageState extends State<LandingPage>
       });
 
       // Implement the 33% chance logic and check the _preventAd flag
-      if (!_preventAd && Random().nextInt(3) == 0) {
+      if (!_preventAd && math.Random().nextInt(3) == 0) {
         // Approximately 33% chance
         await _showRewardedInterstitialAd();
       } else {
@@ -1488,14 +1582,33 @@ class LandingPageState extends State<LandingPage>
     }
   }
 
-  Widget _buildWinOverlay(BuildContext context, double prizePoolAmount) {
-    // Initialize the audio player
-    AudioPlayer audioPlayer = AudioPlayer();
+  Future<void> playVictorySound() async {
+    final audioPlayer = AudioPlayer();
 
-    // Function to play sound
-    Future<void> playVictorySound() async {
-      await audioPlayer.play(AssetSource('sounds/victory_sound.mp3'));
+    // Ensure appDocumentsDirectory is initialized before using it.
+    if (appDocumentsDirectory == null) {
+      appDocumentsDirectory = await getApplicationDocumentsDirectory();
     }
+
+    // Directly construct the path using appDocumentsDirectory
+    final soundFilePath =
+        p.join(appDocumentsDirectory!.path, 'sounds/victory_sound.mp3');
+
+    if (await File(soundFilePath).exists()) {
+      await audioPlayer.play(DeviceFileSource(soundFilePath));
+    } else {
+      print('Victory sound file does not exist.');
+      // Handle the case where the file doesn't exist as needed
+    }
+  }
+
+  Future<String> _localAssetPath(String localPath) async {
+    final dir = await getApplicationDocumentsDirectory();
+    return p.join(dir.path, localPath);
+  }
+
+  Widget _buildWinOverlay(BuildContext context, double prizePoolAmount) {
+    // Assuming this is a top-level function or part of a class that has access to the audioPlayer instance
 
     // Play the victory sound when the widget is displayed
     playVictorySound();

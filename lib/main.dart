@@ -8,6 +8,7 @@ import 'package:firebase_ui_oauth_google/firebase_ui_oauth_google.dart';
 import 'package:flutter/foundation.dart';
 
 import 'package:flutter/material.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -20,6 +21,7 @@ import 'package:oauth2/oauth2.dart' as oauth2;
 import 'package:http/http.dart' as http;
 import 'package:flutter_appauth/flutter_appauth.dart';
 import 'package:video_player/video_player.dart';
+import 'package:zmoney/fukk_widgets/app_assets.dart';
 
 import 'package:zmoney/fukk_widgets/language_selector.dart';
 import 'package:zmoney/fukk_widgets/translator.dart';
@@ -37,6 +39,7 @@ final translator =
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   GamesServices.signIn();
   String envFileName = ".env";
   await dotenv.load(fileName: envFileName);
@@ -56,13 +59,8 @@ void main() async {
       options: DefaultFirebaseOptions.currentPlatform,
     );
 
-    FirebaseUIAuth.configureProviders([
-      GoogleProvider(
-          clientId:
-              '446412900874-ifkm836l5ftprj362groq3q3gd5brq3c.apps.googleusercontent.com'),
-    ]);
-
-    await MobileAds.instance.initialize();
+    await FirebaseAppCheck.instance
+        .activate(androidProvider: AndroidProvider.playIntegrity);
 
     String? jwtToken = await secureStorage.read(key: 'jwtToken');
     if (jwtToken != null) {
@@ -84,14 +82,16 @@ void main() async {
     homeScreen = const WelcomeScreen();
   }
 
-  String userLanguage = getPreferredLanguage();
-  // await clearSharedPreferences();
+  // Assuming this code is inside an async function
+  String userLanguage =
+      await getPreferredLanguage(); // Notice the 'await' keyword
+// await clearSharedPreferences(); // Uncomment this if you need to clear SharedPreferences
   const String preferredLanguage = 'en'; // Example language code
   translator.setCurrentLanguage(preferredLanguage);
 
   await AutoLocalization.init(
     appLanguage: 'en', // Default language
-    userLanguage: userLanguage, // userLanguage
+    userLanguage: userLanguage, // Use the awaited userLanguage
   );
 
   Future.delayed(const Duration(seconds: 3), () {
@@ -99,8 +99,15 @@ void main() async {
   });
 }
 
-String getPreferredLanguage() {
-  return PlatformDispatcher.instance.locales.first.languageCode;
+Future<String> getPreferredLanguage() async {
+  final SharedPreferences prefs = await SharedPreferences.getInstance();
+  final String? userLanguage = prefs.getString('userLanguage');
+
+  if (userLanguage != null) {
+    return userLanguage;
+  } else {
+    return PlatformDispatcher.instance.locales.first.languageCode;
+  }
 }
 
 Future<http.Response> verifyAndRetrieveData(String jwtToken) async {
@@ -386,15 +393,20 @@ class WelcomeScreenState extends State<WelcomeScreen>
       body: Stack(
         fit: StackFit.expand,
         children: [
-          const AnimatedBackgroundScreen(),
+          AnimatedBackgroundScreen(),
           Positioned(
-            top: 20, // Adjust as needed
+            top: 35, // Adjust as needed
             right: 20, // Adjust as needed
             child: LanguageSelectorWidget(
               onLanguageChanged: (String newLanguageCode) {
                 _initWidgetsAndAnimations2(); // Re-initialize widgets and animations
               },
-            ), // Language selector widget with callback
+              dropdownColor: Colors
+                  .transparent, // Example color for the dropdown background
+              textColor: Colors.white, // Example color for the text
+              iconColor: Colors.white, // Example color for the dropdown icon
+              underlineColor: Colors.white, // Example color for the underline
+            ),
           ),
           Center(
             child: SingleChildScrollView(

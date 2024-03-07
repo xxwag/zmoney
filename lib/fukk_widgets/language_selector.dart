@@ -1,5 +1,6 @@
 import 'package:auto_localization/auto_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:zmoney/fukk_widgets/translator.dart';
 
 final translator =
@@ -26,12 +27,33 @@ class LanguageSelectorWidget extends StatefulWidget {
 }
 
 class _LanguageSelectorWidgetState extends State<LanguageSelectorWidget> {
-// Assuming you have a method to update the language in AutoLocalization
+  bool _isLocked = false;
+
   void updateLanguage(String languageCode) async {
-    await AutoLocalization.init(
-      appLanguage: 'en', // Set to default or base language if necessary
-      userLanguage: languageCode, // Update to the new user-selected language
-    );
+    if (!_isLocked) {
+      setState(() {
+        _isLocked = true; // Lock the language selector
+      });
+
+      // Update the language in AutoLocalization
+      await AutoLocalization.init(
+        appLanguage: 'en', // Set to default or base language if necessary
+        userLanguage: languageCode, // Update to the new user-selected language
+      );
+
+      // Update the language in your translator widget, if necessary
+      translator.setCurrentLanguage(languageCode);
+// Store the language code in SharedPreferences
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setString('userLanguage', languageCode);
+
+      // Inform about the language change
+      widget.onLanguageChanged(languageCode);
+
+      setState(() {
+        _isLocked = false; // Unlock the language selector
+      });
+    }
   }
 
   @override
@@ -66,21 +88,19 @@ class _LanguageSelectorWidgetState extends State<LanguageSelectorWidget> {
     };
 
     return DropdownButton<String>(
-      value: AutoLocalization.userLanguage,
+      value: translator.currentLanguage,
       icon: Icon(Icons.arrow_downward, color: widget.iconColor),
       underline: Container(
         height: 2,
         color: widget.underlineColor ?? Theme.of(context).dividerColor,
       ),
-      onChanged: (String? newValue) {
-        if (newValue != null) {
-          setState(() {
-            translator.setCurrentLanguage(newValue);
-          });
-          widget.onLanguageChanged(newValue); // Existing callback
-          updateLanguage(newValue); // New call to update AutoLocalization
-        }
-      },
+      onChanged: _isLocked
+          ? null
+          : (String? newValue) {
+              if (newValue != null) {
+                updateLanguage(newValue);
+              }
+            },
       items: languages.entries.map<DropdownMenuItem<String>>((entry) {
         return DropdownMenuItem<String>(
           value: entry.key,

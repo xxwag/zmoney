@@ -4,10 +4,10 @@ class TextCycleWidget extends StatefulWidget {
   const TextCycleWidget({super.key});
 
   @override
-  _TextCycleWidgetState createState() => _TextCycleWidgetState();
+  TextCycleWidgetState createState() => TextCycleWidgetState();
 }
 
-class _TextCycleWidgetState extends State<TextCycleWidget> {
+class TextCycleWidgetState extends State<TextCycleWidget> {
   final List<String> translatedtexts2 = [
     "How Much?",
     "How Much?",

@@ -159,10 +159,10 @@ class TutorialStepWidget extends StatefulWidget {
       {super.key, required this.description, required this.onTap});
 
   @override
-  _TutorialStepWidgetState createState() => _TutorialStepWidgetState();
+  TutorialStepWidgetState createState() => TutorialStepWidgetState();
 }
 
-class _TutorialStepWidgetState extends State<TutorialStepWidget>
+class TutorialStepWidgetState extends State<TutorialStepWidget>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _animation;

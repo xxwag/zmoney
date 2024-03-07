@@ -1,10 +1,12 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:video_player/video_player.dart';
 import 'package:zmoney/main.dart';
@@ -149,6 +151,7 @@ class SideMenuDrawerState extends State<SideMenuDrawer> {
   @override
   void dispose() {
     //_videoPlayerController.dispose();
+    VideoPlayerManager().pause();
     super.dispose();
   }
 }
@@ -161,28 +164,37 @@ class VideoPlayerManager {
     return _instance;
   }
 
-  VideoPlayerManager._internal() {
-    // Initialize your video player here
-    videoPlayerController = VideoPlayerController.asset('assets/videos/8s.mp4')
-      ..initialize().then((_) {
-        videoPlayerController?.setLooping(true);
-        // Optionally, start playing immediately or wait until needed
-      });
+  VideoPlayerManager._internal();
+
+  Future<void> init() async {
+    final directory = await getApplicationDocumentsDirectory();
+    final filePath = '${directory.path}/videos/8s.mp4';
+
+    final fileExists = await File(filePath).exists();
+    if (!fileExists) {
+      print("Video file does not exist at path: $filePath");
+      return;
+    }
+
+    videoPlayerController = VideoPlayerController.file(File(filePath));
+    await videoPlayerController?.initialize();
+    videoPlayerController?.setLooping(true);
   }
 
   void play() {
-    if (!videoPlayerController!.value.isPlaying) {
+    if (videoPlayerController != null &&
+        !videoPlayerController!.value.isPlaying) {
       videoPlayerController?.play();
     }
   }
 
   void pause() {
-    if (videoPlayerController!.value.isPlaying) {
+    if (videoPlayerController != null &&
+        videoPlayerController!.value.isPlaying) {
       videoPlayerController?.pause();
     }
   }
 
-  // Use dispose with caution, only when you're sure it won't be needed anymore
   void dispose() {
     videoPlayerController?.dispose();
     videoPlayerController = null;
