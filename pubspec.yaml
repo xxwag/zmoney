@@ -2,7 +2,7 @@ name: zmoney
 description: How Much?
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
-version: 6.0.0+29
+version: 6.0.0+30
 
 environment:
   sdk: '>=3.1.0 <4.0.0'
@@ -73,4 +73,22 @@ flutter:
         - asset: fonts/Proxima_Nova_Light.ttf
         - asset: fonts/Proxima_Nova_Light_It.ttf
           weight: 700
+    - family: CartoonFont1
+      fonts:
+        - asset: fonts/arak.TTF
+    - family: CartoonFont2
+      fonts:
+        - asset: fonts/bouncy.otf
+    - family: CartoonFont3
+      fonts:
+        - asset: fonts/cheri.TTF 
+    - family: CartoonFont4
+      fonts:
+        - asset: fonts/fof.ttf     
+    - family: CartoonFont5
+      fonts:
+        - asset: fonts/grinched.otf 
+    - family: CartoonFont6
+      fonts:
+        - asset: fonts/pork.TTF           
   # Add other configurations like assets and fonts as needed

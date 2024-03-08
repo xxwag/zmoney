@@ -5,7 +5,6 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math; // Import the math library
 
-import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:games_services/games_services.dart';
 import 'package:http/http.dart' as http;
@@ -212,40 +211,47 @@ class LandingPageState extends State<LandingPage>
   late AnimationController _glowController; // Renamed for clarity
   late Animation<double> _glowAnimation; // Renamed for clarity
   static const platform = MethodChannel('com.gg.zmoney/game_services');
-
+  bool _isLoading = true;
   //INIT STATE <<<<<<<<<<<<<<<<<<<<
+  @override
   @override
   void initState() {
     super.initState();
-    _initSkinsAndDirectory();
+    _initializeAsyncOperations().then((_) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false; // Set loading to false when done
+        });
+      }
+    });
 
-    initializeTranslations();
     WidgetsBinding.instance.addObserver(this); // Add the observer
+
     if (!kDebugMode && !kProfileMode) {
       _initBannerAd();
       _loadRewardedAd();
+      _loadRewardedInterstitialAd();
     }
-    _loadRewardedInterstitialAd();
+  }
 
-    _fetchPrizePoolFromServer();
+  Future<void> _initializeAsyncOperations() async {
+    await _initSkinsAndDirectory();
+    await initializeTranslations();
+    WidgetsBinding.instance.addObserver(this);
+
+    await _fetchPrizePoolFromServer();
     _confettiController = ConfettiController();
-    //_confettiController.play();
-
-    _glowController = AnimationController(
-      duration: const Duration(seconds: 2),
-      vsync: this,
-    )..repeat(reverse: true);
-
-    _glowAnimation = Tween<double>(begin: 0.5, end: 1.0)
-        .animate(_glowController); // Use the controller for the glow effect
-
+    _glowController =
+        AnimationController(duration: const Duration(seconds: 2), vsync: this)
+          ..repeat(reverse: true);
+    _glowAnimation =
+        Tween<double>(begin: 0.5, end: 1.0).animate(_glowController);
     _glowController.repeat(reverse: true);
-    // Attempt to sign in to Game Services
-    // Initialize VideoPlayerManager
+
     VideoPlayerManager().init().then((_) {
       // Now it's safe to use VideoPlayerManager, maybe set a flag to indicate readiness
     });
-    // Check if the tutorial has been completed previously
+    // Additional initialization as needed.
   }
 
   Future<void> _initSkinsAndDirectory() async {
@@ -731,6 +737,17 @@ class LandingPageState extends State<LandingPage>
         ? 50.0
         : 0.0; // Example ad height, adjust based on actual ad size
 
+    // Check if the page is still loading
+    if (_isLoading) {
+      // Display loading animation
+      return Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(), // Show a loading spinner
+        ),
+      );
+    }
+
+    // Your existing build code for the main content goes here
     return WillPopScope(
         onWillPop: onWillPop,
         child: Scaffold(

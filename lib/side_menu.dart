@@ -9,9 +9,9 @@ import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:video_player/video_player.dart';
-import 'package:zmoney/main.dart';
 import 'package:zmoney/ngrok.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:zmoney/welcome_screen.dart';
 
 class SideMenuDrawer extends StatefulWidget {
   final List<String> translatedTexts;

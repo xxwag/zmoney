@@ -1,4 +1,5 @@
 import 'dart:io';
+// ignore: unused_import
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:path/path.dart' as p;
@@ -66,10 +67,6 @@ Future<bool> checkAndFetchAssets() async {
 /// Fetches an asset from Firebase Storage and saves it locally.
 Future<void> fetchAndSaveAsset(String cloudPath, File localFile) async {
   try {
-    String? token = await FirebaseAppCheck.instance.getToken();
-    print('Firebase App Check Token: $token');
-    await checkAndFetchAssets();
-
     final FirebaseStorage storage = FirebaseStorage.instance;
     final String downloadUrl = await storage.ref(cloudPath).getDownloadURL();
     final http.Response downloadData = await http.get(Uri.parse(downloadUrl));

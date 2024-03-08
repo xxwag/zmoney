@@ -1,6 +1,12 @@
 import 'dart:async';
-
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:zmoney/ngrok.dart';
+import 'package:zmoney/welcome_screen.dart';
+import 'landing_page.dart';
 
 class LoadingScreen extends StatefulWidget {
   const LoadingScreen({super.key});
@@ -10,11 +16,11 @@ class LoadingScreen extends StatefulWidget {
 }
 
 class LoadingScreenState extends State<LoadingScreen> {
+  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
   bool _showLoadingTips = false;
   Timer? _loadingTimer;
   final List<String> _visibleReasons = [];
   final List<double> _opacityLevels = []; // Track opacity for each reason
-
   final List<String> _loadingReasons = [
     "Something is not adding up🤔",
     "Maybe the connection is slow?",
@@ -22,7 +28,7 @@ class LoadingScreenState extends State<LoadingScreen> {
     "Check those while waiting here ❤️",
     "We are loading up to no data 💔",
     "Yes still waiting for the server to respond...",
-    "Stil waiting ...",
+    "Still waiting ...",
     "Cannot connect to the authorization server",
     "Try restarting the app if nothing helps.",
     // Add more reasons here
@@ -31,7 +37,7 @@ class LoadingScreenState extends State<LoadingScreen> {
   @override
   void initState() {
     super.initState();
-
+    _verifyJwtAndNavigate();
     // Start the timer to show tips after 10 seconds
     _loadingTimer = Timer(const Duration(seconds: 10), () {
       setState(() {
@@ -47,28 +53,48 @@ class LoadingScreenState extends State<LoadingScreen> {
         if (i < _loadingReasons.length) {
           setState(() {
             _visibleReasons.add(_loadingReasons[i]);
-            _opacityLevels.add(0); // Initialize opacity to 0
+            _opacityLevels.add(1); // Make visible immediately
           });
-          _fadeInReason(i);
         }
       });
     }
   }
 
-  void _fadeInReason(int index) {
-    Timer(const Duration(milliseconds: 100), () {
-      // Ensure opacity does not exceed 1.0
-      if (_opacityLevels[index] < 1) {
-        double newOpacity = _opacityLevels[index] + 0.1; // Increase opacity
-        setState(() {
-          _opacityLevels[index] =
-              newOpacity > 1.0 ? 1.0 : newOpacity; // Clamp opacity to max 1.0
-        });
-        if (_opacityLevels[index] < 1) {
-          _fadeInReason(index); // Continue fading in only if opacity < 1
-        }
+  Future<void> _verifyJwtAndNavigate() async {
+    String? jwtToken = await _secureStorage.read(key: 'jwtToken');
+    if (jwtToken != null) {
+      final http.Response playerDataResponse =
+          await verifyAndRetrieveData(jwtToken);
+      if (playerDataResponse.statusCode == 200) {
+        var playerData = jsonDecode(playerDataResponse.body)['playerData'];
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('playerData', jsonEncode(playerData));
+        _navigateToScreen(const LandingPage());
+      } else {
+        _navigateToScreen(const WelcomeScreen());
       }
-    });
+    } else {
+      _navigateToScreen(const WelcomeScreen());
+    }
+  }
+
+  Future<http.Response> verifyAndRetrieveData(String jwtToken) async {
+    print("Verifying with JWT token: $jwtToken");
+    return http.post(
+      Uri.parse('${NgrokManager.ngrokUrl}/api/verifyAndRetrieveData'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'token': jwtToken}),
+    );
+  }
+
+  void _navigateToScreen(Widget screen) {
+    _loadingTimer?.cancel(); // Stop the loading tips timer
+    if (mounted) {
+      Future.delayed(const Duration(seconds: 3), () {
+        Navigator.pushReplacement(
+            context, MaterialPageRoute(builder: (context) => screen));
+      });
+    }
   }
 
   @override
@@ -96,43 +122,20 @@ class LoadingScreenState extends State<LoadingScreen> {
   }
 
   Widget _buildLoadingTips() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: _visibleReasons.asMap().entries.map((entry) {
-        int idx = entry.key;
-        String reason = entry.value;
-        int totalCount = _visibleReasons.length;
-
-        // Ensure opacity is within valid range
-        double opacity = _opacityLevels[idx].clamp(0.0, 1.0);
-
-        return AnimatedOpacity(
-          opacity: opacity,
-          duration: const Duration(
-              milliseconds: 500), // Control the speed of the fade in
-          child: Container(
-            margin: const EdgeInsets.only(
-                bottom: 8), // Add some spacing between items
-            decoration: BoxDecoration(
-              color: Colors.black45, // Semi-transparent background
-              borderRadius: BorderRadius.circular(10), // Rounded corners
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: _visibleReasons.map((reason) {
+          return ListTile(
+            title: Text(
+              reason,
+              style: const TextStyle(color: Colors.white, fontSize: 16),
+              textAlign: TextAlign.center,
             ),
-            child: ListTile(
-              title: FittedBox(
-                fit: BoxFit.scaleDown, // Shrink the text to fit on one line
-                child: Text(
-                  reason,
-                  style: const TextStyle(color: Colors.white, fontSize: 16),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-              leading: (idx == 0 || idx == totalCount - 1)
-                  ? const Icon(Icons.info_outline, color: Colors.white)
-                  : null,
-            ),
-          ),
-        );
-      }).toList(),
+            leading: const Icon(Icons.info_outline, color: Colors.white),
+          );
+        }).toList(),
+      ),
     );
   }
 
