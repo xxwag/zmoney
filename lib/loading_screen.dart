@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:zmoney/ngrok.dart';
+import 'package:zmoney/fukk_widgets/ngrok.dart';
 import 'package:zmoney/welcome_screen.dart';
 import 'landing_page.dart';
 
@@ -79,7 +79,6 @@ class LoadingScreenState extends State<LoadingScreen> {
   }
 
   Future<http.Response> verifyAndRetrieveData(String jwtToken) async {
-    print("Verifying with JWT token: $jwtToken");
     return http.post(
       Uri.parse('${NgrokManager.ngrokUrl}/api/verifyAndRetrieveData'),
       headers: {'Content-Type': 'application/json'},

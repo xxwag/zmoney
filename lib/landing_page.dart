@@ -20,13 +20,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:zmoney/fukk_widgets/app_assets.dart';
 import 'package:zmoney/fukk_widgets/language_selector.dart';
 import 'package:zmoney/fukk_widgets/skin.dart';
+import 'package:zmoney/fukk_widgets/statistics_playerdata.dart';
 import 'package:zmoney/fukk_widgets/translator.dart';
-import 'package:zmoney/marquee.dart';
-import 'package:zmoney/ngrok.dart';
+import 'package:zmoney/fukk_widgets/marquee.dart';
+import 'package:zmoney/fukk_widgets/ngrok.dart';
 import 'package:animated_flip_counter/animated_flip_counter.dart';
 import 'package:zmoney/side_menu.dart';
-import 'package:zmoney/text_cycle.dart';
-import 'package:zmoney/tutorial_steps.dart';
+import 'package:zmoney/fukk_widgets/text_cycle.dart';
+
 import 'package:audioplayers/audioplayers.dart';
 import 'package:intl/intl.dart'; // Import intl package
 import 'package:auto_size_text/auto_size_text.dart';
@@ -60,7 +61,7 @@ class LandingPageState extends State<LandingPage>
 // State to manage tutorial visibility
 // State for party animation
   final TextEditingController _numberController = TextEditingController();
-  late TutorialManager tutorialManager;
+
   Key playerDataWidgetKey = UniqueKey();
 
   bool _isWaitingForResponse = false;
@@ -103,6 +104,7 @@ class LandingPageState extends State<LandingPage>
     'Application still under heavy development!   ',
     'Rules',
     'Game Menu',
+    'Zmoney Store',
   ]; // Make it an empty, growable list
 
   double _prizePoolAmount = 100000; // Starting amount
@@ -110,7 +112,7 @@ class LandingPageState extends State<LandingPage>
 
 // To track the Go button lock state
   bool isButtonLocked = false; // Add this variable to your widget state
-  List<TutorialStep> tutorialSteps = [];
+
   final bool _isGreenText = true; // Define _isGreenText as a boolean variable
 
 // Default color, can be black or white
@@ -121,87 +123,7 @@ class LandingPageState extends State<LandingPage>
   int currentSkin = 1; // Default skin. Adjust based on how many skins you have.
   int currentSkinIndex = 0; // Default to the first skin
 
-  List<Skin> skins = [
-    Skin(
-      backgroundColor: Colors.black,
-      prizePoolTextColor: Colors.lightGreen,
-      textColor: Colors.white,
-      specialTextColor: Colors
-          .white, // Assuming you've added this property based on previous instructions
-      buttonColor: Colors.black,
-      buttonTextColor: Colors.white,
-      textColorSwitchTrue: Colors.lightGreenAccent, // True condition color
-      textColorSwitchFalse: Colors.lightGreen, // False condition color
-      decoration: const BoxDecoration(color: Colors.black),
-    ),
-    Skin(
-      backgroundColor: Colors.white,
-      prizePoolTextColor: Colors.blueAccent,
-      textColor: Colors.white,
-      specialTextColor: Colors.white, // Example special text color
-      buttonColor: Colors.black,
-      buttonTextColor: Colors.white,
-      textColorSwitchTrue: Colors.lightGreenAccent, // True condition color
-      textColorSwitchFalse: Colors.lightGreen, // False condition color
-      decoration: const BoxDecoration(
-        image: DecorationImage(
-          image: AssetImage('assets/texture1.jpg'),
-          fit: BoxFit.cover,
-        ),
-      ),
-    ),
-    Skin(
-      backgroundColor: const Color(0xFF4A2040), // Dark Amethyst
-      prizePoolTextColor: const Color(0xFFE0B0FF), // Mauve
-      textColor: const Color(0xFFF8E8FF), // Very Pale Purple
-      specialTextColor: const Color(0xFFDEC0E6), // Thistle
-      buttonColor: const Color(0xFF6A417A), // Medium Amethyst
-      buttonTextColor: const Color(0xFFF8E8FF), // Very Pale Purple
-      textColorSwitchTrue: const Color(0xFFCDA4DE), // Pastel Violet
-      textColorSwitchFalse: const Color(0xFFB0A8B9), // Greyish Lavender
-      decoration: const BoxDecoration(
-        image: DecorationImage(
-          image: AssetImage('assets/texture2.jpg'),
-          fit: BoxFit.cover,
-        ),
-      ),
-    ),
-    Skin(
-      backgroundColor: const Color(0xFF0B3D2E), // Dark Green
-      prizePoolTextColor: Colors.white, // Bright Green
-      textColor: const Color(0xFFE9E4D0), // Light Beige
-      specialTextColor: const Color(0xFFD1E8D2), // Pale Green
-      buttonColor: const Color(0xFF507C59), // Moss Green
-      buttonTextColor: const Color(0xFFE9E4D0), // Light Beige
-      textColorSwitchTrue: const Color(0xFFD1E8D2), // Pale Green
-      textColorSwitchFalse: const Color(0xFF6C8E67), // Sage Green
-      decoration: const BoxDecoration(
-        image: DecorationImage(
-          image: AssetImage('assets/texture3.jpg'),
-          fit: BoxFit.cover,
-        ),
-      ),
-    ),
-    Skin(
-      backgroundColor: Colors.brown[800]!, // Deep wood color
-      prizePoolTextColor: Colors.white, // Warm amber for highlights
-      textColor: Colors.white, // High contrast for readability
-      specialTextColor: Colors.white, // Earthy orange for special texts
-      buttonColor:
-          Colors.green[800]!, // Dark green for buttons, resembling forest
-      buttonTextColor:
-          Colors.white, // White text for clear readability on buttons
-      textColorSwitchTrue: Colors.amber, // Warm amber for true state
-      textColorSwitchFalse:
-          Colors.brown[600]!, // Slightly lighter wood color for false
-      decoration: const BoxDecoration(
-        image: DecorationImage(
-          image: AssetImage('assets/texture4.jpg'),
-          fit: BoxFit.cover,
-        ),
-      ),
-    ),
-  ];
+  List<Skin> skins = [];
   late Directory directory; // To hold the application directory path
 
   RewardedInterstitialAd? _rewardedInterstitialAd;
@@ -212,8 +134,14 @@ class LandingPageState extends State<LandingPage>
   late Animation<double> _glowAnimation; // Renamed for clarity
   static const platform = MethodChannel('com.gg.zmoney/game_services');
   bool _isLoading = true;
+  // In your LandingPageState class
+  double _initializationProgress =
+      0.0; // Progress of initialization (0.0 to 1.0)
+  final List<String> _progressMessages =
+      []; // Messages to display during initialization
+
   //INIT STATE <<<<<<<<<<<<<<<<<<<<
-  @override
+
   @override
   void initState() {
     super.initState();
@@ -226,20 +154,27 @@ class LandingPageState extends State<LandingPage>
     });
 
     WidgetsBinding.instance.addObserver(this); // Add the observer
-
-    if (!kDebugMode && !kProfileMode) {
-      _initBannerAd();
-      _loadRewardedAd();
-      _loadRewardedInterstitialAd();
-    }
   }
 
   Future<void> _initializeAsyncOperations() async {
+    // Assume there are 5 steps in total
+    double progressIncrement = 1.0 / 5;
+    _initBannerAd();
+    _loadRewardedAd();
+    _loadRewardedInterstitialAd();
+    // Update the progress and message for each step
     await _initSkinsAndDirectory();
-    await initializeTranslations();
-    WidgetsBinding.instance.addObserver(this);
+    _updateProgress(progressIncrement, "Initialized skins and directories");
+
+    await checkAndFetchAssets();
+    _updateProgress(progressIncrement, "Assets checked and fetched");
+
+    initializeTranslations();
+    _updateProgress(progressIncrement, "Translations initialized");
 
     await _fetchPrizePoolFromServer();
+    _updateProgress(progressIncrement, "Fetched prize pool from server");
+
     _confettiController = ConfettiController();
     _glowController =
         AnimationController(duration: const Duration(seconds: 2), vsync: this)
@@ -247,11 +182,27 @@ class LandingPageState extends State<LandingPage>
     _glowAnimation =
         Tween<double>(begin: 0.5, end: 1.0).animate(_glowController);
     _glowController.repeat(reverse: true);
+    _updateProgress(progressIncrement, "Controllers initialized");
 
-    VideoPlayerManager().init().then((_) {
-      // Now it's safe to use VideoPlayerManager, maybe set a flag to indicate readiness
+    await VideoPlayerManager().init();
+    _updateProgress(progressIncrement, "Video player manager initialized");
+
+    // When all tasks are completed, ensure progress is set to 100%
+    if (_initializationProgress < 1.0) {
+      setState(() {
+        _initializationProgress = 1.0;
+        _isLoading = false; // Hide loading indicator and show content
+      });
+    }
+  }
+
+  void _updateProgress(double increment, String message) {
+    setState(() {
+      _initializationProgress += increment;
+      _progressMessages.add(message);
+      // Optionally, you might only want to show the latest message
+      // _progressMessages = [message];
     });
-    // Additional initialization as needed.
   }
 
   Future<void> _initSkinsAndDirectory() async {
@@ -382,6 +333,7 @@ class LandingPageState extends State<LandingPage>
       'Application still under heavy development!   ',
       'Rules',
       'Game Menu',
+      'Zmoney Store',
       // Add more keys as needed
     ];
 
@@ -396,12 +348,6 @@ class LandingPageState extends State<LandingPage>
     setState(() {
       translatedTexts =
           results; // This list now directly reflects the keys translated
-
-      tutorialManager = TutorialManager(
-        translatedTexts: translatedTexts,
-        keys: [keyLanguageSelector, key1, key2, key3],
-        onUpdate: () => setState(() {}),
-      );
     });
   }
 
@@ -444,7 +390,6 @@ class LandingPageState extends State<LandingPage>
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        print(data);
         if (data != null) {
           setState(() {
             _prizePoolAmount = data['prizePoolBase'].toDouble();
@@ -737,12 +682,69 @@ class LandingPageState extends State<LandingPage>
         ? 50.0
         : 0.0; // Example ad height, adjust based on actual ad size
 
-    // Check if the page is still loading
     if (_isLoading) {
-      // Display loading animation
       return Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(), // Show a loading spinner
+        body: Container(
+          decoration: const BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage('assets/mainscreen.png'),
+              fit: BoxFit.cover,
+            ),
+          ),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 30.0),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: LinearProgressIndicator(
+                      value: _initializationProgress,
+                      backgroundColor: Colors.white.withOpacity(0.3),
+                      valueColor: const AlwaysStoppedAnimation<Color>(
+                          Colors.lightBlueAccent),
+                      minHeight: 10,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  child: Text(
+                    _progressMessages.isNotEmpty
+                        ? _progressMessages.last
+                        : "Initializing...",
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      shadows: [
+                        Shadow(
+                          blurRadius: 4.0,
+                          color: Colors.black,
+                          offset: Offset(2.0, 2.0),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 30),
+                // Optional: Add a visual element like a Flutter logo or another relevant image
+                const Opacity(
+                  opacity: 0.8,
+                  child: FlutterLogo(size: 100),
+                ),
+              ],
+            ),
+          ),
         ),
       );
     }
@@ -883,50 +885,62 @@ class LandingPageState extends State<LandingPage>
                             animation: _glowAnimation,
                             builder: (context, child) {
                               return Opacity(
-                                opacity: _glowAnimation.value,
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceEvenly,
-                                  children: <Widget>[
-                                    IconButton(
-                                      icon: Icon(Icons.chevron_left,
-                                          size: 60,
-                                          color: currentSkin.specialTextColor
-                                              .withOpacity(
-                                                  _glowAnimation.value)),
-                                      onPressed: () => _toggleSkin(false),
-                                    ),
-                                    Text(
-                                      translatedTexts[15],
-                                      style: TextStyle(
-                                        fontFamily: 'Proxima',
-                                        fontWeight: FontWeight
-                                            .w700, // This applies the italic font with weight 700 based on your pubspec declaration
-                                        color: currentSkin.specialTextColor
-                                            .withOpacity(_glowAnimation.value),
-                                        fontSize: 20,
-                                        shadows: [
-                                          Shadow(
-                                            offset: const Offset(0.0, 0.0),
-                                            blurRadius: 12.0,
+                                  opacity: _glowAnimation.value,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment
+                                        .center, // Centers the children horizontally
+                                    children: <Widget>[
+                                      IconButton(
+                                        icon: Icon(Icons.chevron_left,
+                                            size: 60,
                                             color: currentSkin.specialTextColor
                                                 .withOpacity(
-                                                    _glowAnimation.value),
-                                          ),
-                                        ],
+                                                    _glowAnimation.value)),
+                                        onPressed: () => _toggleSkin(false),
                                       ),
-                                    ),
-                                    IconButton(
-                                      icon: Icon(Icons.chevron_right,
-                                          size: 60,
-                                          color: currentSkin.specialTextColor
-                                              .withOpacity(
-                                                  _glowAnimation.value)),
-                                      onPressed: () => _toggleSkin(true),
-                                    ),
-                                  ],
-                                ),
-                              );
+                                      Expanded(
+                                        // This makes the text widget flexible in the row, taking up the remaining space
+                                        child: Center(
+                                          // Explicitly center the AutoSizeText horizontally
+                                          child: AutoSizeText(
+                                            translatedTexts[15],
+                                            minFontSize: 12,
+                                            maxFontSize: 16,
+                                            style: TextStyle(
+                                              fontFamily: 'Proxima',
+                                              fontWeight: FontWeight.w700,
+                                              color: currentSkin
+                                                  .specialTextColor
+                                                  .withOpacity(
+                                                      _glowAnimation.value),
+                                              fontSize: 20,
+                                              shadows: [
+                                                Shadow(
+                                                  offset:
+                                                      const Offset(0.0, 0.0),
+                                                  blurRadius: 12.0,
+                                                  color: currentSkin
+                                                      .specialTextColor
+                                                      .withOpacity(
+                                                          _glowAnimation.value),
+                                                ),
+                                              ],
+                                            ),
+                                            overflow: TextOverflow
+                                                .ellipsis, // Add an overflow rule if needed
+                                          ),
+                                        ),
+                                      ),
+                                      IconButton(
+                                        icon: Icon(Icons.chevron_right,
+                                            size: 60,
+                                            color: currentSkin.specialTextColor
+                                                .withOpacity(
+                                                    _glowAnimation.value)),
+                                        onPressed: () => _toggleSkin(true),
+                                      ),
+                                    ],
+                                  ));
                             },
                           ),
                         ),
@@ -1603,9 +1617,7 @@ class LandingPageState extends State<LandingPage>
     final audioPlayer = AudioPlayer();
 
     // Ensure appDocumentsDirectory is initialized before using it.
-    if (appDocumentsDirectory == null) {
-      appDocumentsDirectory = await getApplicationDocumentsDirectory();
-    }
+    appDocumentsDirectory ??= await getApplicationDocumentsDirectory();
 
     // Directly construct the path using appDocumentsDirectory
     final soundFilePath =
@@ -1614,14 +1626,8 @@ class LandingPageState extends State<LandingPage>
     if (await File(soundFilePath).exists()) {
       await audioPlayer.play(DeviceFileSource(soundFilePath));
     } else {
-      print('Victory sound file does not exist.');
       // Handle the case where the file doesn't exist as needed
     }
-  }
-
-  Future<String> _localAssetPath(String localPath) async {
-    final dir = await getApplicationDocumentsDirectory();
-    return p.join(dir.path, localPath);
   }
 
   Widget _buildWinOverlay(BuildContext context, double prizePoolAmount) {
@@ -1794,406 +1800,5 @@ class LandingPageState extends State<LandingPage>
         ),
       ),
     );
-  }
-}
-
-class PlayerDataWidget extends StatefulWidget {
-  final double conversionRatio;
-
-  const PlayerDataWidget({super.key, required this.conversionRatio});
-
-  @override
-  PlayerDataWidgetState createState() => PlayerDataWidgetState();
-}
-
-class PlayerDataWidgetState extends State<PlayerDataWidget> {
-  Map<String, dynamic> playerData = {};
-  String? userEmail;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadPlayerData();
-    _loadUserEmail();
-  }
-
-  Future<void> _loadPlayerData() async {
-    final prefs = await SharedPreferences.getInstance();
-    String? playerDataString = prefs.getString('playerData');
-    if (playerDataString != null) {
-      Map<String, dynamic> tempPlayerData = jsonDecode(playerDataString);
-
-      // Ensuring 'total_win_amount' is treated as a double
-      if (tempPlayerData.containsKey('total_win_amount')) {
-        var totalWinAmount = tempPlayerData['total_win_amount'];
-        // Convert to double if it is not already
-        tempPlayerData['total_win_amount'] =
-            totalWinAmount is int ? totalWinAmount.toDouble() : totalWinAmount;
-      }
-
-      setState(() {
-        playerData = tempPlayerData;
-      });
-    }
-  }
-
-  Future<void> _loadUserEmail() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      userEmail = prefs.getString('userEmail');
-    });
-  }
-
-  void _showAchievements() async {
-    await GamesServices.showAchievements();
-  }
-
-  void _showLeaderboard() async {
-    await GamesServices.showLeaderboards(); // Use your actual leaderboard ID
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // Assuming playerData['total_win_amount'] and conversionRatio are correctly fetched/set
-    // Assuming playerData is a map
-
-    final double totalWinAmount =
-        (playerData['total_win_amount'] as double?) ?? 0.1;
-
-// Calculate the initial real money value
-    final double conversionRatio =
-        widget.conversionRatio; // Default to 0.0 if not provided
-    final double initialRealMoneyValue =
-        (totalWinAmount * conversionRatio) * 0.60; // Adjusted formula
-
-// Calculate 60% of the initial real money value
-    final double realMoneyValue = initialRealMoneyValue;
-    List<String> lastGuesses =
-        playerData['last_guesses']?.toString().split(',') ?? [];
-
-    return Material(
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  ElevatedButton(
-                    onPressed: _showAchievements,
-                    child: const Text('Achievements'),
-                  ),
-                  ElevatedButton(
-                    onPressed: _showLeaderboard,
-                    child: const Text('Leaderboard'),
-                  ),
-                ],
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    FutureBuilder<String>(
-                      future: translator.translate("Wins"),
-                      builder: (context, snapshot) => _buildHighlightedInfo(
-                          title: snapshot.data ?? "Wins",
-                          value: playerData['wins']?.toString() ?? '0'),
-                    ),
-                    FutureBuilder<String>(
-                      future: translator.translate("Total Guesses"),
-                      builder: (context, snapshot) => _buildHighlightedInfo(
-                          title: snapshot.data ?? "Total Guesses",
-                          value:
-                              playerData['total_guesses']?.toString() ?? '0'),
-                    ),
-                  ],
-                ),
-              ),
-              if (userEmail != null)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8.0),
-                  child: FutureBuilder<String>(
-                    future: translator.translate("Logged in as"),
-                    builder: (context, snapshot) {
-                      String loggedInText = snapshot.data ?? "Logged in as";
-                      return Text(
-                        "$loggedInText: $userEmail",
-                        style: const TextStyle(
-                            fontSize: 16, fontStyle: FontStyle.italic),
-                      );
-                    },
-                  ),
-                ),
-              FutureBuilder<String>(
-                future: translator.translate("Earnings"),
-                builder: (context, snapshot) =>
-                    _buildSectionTitle(snapshot.data ?? "Earnings"),
-              ),
-              FutureBuilder<String>(
-                future: translator.translate("Total Win Amount"),
-                builder: (context, snapshot) => _buildAmountRow(
-                    snapshot.data ?? "Total Win Amount:", totalWinAmount,
-                    leadingIcon: Icons.account_balance_wallet),
-              ),
-              FutureBuilder<String>(
-                future: translator.translate("Real Money Value"),
-                builder: (context, snapshot) => _buildAmountRowWithExplanation(
-                    snapshot.data ?? "Real Money Value:", realMoneyValue,
-                    leadingIcon: Icons.monetization_on, isCurrency: true),
-              ),
-              const Divider(),
-              FutureBuilder<String>(
-                future: translator.translate("Highest Win"),
-                builder: (context, snapshot) =>
-                    _buildSectionTitle(snapshot.data ?? "Highest Win"),
-              ),
-              FutureBuilder<String>(
-                future: translator.translate("Highest Win Amount"),
-                builder: (context, snapshot) => _buildAmountRow(
-                    snapshot.data ?? "Highest Win Amount:", totalWinAmount,
-                    leadingIcon: Icons.emoji_events),
-              ),
-              const Divider(),
-              FutureBuilder<String>(
-                future: translator.translate("Last Guesses"),
-                builder: (context, snapshot) =>
-                    _buildSectionTitle(snapshot.data ?? "Last Guesses"),
-              ),
-              lastGuesses.isNotEmpty
-                  ? Column(
-                      children: lastGuesses
-                          .map((guess) => ListTile(
-                                leading: const Icon(Icons.casino,
-                                    color: Colors.orange),
-                                title: Text(guess,
-                                    style: const TextStyle(fontSize: 16)),
-                              ))
-                          .toList(),
-                    )
-                  : FutureBuilder<String>(
-                      future: translator.translate("No last guesses available"),
-                      builder: (context, snapshot) => Text(
-                          snapshot.data ?? "No last guesses available",
-                          style: const TextStyle(fontSize: 16)),
-                    ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAmountRowWithExplanation(String title, double amount,
-      {bool isCurrency = false, IconData? leadingIcon}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildAmountRow(title, amount,
-            isCurrency: isCurrency, leadingIcon: leadingIcon),
-        const Padding(
-          padding: EdgeInsets.only(top: 8.0),
-          child: Text(
-            "current revenue + your score * your total win amount",
-            style: TextStyle(
-              fontFamily: 'Proxima',
-              fontSize: 12, // Adjust the size as needed
-              fontStyle:
-                  FontStyle.italic, // Use italic for the explanation if desired
-              color: Colors
-                  .grey, // Use a subtle color to indicate this is an explanation
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildHighlightedInfo({required String title, required String value}) {
-    return Column(
-      children: [
-        Text(title,
-            style: const TextStyle(
-                fontWeight: FontWeight.bold, color: Colors.blue)),
-        Text(value,
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-      ],
-    );
-  }
-
-  Widget _buildSectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Text(
-        title,
-        style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.blueAccent),
-      ),
-    );
-  }
-
-  Widget _buildAmountRow(String title, double amount,
-      {bool isCurrency = false, IconData? leadingIcon}) {
-    return ListTile(
-      leading: leadingIcon != null ? Icon(leadingIcon) : null,
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-      subtitle: Text(
-        isCurrency
-            ? '\$${amount.toStringAsFixed(2)}'
-            : '${amount.toString()} Coins',
-        style: const TextStyle(
-            color: Colors.green, fontWeight: FontWeight.bold, fontSize: 16),
-      ),
-    );
-  }
-}
-// Assuming PlayerDataWidget is defined elsewhere in your code
-
-class StatisticsFloatingButton extends StatefulWidget {
-  final double conversionRatio; // Add conversionRatio as a field
-
-  const StatisticsFloatingButton({
-    super.key,
-    required this.conversionRatio, // Require it as a named parameter
-  });
-
-  @override
-  State<StatisticsFloatingButton> createState() =>
-      _StatisticsFloatingButtonState();
-}
-
-class _StatisticsFloatingButtonState extends State<StatisticsFloatingButton>
-    with SingleTickerProviderStateMixin {
-  OverlayEntry? _overlayEntry;
-  late AnimationController _animationController;
-  bool isOverlayVisible = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 300),
-    );
-  }
-
-  void _toggleOverlay(BuildContext context) {
-    if (isOverlayVisible) {
-      _hideOverlay();
-    } else {
-      _showOverlay(context);
-    }
-  }
-
-  void _showOverlay(BuildContext context) {
-    _overlayEntry = _createOverlayEntry(context);
-    Overlay.of(context).insert(_overlayEntry!);
-    _animationController.forward();
-    isOverlayVisible = true;
-  }
-
-  void _hideOverlay() {
-    if (_overlayEntry != null) {
-      _animationController.reverse().then((value) => _overlayEntry?.remove());
-      isOverlayVisible = false;
-    }
-  }
-
-  OverlayEntry _createOverlayEntry(BuildContext context) {
-    // Animation for slide transition
-    var slideAnimation = Tween<Offset>(
-      begin: const Offset(1, 0), // Start from the right
-      end: Offset.zero, // End at its natural position
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
-
-    // Tracking start and end points of the swipe
-    Offset? dragStart;
-    Offset? dragEnd;
-
-    return OverlayEntry(
-      builder: (context) => GestureDetector(
-        onTap: _hideOverlay, // Close drawer when tapping outside
-        behavior: HitTestBehavior.translucent,
-        child: Stack(
-          children: [
-            // Transparent area
-            Positioned.fill(
-              child: Container(
-                  color: Colors.black54), // Semi-transparent background
-            ),
-            // Drawer
-            Align(
-              alignment: Alignment.centerRight,
-              child: SlideTransition(
-                position: slideAnimation,
-                child: Material(
-                  elevation: 16.0, // Shadow
-                  child: Container(
-                    width: MediaQuery.of(context).size.width * 0.75,
-                    height: MediaQuery.of(context).size.height,
-                    color: Colors.white,
-                    child: GestureDetector(
-                      onHorizontalDragStart: (details) {
-                        dragStart = details.globalPosition;
-                      },
-                      onHorizontalDragUpdate: (details) {
-                        dragEnd = details.globalPosition;
-                      },
-                      onHorizontalDragEnd: (details) {
-                        // Determine swipe direction and velocity
-                        final velocity = details.primaryVelocity ?? 0;
-                        // Close drawer if swipe to the right or fast swipe to the left
-                        if (dragEnd!.dx > dragStart!.dx || velocity > 250) {
-                          _hideOverlay();
-                        }
-                      },
-                      child: Column(
-                        children: [
-                          AppBar(
-                            title: const Text("Player Stats"),
-                            leading: IconButton(
-                              icon: const Icon(Icons.arrow_back),
-                              onPressed:
-                                  _hideOverlay, // Back button to close the drawer
-                            ),
-                            automaticallyImplyLeading: false,
-                          ),
-                          Expanded(
-                            child: PlayerDataWidget(
-                                conversionRatio: widget
-                                    .conversionRatio), // Use widget.conversionRatio here
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FloatingActionButton(
-      onPressed: () => _toggleOverlay(context),
-      child: Icon(isOverlayVisible ? Icons.close : Icons.bar_chart),
-    );
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
   }
 }

@@ -11,6 +11,7 @@
         android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
+        
         android:label="How Much?"
         android:icon="@mipmap/ic_launcher">
 

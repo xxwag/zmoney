@@ -155,6 +155,7 @@ class _AnimatedSmileyState extends State<AnimatedSmiley>
                         style: TextStyle(
                           backgroundColor: Colors.transparent,
                           decoration: TextDecoration.none,
+                          color: Colors.transparent,
                           fontSize: _sizeAnimation.value,
                           // Not applying the selected font to the emoji
                         ),

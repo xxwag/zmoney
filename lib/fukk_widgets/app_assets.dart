@@ -49,17 +49,12 @@ Future<bool> checkAndFetchAssets() async {
 
         if (!await localFile.exists() || await localFile.length() == 0) {
           await fetchAndSaveAsset(asset.cloudPath, localFile);
-          print('Asset fetched and saved locally: $asset');
-        } else {
-          print('Asset already exists locally: $asset');
-        }
+        } else {}
       }
     }
 
-    print("All assets processed.");
     return true; // Return true on success
   } catch (e) {
-    print("Error checking and fetching assets: $e");
     return false; // Return false on error
   }
 }
@@ -72,8 +67,7 @@ Future<void> fetchAndSaveAsset(String cloudPath, File localFile) async {
     final http.Response downloadData = await http.get(Uri.parse(downloadUrl));
     await localFile.create(recursive: true);
     await localFile.writeAsBytes(downloadData.bodyBytes);
-    print('Downloaded and saved: $cloudPath');
   } catch (e) {
-    print('Error downloading $cloudPath: $e');
+    return;
   }
 }

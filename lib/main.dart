@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 
@@ -10,12 +9,10 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:oauth2/oauth2.dart' as oauth2;
-import 'package:http/http.dart' as http;
 
 import 'package:zmoney/fukk_widgets/translator.dart';
 import 'package:zmoney/loading_screen.dart';
-import 'package:zmoney/ngrok.dart';
+import 'package:zmoney/fukk_widgets/ngrok.dart';
 import 'firebase_options.dart';
 import 'package:games_services/games_services.dart';
 import 'package:auto_localization/auto_localization.dart';
@@ -26,21 +23,18 @@ final translator =
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  String envFileName = ".env";
-  await dotenv.load(fileName: envFileName);
+  await dotenv.load(fileName: ".env");
 
   const secureStorage = FlutterSecureStorage();
   await secureStorage.write(
       key: 'ngrokToken', value: dotenv.env['NGROK_TOKEN']);
   // Fetch Ngrok data
   await NgrokManager.fetchNgrokData();
-  runApp(MyApp(homeScreen: const LoadingScreen()));
+  runApp(const MyApp(homeScreen: LoadingScreen()));
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  await FirebaseAppCheck.instance
+  FirebaseAppCheck.instance
       .activate(androidProvider: AndroidProvider.playIntegrity);
 
   // Assuming this code is inside an async function

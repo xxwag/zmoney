@@ -17,12 +17,11 @@ import 'package:oauth2/oauth2.dart' as oauth2;
 import 'package:http/http.dart' as http;
 import 'package:flutter_appauth/flutter_appauth.dart';
 import 'package:video_player/video_player.dart';
-import 'package:zmoney/fukk_widgets/app_assets.dart';
 
 import 'package:zmoney/fukk_widgets/language_selector.dart';
 import 'package:zmoney/fukk_widgets/smiley.dart';
 import 'package:zmoney/fukk_widgets/translator.dart';
-import 'package:zmoney/ngrok.dart';
+import 'package:zmoney/fukk_widgets/ngrok.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'landing_page.dart';
 import 'package:flutter/services.dart';
@@ -327,8 +326,8 @@ class WelcomeScreenState extends State<WelcomeScreen>
             right: 20, // Adjust as needed for Smiley Face Thrower
             child: FloatingActionButton(
               onPressed: () => SmileyFaceThrower.showSmiley(context),
-              child: Icon(Icons.tag_faces),
               backgroundColor: Colors.yellow,
+              child: const Icon(Icons.tag_faces),
             ),
           ),
         ],
@@ -390,7 +389,10 @@ class WelcomeScreenState extends State<WelcomeScreen>
 
   Widget _buildAuthActionButton() {
     bool isButtonDisabled = _isAuthenticating ||
-        !_isPasswordValid; // Now also depends on password validity
+        !_isPasswordValid ||
+        (_isSignUpMode &&
+            !_arePasswordsMatching()); // Updated condition to include password matching check
+
     Color buttonColor = _isSignUpMode ? Colors.blueAccent : Colors.lightGreen;
 
     // Define keys for the translations
@@ -836,24 +838,21 @@ class WelcomeScreenState extends State<WelcomeScreen>
         );
 
         if (response.statusCode == 200) {
-          await checkAndFetchAssets();
           var responseData = jsonDecode(response.body);
           var jwtToken = responseData['token'];
           await secureStorage.write(key: 'jwtToken', value: jwtToken);
           if (context.mounted) {
             final playerDataResponse = await verifyAndRetrieveData(jwtToken);
             if (playerDataResponse.statusCode == 200) {
+              Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (context) => const LandingPage()));
+
               var playerData =
                   jsonDecode(playerDataResponse.body)['playerData'];
               final prefs = await SharedPreferences.getInstance();
               await prefs.setString('playerData', jsonEncode(playerData));
 
-              // Navig if (context.mounted) {ate to the next screen or update the state as necessary
-              // ignore: use_build_context_synchronously
-              Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (context) => const LandingPage()));
               await _showSnackBar("Sign-in successful.");
-              _isAuthenticating = false; // Unlock UI
             }
           } else {
             await _showSnackBar("Error verifying token and retrieving data.");

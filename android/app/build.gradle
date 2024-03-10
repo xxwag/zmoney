@@ -63,8 +63,8 @@ android {
         minSdkVersion 21
         compileSdkVersion 34
         targetSdkVersion 33
-        versionCode 30 // Increment this number manually
-        versionName "6.0.0"
+        versionCode 32 // Increment this number manually
+        versionName "1.0.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         multiDexEnabled true
         
@@ -118,6 +118,9 @@ dependencies {
     implementation("com.google.firebase:firebase-perf")
 
     
+
+    implementation 'com.android.billingclient:billing:6.2.0'
+
     implementation 'com.android.support:multidex:1.0.3'
  
     implementation 'com.google.android.material:material:1.9.0'

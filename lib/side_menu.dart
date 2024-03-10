@@ -9,8 +9,9 @@ import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:video_player/video_player.dart';
-import 'package:zmoney/ngrok.dart';
+import 'package:zmoney/fukk_widgets/ngrok.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:zmoney/fukk_widgets/store_page.dart';
 import 'package:zmoney/welcome_screen.dart';
 
 class SideMenuDrawer extends StatefulWidget {
@@ -129,6 +130,17 @@ class SideMenuDrawerState extends State<SideMenuDrawer> {
             },
           ),
           ListTile(
+            leading: const Icon(Icons.store),
+            title: Text(widget.translatedTexts[20]), // 'Store' text
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const InAppPurchaseScreen()),
+              );
+            },
+          ),
+          ListTile(
             leading: const Icon(Icons.balance),
             title: Text(widget
                 .translatedTexts[5]), // Assuming this is the balance list title
@@ -172,7 +184,6 @@ class VideoPlayerManager {
 
     final fileExists = await File(filePath).exists();
     if (!fileExists) {
-      print("Video file does not exist at path: $filePath");
       return;
     }
 
