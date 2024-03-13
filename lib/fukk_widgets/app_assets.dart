@@ -1,10 +1,9 @@
 import 'dart:io';
 // ignore: unused_import
-import 'package:firebase_app_check/firebase_app_check.dart';
+import 'package:dio/dio.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
-import 'package:http/http.dart' as http;
 
 /// Represents an asset that the app requires.
 class AppAsset {
@@ -61,13 +60,20 @@ Future<bool> checkAndFetchAssets() async {
 
 /// Fetches an asset from Firebase Storage and saves it locally.
 Future<void> fetchAndSaveAsset(String cloudPath, File localFile) async {
+  final FirebaseStorage storage = FirebaseStorage.instance;
   try {
-    final FirebaseStorage storage = FirebaseStorage.instance;
     final String downloadUrl = await storage.ref(cloudPath).getDownloadURL();
-    final http.Response downloadData = await http.get(Uri.parse(downloadUrl));
+    final Dio dio = Dio();
+
+    Response response = await dio.get(
+      downloadUrl,
+      options: Options(responseType: ResponseType.bytes),
+    );
+
     await localFile.create(recursive: true);
-    await localFile.writeAsBytes(downloadData.bodyBytes);
+    await localFile.writeAsBytes(response.data);
   } catch (e) {
+    // It's helpful to log errors for debugging purposes
     return;
   }
 }

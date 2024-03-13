@@ -9,6 +9,7 @@ import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:video_player/video_player.dart';
+import 'package:zmoney/fukk_widgets/call_page.dart';
 import 'package:zmoney/fukk_widgets/ngrok.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:zmoney/fukk_widgets/store_page.dart';
@@ -151,6 +152,20 @@ class SideMenuDrawerState extends State<SideMenuDrawer> {
                 MaterialPageRoute(
                     builder: (context) =>
                         const MoneyWithdrawalScreen()), // Use the actual constructor of your MoneyWithdrawalScreen
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.phone),
+            title: Text(widget
+                .translatedTexts[5]), // Assuming this is the balance list title
+            onTap: () {
+              // Navigate to MoneyWithdrawalScreen
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) =>
+                        CallPage()), // Use the actual constructor of your MoneyWithdrawalScreen
               );
             },
           ),

@@ -1,6 +1,5 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'notification_handler.dart';
 
@@ -19,7 +18,7 @@ class NgrokManager {
 
   static Future<bool> fetchNgrokData2() async {
     if (kDebugMode) {
-      print("fetching ngrok data");
+      print("fetching ngrok data with Dio");
     }
     const apiUrl = 'https://api.ngrok.com/tunnels';
     try {
@@ -28,17 +27,19 @@ class NgrokManager {
         throw Exception('Ngrok auth token not found');
       }
 
-      final response = await http.get(
-        Uri.parse(apiUrl),
-        headers: {
-          'Authorization': 'Bearer $authToken',
-          'Ngrok-Version': '2',
-        },
+      final dio = Dio();
+      final response = await dio.get(
+        apiUrl,
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $authToken',
+            'Ngrok-Version': '2',
+          },
+        ),
       );
 
       if (response.statusCode == 200) {
-        final jsonResponse = json.decode(response.body);
-        final tunnels = jsonResponse['tunnels'] as List<dynamic>;
+        final tunnels = response.data['tunnels'] as List<dynamic>;
         if (tunnels.isNotEmpty) {
           final tunnel = tunnels[0] as Map<String, dynamic>;
           final publicUrl = tunnel['public_url'] as String;
@@ -68,7 +69,7 @@ class NgrokManager {
 
   static Future<void> fetchNgrokData() async {
     if (kDebugMode) {
-      print("fetching ngrok data");
+      print("fetching ngrok data with Dio");
     }
     const apiUrl = 'https://api.ngrok.com/tunnels';
     try {
@@ -77,17 +78,19 @@ class NgrokManager {
         throw Exception('Ngrok auth token not found');
       }
 
-      final response = await http.get(
-        Uri.parse(apiUrl),
-        headers: {
-          'Authorization': 'Bearer $authToken',
-          'Ngrok-Version': '2',
-        },
+      final dio = Dio();
+      final response = await dio.get(
+        apiUrl,
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $authToken',
+            'Ngrok-Version': '2',
+          },
+        ),
       );
 
       if (response.statusCode == 200) {
-        final jsonResponse = json.decode(response.body);
-        final tunnels = jsonResponse['tunnels'] as List<dynamic>;
+        final tunnels = response.data['tunnels'] as List<dynamic>;
         if (tunnels.isNotEmpty) {
           final tunnel = tunnels[0] as Map<String, dynamic>;
           final publicUrl = tunnel['public_url'] as String;

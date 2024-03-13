@@ -107,6 +107,8 @@ class LandingPageState extends State<LandingPage>
     'Zmoney Store',
   ]; // Make it an empty, growable list
 
+  late Future<List<Skin>> futureSkins; // To store the future list of skins
+
   double _prizePoolAmount = 100000; // Starting amount
   double _conversionRatio = 0.1; // Adjusted for demonstration
 
@@ -124,6 +126,7 @@ class LandingPageState extends State<LandingPage>
   int currentSkinIndex = 0; // Default to the first skin
 
   List<Skin> skins = [];
+
   late Directory directory; // To hold the application directory path
 
   RewardedInterstitialAd? _rewardedInterstitialAd;
@@ -146,22 +149,22 @@ class LandingPageState extends State<LandingPage>
   void initState() {
     super.initState();
     _initializeAsyncOperations().then((_) {
+      _initBannerAd();
+      _loadRewardedAd();
+      _loadRewardedInterstitialAd();
       if (mounted) {
         setState(() {
           _isLoading = false; // Set loading to false when done
         });
       }
     });
-
     WidgetsBinding.instance.addObserver(this); // Add the observer
   }
 
   Future<void> _initializeAsyncOperations() async {
     // Assume there are 5 steps in total
     double progressIncrement = 1.0 / 5;
-    _initBannerAd();
-    _loadRewardedAd();
-    _loadRewardedInterstitialAd();
+
     // Update the progress and message for each step
     await _initSkinsAndDirectory();
     _updateProgress(progressIncrement, "Initialized skins and directories");
@@ -196,6 +199,232 @@ class LandingPageState extends State<LandingPage>
     }
   }
 
+  void _loadRewardedInterstitialAd() {
+    if (_rewardedInterstitialAd == null) {
+      return;
+    }
+
+    RewardedInterstitialAd.load(
+      adUnitId: 'ca-app-pub-4652990815059289/7189734426',
+      request: const AdRequest(),
+      rewardedInterstitialAdLoadCallback: RewardedInterstitialAdLoadCallback(
+        onAdLoaded: (RewardedInterstitialAd ad) {
+          _rewardedInterstitialAd = ad;
+        },
+        onAdFailedToLoad: (LoadAdError error) {
+          _rewardedInterstitialAd = null;
+        },
+      ),
+    );
+  }
+
+  Future<void> _showRewardedInterstitialAd() async {
+    if (_rewardedInterstitialAd == null) {
+      return;
+    }
+    _rewardedInterstitialAd!.fullScreenContentCallback =
+        FullScreenContentCallback(
+      onAdDismissedFullScreenContent: (RewardedInterstitialAd ad) {
+        ad.dispose();
+        _loadRewardedInterstitialAd();
+        _preventAd = true; // Prevent ad from showing on the next guess
+      },
+      onAdFailedToShowFullScreenContent:
+          (RewardedInterstitialAd ad, AdError error) {
+        ad.dispose();
+        _loadRewardedInterstitialAd();
+      },
+    );
+    _rewardedInterstitialAd!.show(
+        onUserEarnedReward: (AdWithoutView ad, RewardItem reward) {
+      // Handle reward
+      _timerFinished = true;
+    });
+    _rewardedInterstitialAd = null;
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.resumed) {
+      // Only initialize or load ads when the app resumes to avoid unnecessary memory usage
+      _isBannerAdReady ? null : _initBannerAd(); // Conditional loading
+      _isRewardedAdReady ? null : _loadRewardedAd(); // Conditional loading
+      _fetchPrizePoolFromServer();
+    }
+  }
+
+  void _setupRewardedAdListeners() {
+    _rewardedAd?.fullScreenContentCallback = FullScreenContentCallback(
+      onAdShowedFullScreenContent: (RewardedAd ad) => print('Ad showed.'),
+      onAdDismissedFullScreenContent: (RewardedAd ad) {
+        print('Ad dismissed.');
+        ad.dispose();
+        setState(() {
+          _rewardedAd = null;
+          _isRewardedAdReady = false;
+        });
+        _loadRewardedAd(); // Consider preloading the next ad.
+      },
+      onAdFailedToShowFullScreenContent: (RewardedAd ad, AdError error) {
+        print('Ad failed to show.');
+        ad.dispose();
+        setState(() {
+          _rewardedAd = null;
+          _isRewardedAdReady = false;
+        });
+      },
+    );
+  }
+
+  // Function to handle the press of the ad button
+  void _onPressAdButton() {
+    // Close the keyboard
+    FocusScope.of(context).unfocus();
+
+    if (_isRewardedAdReady && _rewardedAd != null) {
+      Future.delayed(const Duration(milliseconds: 300), () {
+        _showRewardedAd();
+      });
+    } else {
+      _loadRewardedAd();
+      // Implement logic to wait for the ad to load or check periodically if it's ready
+      // Note: The detailed implementation will depend on your app's structure
+    }
+  }
+
+  void _loadRewardedAd() {
+    // First, dispose of any existing ad
+    _rewardedAd?.dispose();
+    _rewardedAd = null;
+    _isRewardedAdReady = false;
+
+    RewardedAd.load(
+      adUnitId: 'ca-app-pub-4652990815059289/8386402654',
+      request: AdRequest(),
+      rewardedAdLoadCallback: RewardedAdLoadCallback(
+        onAdLoaded: (RewardedAd ad) {
+          setState(() {
+            _rewardedAd = ad;
+            _isRewardedAdReady = true;
+          });
+          _setupRewardedAdListeners();
+        },
+        onAdFailedToLoad: (LoadAdError error) {
+          setState(() {
+            _rewardedAd = null;
+            _isRewardedAdReady = false;
+          });
+          print("RewardedAd failed to load: $error");
+          // Optionally implement retry logic here
+        },
+      ),
+    );
+  }
+
+  void _showRewardedAd() {
+    if (_isRewardedAdReady) {
+      _rewardedAd?.show(
+        onUserEarnedReward: (AdWithoutView ad, RewardItem reward) {
+          // User has earned the reward. Implement any logic needed when a reward is earned.
+          // Example: Call a method to skip timer or unlock content
+          _timerFinished = true;
+          _timerStarted = false;
+          isButtonLocked = false; // Unlock the Go button here as well
+          ad.dispose();
+          // Preemptively load a new rewarded ad for future use
+          _loadRewardedAd();
+        },
+      );
+
+      _rewardedAd?.fullScreenContentCallback = FullScreenContentCallback(
+        onAdDismissedFullScreenContent: (AdWithoutView ad) {
+          // Dispose of the ad when it's dismissed to free up resources
+          ad.dispose();
+          // Preemptively load a new rewarded ad for future use
+          _loadRewardedAd();
+        },
+        onAdFailedToShowFullScreenContent: (AdWithoutView ad, AdError error) {
+          // Log or handle the error if the ad fails to show
+          if (kDebugMode) {
+            print('Failed to show rewarded ad: $error');
+          }
+          // Dispose of the ad to free up resources
+          ad.dispose();
+          // Attempt to load a new rewarded ad
+          _loadRewardedAd();
+        },
+        // Consider handling other callback events if needed
+      );
+    } else {
+      // This block executes if the rewarded ad is not ready to be shown
+      // Log this status or inform the user as needed
+      if (kDebugMode) {
+        print('Rewarded ad is not ready yet.');
+      }
+      // Optionally, trigger a load or retry mechanism for the rewarded ad here
+    }
+  }
+
+  void _initBannerAd() {
+    // Initialize the BannerAd instance and assign it to the _bannerAd variable.
+    _bannerAd = BannerAd(
+      adUnitId:
+          'ca-app-pub-4652990815059289/6968524603', // Replace with your ad unit ID
+      size: AdSize.banner,
+      request: const AdRequest(),
+      listener: BannerAdListener(
+        onAdLoaded: (Ad ad) {
+          // When the ad is loaded, set _isBannerAdReady to true and update the UI as needed
+          setState(() {
+            _isBannerAdReady = true;
+          });
+        },
+        onAdFailedToLoad: (Ad ad, LoadAdError error) {
+          // Handle the error when loading an ad fails
+          _retryLoadRewardedAd;
+          if (kDebugMode) {
+            print('BannerAd failed to load: $error');
+          }
+          ad.dispose(); // Dispose the ad to free up resources
+          // Optionally, implement a retry mechanism or update UI to reflect the failure
+        },
+        // You may handle other ad lifecycle events, such as onAdOpened, onAdClosed, etc.
+      ),
+    );
+
+    // Load the ad
+    _bannerAd.load();
+  }
+
+  void _retryLoadRewardedAd({int attempt = 1}) {
+    const maxAttempts = 3;
+    if (attempt <= maxAttempts) {
+      Future.delayed(Duration(seconds: attempt * 2), () => _loadRewardedAd());
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+  }
+
+  @override
+  void dispose() {
+    _timer
+        ?.cancel(); // Ensure the timer is canceled when the widget is disposed
+    _smoothIncrementationTimer
+        ?.cancel(); // Cancel the smooth incrementation timer
+    _bannerAd.dispose(); // Dispose of _bannerAd safely
+    _rewardedAd?.dispose();
+    _rewardedAd = null; // Then set _rewardedAd to null to clean up references
+    _rewardedInterstitialAd?.dispose();
+    _confettiController.dispose();
+    WidgetsBinding.instance.removeObserver(this);
+
+    super.dispose();
+  }
+
   void _updateProgress(double increment, String message) {
     setState(() {
       _initializationProgress += increment;
@@ -206,15 +435,21 @@ class LandingPageState extends State<LandingPage>
   }
 
   Future<void> _initSkinsAndDirectory() async {
-    directory =
-        await getApplicationDocumentsDirectory(); // This sets the directory before using it
-    skins = _createSkins(); // Now it's safe to call _createSkins()
+    directory = await getApplicationDocumentsDirectory(); // Sets the directory
+    List<dynamic> inventory = await _loadInventory(); // Load inventory
+    skins = await _createSkins(inventory); // Create skins based on inventory
     setState(() {}); // Trigger rebuild with initialized skins
   }
 
-  List<Skin> _createSkins() {
-    return [
+  Future<List<Skin>> _createSkins(List<dynamic> inventory) async {
+    List<String> inventoryIds =
+        inventory.map((item) => item['productId'].toString()).toList();
+
+    List<Skin> allSkins = [
+      // Default skin always available
       Skin(
+        id: "defaultSkin", // Example ID
+        isAvailable: true, // Default skins can be available by default
         backgroundColor: Colors.black,
         prizePoolTextColor: Colors.lightGreen,
         textColor: Colors.white,
@@ -227,6 +462,8 @@ class LandingPageState extends State<LandingPage>
         decoration: const BoxDecoration(color: Colors.black),
       ),
       Skin(
+        id: "xxwag", // Example ID
+        isAvailable: true, // Default skins can be available by default
         backgroundColor: Colors.white,
         prizePoolTextColor: Colors.blueAccent,
         textColor: Colors.white,
@@ -242,23 +479,10 @@ class LandingPageState extends State<LandingPage>
           ),
         ),
       ),
+
       Skin(
-        backgroundColor: const Color(0xFF4A2040), // Dark Amethyst
-        prizePoolTextColor: const Color(0xFFE0B0FF), // Mauve
-        textColor: const Color(0xFFF8E8FF), // Very Pale Purple
-        specialTextColor: const Color(0xFFDEC0E6), // Thistle
-        buttonColor: const Color(0xFF6A417A), // Medium Amethyst
-        buttonTextColor: const Color(0xFFF8E8FF), // Very Pale Purple
-        textColorSwitchTrue: const Color(0xFFCDA4DE), // Pastel Violet
-        textColorSwitchFalse: const Color(0xFFB0A8B9), // Greyish Lavender
-        decoration: BoxDecoration(
-          image: DecorationImage(
-            image: FileImage(File('${directory.path}/textures/texture2.jpg')),
-            fit: BoxFit.cover,
-          ),
-        ),
-      ),
-      Skin(
+        id: "xxwag2", // Example ID
+        isAvailable: true, // Default skins can be available by default
         backgroundColor: const Color(0xFF0B3D2E), // Dark Green
         prizePoolTextColor: Colors.white, // Bright Green
         textColor: const Color(0xFFE9E4D0), // Light Beige
@@ -275,6 +499,8 @@ class LandingPageState extends State<LandingPage>
         ),
       ),
       Skin(
+        id: "xxwag3", // Example ID
+        isAvailable: true, // Default skins can be available by default
         backgroundColor: Colors.brown[800]!, // Deep wood color
         prizePoolTextColor: Colors.white, // Warm amber for highlights
         textColor: Colors.white, // High contrast for readability
@@ -293,22 +519,43 @@ class LandingPageState extends State<LandingPage>
           ),
         ),
       ),
+      // Other skins with conditional availability
+      Skin(
+        id: "emerald", // Example ID
+        isAvailable: inventoryIds.contains("emeraldskin"),
+        backgroundColor: const Color(0xFF4A2040), // Dark Amethyst
+        prizePoolTextColor: const Color(0xFFE0B0FF), // Mauve
+        textColor: const Color(0xFFF8E8FF), // Very Pale Purple
+        specialTextColor: const Color(0xFFDEC0E6), // Thistle
+        buttonColor: const Color(0xFF6A417A), // Medium Amethyst
+        buttonTextColor: const Color(0xFFF8E8FF), // Very Pale Purple
+        textColorSwitchTrue: const Color(0xFFCDA4DE), // Pastel Violet
+        textColorSwitchFalse: const Color(0xFFB0A8B9), // Greyish Lavender
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: FileImage(File('${directory.path}/textures/texture2.jpg')),
+            fit: BoxFit.cover,
+          ),
+        ),
+      ),
+
+      // Repeat for other skins...
     ];
+
+    // Filter skins based on the isAvailable flag
+    List<Skin> availableSkins =
+        allSkins.where((skin) => skin.isAvailable).toList();
+
+    return availableSkins; // Return the filtered list of skins
   }
 
-  void _loadRewardedInterstitialAd() {
-    RewardedInterstitialAd.load(
-      adUnitId: 'ca-app-pub-4652990815059289/7189734426',
-      request: const AdRequest(),
-      rewardedInterstitialAdLoadCallback: RewardedInterstitialAdLoadCallback(
-        onAdLoaded: (RewardedInterstitialAd ad) {
-          _rewardedInterstitialAd = ad;
-        },
-        onAdFailedToLoad: (LoadAdError error) {
-          _rewardedInterstitialAd = null;
-        },
-      ),
-    );
+  Future<List<dynamic>> _loadInventory() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? inventoryJson = prefs.getString('inventory');
+    if (inventoryJson != null) {
+      return jsonDecode(inventoryJson) as List<dynamic>;
+    }
+    return [];
   }
 
   Future<void> initializeTranslations() async {
@@ -349,31 +596,6 @@ class LandingPageState extends State<LandingPage>
       translatedTexts =
           results; // This list now directly reflects the keys translated
     });
-  }
-
-  Future<void> _showRewardedInterstitialAd() async {
-    if (_rewardedInterstitialAd == null) {
-      return;
-    }
-    _rewardedInterstitialAd!.fullScreenContentCallback =
-        FullScreenContentCallback(
-      onAdDismissedFullScreenContent: (RewardedInterstitialAd ad) {
-        ad.dispose();
-        _loadRewardedInterstitialAd();
-        _preventAd = true; // Prevent ad from showing on the next guess
-      },
-      onAdFailedToShowFullScreenContent:
-          (RewardedInterstitialAd ad, AdError error) {
-        ad.dispose();
-        _loadRewardedInterstitialAd();
-      },
-    );
-    _rewardedInterstitialAd!.show(
-        onUserEarnedReward: (AdWithoutView ad, RewardItem reward) {
-      // Handle reward
-      _timerFinished = true;
-    });
-    _rewardedInterstitialAd = null;
   }
 
   Future<void> _fetchPrizePoolFromServer() async {
@@ -505,154 +727,6 @@ class LandingPageState extends State<LandingPage>
     }
   }
 
-  @override
-  void dispose() {
-    _timer
-        ?.cancel(); // Ensure the timer is canceled when the widget is disposed
-    _smoothIncrementationTimer
-        ?.cancel(); // Cancel the smooth incrementation timer
-    _bannerAd.dispose(); // Dispose of _bannerAd safely
-    _rewardedAd?.dispose();
-    _rewardedAd = null; // Then set _rewardedAd to null to clean up references
-
-    _confettiController.dispose();
-    WidgetsBinding.instance.removeObserver(this);
-
-    super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    super.didChangeAppLifecycleState(state);
-    if (state == AppLifecycleState.resumed) {
-      // Only initialize or load ads when the app resumes to avoid unnecessary memory usage
-      _isBannerAdReady ? null : _initBannerAd(); // Conditional loading
-      _isRewardedAdReady ? null : _loadRewardedAd(); // Conditional loading
-      _fetchPrizePoolFromServer();
-    }
-  }
-
-  void _loadRewardedAd() {
-    if (!_isRewardedAdReady && _rewardedAd == null) {
-      RewardedAd.load(
-        adUnitId: 'ca-app-pub-4652990815059289/8386402654',
-        request: const AdRequest(),
-        rewardedAdLoadCallback: RewardedAdLoadCallback(
-          onAdLoaded: (RewardedAd ad) {
-            setState(() {
-              _rewardedAd = ad;
-              _isRewardedAdReady = true;
-            });
-          },
-          onAdFailedToLoad: (LoadAdError error) {
-            if (kDebugMode) {
-              print('RewardedAd failed to load: $error');
-            }
-            setState(() {
-              _isRewardedAdReady = false;
-            });
-            _retryLoadRewardedAd();
-          },
-        ),
-      );
-    }
-  }
-
-  // Function to handle the press of the ad button
-  void _onPressAdButton() {
-    // Close the keyboard
-    FocusScope.of(context).unfocus();
-
-    // After a brief delay to ensure the keyboard is closed, show the rewarded ad
-    Future.delayed(const Duration(milliseconds: 300), () {
-      _showRewardedAd();
-    });
-  }
-
-  void _showRewardedAd() {
-    if (_isRewardedAdReady) {
-      _rewardedAd?.show(
-        onUserEarnedReward: (AdWithoutView ad, RewardItem reward) {
-          // User has earned the reward. Implement any logic needed when a reward is earned.
-          // Example: Call a method to skip timer or unlock content
-          _timerFinished = true;
-          _timerStarted = false;
-          isButtonLocked = false; // Unlock the Go button here as well
-        },
-      );
-
-      _rewardedAd?.fullScreenContentCallback = FullScreenContentCallback(
-        onAdDismissedFullScreenContent: (AdWithoutView ad) {
-          // Dispose of the ad when it's dismissed to free up resources
-          ad.dispose();
-          // Preemptively load a new rewarded ad for future use
-          _loadRewardedAd();
-        },
-        onAdFailedToShowFullScreenContent: (AdWithoutView ad, AdError error) {
-          // Log or handle the error if the ad fails to show
-          if (kDebugMode) {
-            print('Failed to show rewarded ad: $error');
-          }
-          // Dispose of the ad to free up resources
-          ad.dispose();
-          // Attempt to load a new rewarded ad
-          _loadRewardedAd();
-        },
-        // Consider handling other callback events if needed
-      );
-    } else {
-      // This block executes if the rewarded ad is not ready to be shown
-      // Log this status or inform the user as needed
-      if (kDebugMode) {
-        print('Rewarded ad is not ready yet.');
-      }
-      // Optionally, trigger a load or retry mechanism for the rewarded ad here
-    }
-  }
-
-  void _initBannerAd() {
-    // Initialize the BannerAd instance and assign it to the _bannerAd variable.
-    _bannerAd = BannerAd(
-      adUnitId:
-          'ca-app-pub-4652990815059289/6968524603', // Replace with your ad unit ID
-      size: AdSize.banner,
-      request: const AdRequest(),
-      listener: BannerAdListener(
-        onAdLoaded: (Ad ad) {
-          // When the ad is loaded, set _isBannerAdReady to true and update the UI as needed
-          setState(() {
-            _isBannerAdReady = true;
-          });
-        },
-        onAdFailedToLoad: (Ad ad, LoadAdError error) {
-          // Handle the error when loading an ad fails
-          _retryLoadRewardedAd;
-          if (kDebugMode) {
-            print('BannerAd failed to load: $error');
-          }
-          ad.dispose(); // Dispose the ad to free up resources
-          // Optionally, implement a retry mechanism or update UI to reflect the failure
-        },
-        // You may handle other ad lifecycle events, such as onAdOpened, onAdClosed, etc.
-      ),
-    );
-
-    // Load the ad
-    _bannerAd.load();
-  }
-
-  void _retryLoadRewardedAd({int attempt = 1}) {
-    const maxAttempts = 3;
-    if (attempt <= maxAttempts) {
-      Future.delayed(Duration(seconds: attempt * 2), () => _loadRewardedAd());
-    }
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-  }
-
   void _toggleSkin(bool isIncrementing) {
     setState(() {
       _arrowsVisible = false;
@@ -673,7 +747,14 @@ class LandingPageState extends State<LandingPage>
 
 // Use the currentSkinIndex to get the current Skin object
 
+    // Check if the skins list is empty. If so, display a placeholder or loading indicator.
+    if (skins.isEmpty) {
+      return CircularProgressIndicator(); // Or a Placeholder widget
+    }
+
+    // Safely access the skins list knowing it's not empty
     Skin currentSkin = skins[currentSkinIndex];
+
     // Calculate maxBlastForce based on screen width, with a maximum limit
     double calculatedBlastForce = screenSize.width / 1; // Example calculation
     double maxAllowedBlastForce = 1800; // Set your maximum limit here

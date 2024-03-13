@@ -8,6 +8,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.ConnectionResult
 
+import com.android.billingclient.api.*
 
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.games.PlayGamesSdk
@@ -30,7 +31,7 @@ class MainActivity : FlutterActivity() {
    
     private val CHANNEL = "com.gg.zmoney/game_services"
     private val authChannel = "com.gg.zmoney/auth"
-
+    private lateinit var billingClient: BillingClient
     private lateinit var consentInformation: ConsentInformation
     private val TAG = "MainActivity"
     private lateinit var firebaseAnalytics: FirebaseAnalytics
@@ -56,6 +57,26 @@ class MainActivity : FlutterActivity() {
     FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(true)
     FirebaseCrashlytics.getInstance().log("MainActivity Loaded Successfully")
     initializeUMP()
+
+      // Initialize BillingClient
+        billingClient = BillingClient.newBuilder(this)
+            .setListener { billingResult, purchases -> 
+                // Handle purchases, if needed
+            }
+            .enablePendingPurchases() // Required if your app supports purchases for unpurchased products
+            .build()
+        
+        billingClient.startConnection(object : BillingClientStateListener {
+            override fun onBillingSetupFinished(billingResult: BillingResult) {
+                if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                    // The BillingClient setup is complete, and you can query purchases here.
+                }
+            }
+
+            override fun onBillingServiceDisconnected() {
+                // Try to restart the connection on the next request to Google Play by calling the startConnection() method.
+            }
+        })
 
     
     // Correctly initialize Google Play Games Sign-In Client
@@ -87,6 +108,17 @@ class MainActivity : FlutterActivity() {
                 result.error("INVALID_ARGUMENT", "Achievement ID is required", null)
             }
         }
+
+          "retrievePurchasedQuantity" -> {
+                    val productId = call.argument<String>("productId")
+                    if (productId != null) {
+                        retrievePurchasedQuantity(billingClient, productId) { quantity ->
+                            result.success(quantity)
+                        }
+                    } else {
+                        result.error("INVALID_ARGUMENT", "Product ID is required", null)
+                    }
+                }
             else -> result.notImplemented()
         }
     }
@@ -115,6 +147,17 @@ class MainActivity : FlutterActivity() {
     PlayGames.getAchievementsClient(this).unlock(achievementId)
     Log.d(TAG, "Achievement unlocked: $achievementId")
 }
+
+  private fun retrievePurchasedQuantity(billingClient: BillingClient, productId: String, callback: (Int) -> Unit) {
+        billingClient.queryPurchasesAsync(BillingClient.SkuType.INAPP) { billingResult, purchasesList ->
+            if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && purchasesList != null) {
+                val purchasedQuantity = purchasesList.count { it.skus.contains(productId) }
+                callback(purchasedQuantity)
+            } else {
+                callback(0)
+            }
+        }
+    }
 
     
 

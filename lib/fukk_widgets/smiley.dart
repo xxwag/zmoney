@@ -101,10 +101,10 @@ class AnimatedSmiley extends StatefulWidget {
   });
 
   @override
-  _AnimatedSmileyState createState() => _AnimatedSmileyState();
+  AnimatedSmileyState createState() => AnimatedSmileyState();
 }
 
-class _AnimatedSmileyState extends State<AnimatedSmiley>
+class AnimatedSmileyState extends State<AnimatedSmiley>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final Animation<double> _sizeAnimation;

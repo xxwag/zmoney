@@ -2,8 +2,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:dio/dio.dart';
 import 'package:firebase_ui_auth/firebase_ui_auth.dart';
-import 'package:firebase_ui_oauth_google/firebase_ui_oauth_google.dart';
+
 import 'package:flutter/foundation.dart';
 
 import 'package:flutter/material.dart';
@@ -13,8 +14,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:oauth2/oauth2.dart' as oauth2;
-import 'package:http/http.dart' as http;
+
 import 'package:flutter_appauth/flutter_appauth.dart';
 import 'package:video_player/video_player.dart';
 
@@ -42,15 +42,15 @@ class AuthGate extends StatelessWidget {
           return const LandingPage(); // Your main app screen if the user is already signed in
         } else {
           // User is not signed in, show the sign-in options
-          return SignInScreen(
+          return const SignInScreen(
             // Email and password provider is included by default
             providers: [
               // FacebookProvider(clientId: '939946717700321'),
               // Specify other providers here
-              GoogleProvider(
+              /*GoogleProvider(
                 clientId:
-                    'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com', // Use web client ID here
-              ),
+                    'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com', // Use web client ID here*/
+
               // Add Facebook provider
             ],
             // Optionally, customize the SignInScreen further if needed
@@ -70,6 +70,7 @@ class WelcomeScreen extends StatefulWidget {
 
 class WelcomeScreenState extends State<WelcomeScreen>
     with TickerProviderStateMixin {
+  final Dio dio = Dio();
   final GoogleSignIn _googleSignIn = GoogleSignIn(scopes: ['email']);
   User? currentUser;
   bool _isPasswordVisible = false;
@@ -77,7 +78,7 @@ class WelcomeScreenState extends State<WelcomeScreen>
   bool isSigningInWithGoogle = true; // Initially, try to sign in with Google
   bool showAlternativeOptions =
       false; // Show skip and OAuth2 only if Google sign-in fails
-  oauth2.Client? client;
+
   final FlutterSecureStorage secureStorage = const FlutterSecureStorage();
   final FlutterAppAuth _appAuth = const FlutterAppAuth();
   static const _channel = MethodChannel('com.gg.zmoney/auth');
@@ -692,34 +693,29 @@ class WelcomeScreenState extends State<WelcomeScreen>
       final String? returnedEmail = authDetails['email'];
       final String? idToken =
           await FirebaseAuth.instance.currentUser?.getIdToken();
-
       final String? firebaseUserId =
           authDetails['accessToken']; // Firebase user ID is used as accessToken
 
       if (returnedEmail != null && idToken != null && firebaseUserId != null) {
         // Use the returned credentials to approach the master endpoint
-        final response = await approachMasterEndpoint(
+        final Response response = await approachMasterEndpoint(
             returnedEmail, idToken, firebaseUserId,
             isFirebaseId: true);
 
         if (response.statusCode == 200) {
-          var responseData = jsonDecode(response.body);
+          var responseData =
+              response.data; // With Dio, the data is already decoded
           var jwtToken = responseData['token'];
           await secureStorage.write(key: 'jwtToken', value: jwtToken);
 
-          final playerDataResponse = await verifyAndRetrieveData(jwtToken);
+          final Response playerDataResponse =
+              await verifyAndRetrieveData(jwtToken);
           if (playerDataResponse.statusCode == 200) {
-            var playerData = jsonDecode(playerDataResponse.body)['playerData'];
-            final prefs = await SharedPreferences.getInstance();
-            await prefs.setString('playerData', jsonEncode(playerData));
-            if (context.mounted) {
-              // ignore: use_build_context_synchronously
-              Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (context) => const LandingPage()));
+            Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (context) => const LandingPage()));
+            await _showSnackBar("Sign-in successful.");
 
-              await _showSnackBar("Sign-in successful.");
-              signInSuccess = true;
-            }
+            signInSuccess = true;
           } else {
             await _showSnackBar("Error verifying token and retrieving data.");
           }
@@ -737,21 +733,27 @@ class WelcomeScreenState extends State<WelcomeScreen>
     return signInSuccess;
   }
 
-  Future<http.Response> approachMasterEndpoint(
+  Future<Response> approachMasterEndpoint(
       String email, String idToken, String token,
       {bool isFirebaseId = false}) async {
-    return http.post(
-      Uri.parse('${NgrokManager.ngrokUrl}/api/masterEndpoint'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
+    final Dio dio = Dio(); // Ensure you have a Dio instance available
+
+    final response = await dio.post(
+      '${NgrokManager.ngrokUrl}/api/masterEndpoint',
+      options: Options(
+        headers: {'Content-Type': 'application/json'},
+      ),
+      data: {
         'email': email,
         'idToken': idToken,
         'token':
             token, // Use a generic name like 'token' for both Firebase user ID and Google access token
         'isFirebaseId':
             isFirebaseId, // Indicates the type of token being passed
-      }),
+      },
     );
+
+    return response;
   }
 
   void _handleSignIn() async {
@@ -830,7 +832,7 @@ class WelcomeScreenState extends State<WelcomeScreen>
       UserCredential userCredential =
           await FirebaseAuth.instance.signInWithCredential(credential);
       if (userCredential.user != null) {
-        final response = await approachMasterEndpoint(
+        final Response response = await approachMasterEndpoint(
           userCredential.user!.email!,
           googleAuth.idToken!,
           googleAuth.accessToken!,
@@ -838,25 +840,22 @@ class WelcomeScreenState extends State<WelcomeScreen>
         );
 
         if (response.statusCode == 200) {
-          var responseData = jsonDecode(response.body);
+          var responseData =
+              response.data; // With Dio, the data is already decoded
           var jwtToken = responseData['token'];
           await secureStorage.write(key: 'jwtToken', value: jwtToken);
           if (context.mounted) {
-            final playerDataResponse = await verifyAndRetrieveData(jwtToken);
+            final Response playerDataResponse =
+                await verifyAndRetrieveData(jwtToken);
             if (playerDataResponse.statusCode == 200) {
               Navigator.of(context).pushReplacement(
                   MaterialPageRoute(builder: (context) => const LandingPage()));
 
-              var playerData =
-                  jsonDecode(playerDataResponse.body)['playerData'];
-              final prefs = await SharedPreferences.getInstance();
-              await prefs.setString('playerData', jsonEncode(playerData));
-
               await _showSnackBar("Sign-in successful.");
+            } else {
+              await _showSnackBar("Error verifying token and retrieving data.");
+              _isAuthenticating = false; // Unlock UI
             }
-          } else {
-            await _showSnackBar("Error verifying token and retrieving data.");
-            _isAuthenticating = false; // Unlock UI
           }
         } else {
           await _showSnackBar("Error contacting master endpoint.");
@@ -979,35 +978,30 @@ class WelcomeScreenState extends State<WelcomeScreen>
             await FirebaseAuth.instance.signInWithCredential(credential);
 
         if (userCredential.user != null) {
-          // Assuming your backend needs email, GitHub access token, and possibly a Firebase token
           String? firebaseToken = await userCredential.user!.getIdToken(true);
-          final response = await approachMasterEndpoint(
+          final Response response = await approachMasterEndpoint(
             userCredential.user!.email!,
             firebaseToken!, // Assuming the firebaseToken is not null, handle nullability as needed
             result.accessToken!, // GitHub access token
           );
-
           if (response.statusCode == 200) {
-            var responseData = jsonDecode(response.body);
+            var responseData =
+                response.data; // With Dio, the data is already decoded
             var jwtToken = responseData['token'];
             await secureStorage.write(key: 'jwtToken', value: jwtToken);
 
-            final playerDataResponse = await verifyAndRetrieveData(jwtToken);
-            if (playerDataResponse.statusCode == 200) {
-              var playerData =
-                  jsonDecode(playerDataResponse.body)['playerData'];
-              final prefs = await SharedPreferences.getInstance();
-              await prefs.setString('playerData', jsonEncode(playerData));
-
-              if (mounted) {
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (context) => const LandingPage()),
-                );
+            if (mounted) {
+              final Response playerDataResponse =
+                  await verifyAndRetrieveData(jwtToken);
+              if (playerDataResponse.statusCode == 200) {
+                Navigator.of(context).pushReplacement(MaterialPageRoute(
+                    builder: (context) => const LandingPage()));
+                await _showSnackBar("GitHub Sign-in successful.");
+              } else {
+                await _showSnackBar(
+                    "Error verifying token and retrieving data.");
+                _isAuthenticating = false; // Unlock UI
               }
-              await _showSnackBar("GitHub Sign-in successful.");
-            } else {
-              await _showSnackBar("Error verifying token and retrieving data.");
-              _isAuthenticating = false; // Unlock UI
             }
           } else {
             await _showSnackBar("Error contacting master endpoint.");
@@ -1027,17 +1021,63 @@ class WelcomeScreenState extends State<WelcomeScreen>
     }
   }
 
-  Future<http.Response> verifyAndRetrieveData(String jwtToken) async {
-    // Print the JWT token for verification
+  Future<Response> verifyAndRetrieveData(String jwtToken) async {
     if (kDebugMode) {
       print("Verifying with JWT token: $jwtToken");
     }
 
-    return http.post(
-      Uri.parse('${NgrokManager.ngrokUrl}/api/verifyAndRetrieveData'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'token': jwtToken}),
-    );
+    final Dio dio = Dio(); // Create a new Dio instance
+
+    try {
+      final response = await dio.post(
+        '${NgrokManager.ngrokUrl}/api/verifyAndRetrieveData',
+        options: Options(
+          headers: {'Content-Type': 'application/json'},
+        ),
+        data: {'token': jwtToken},
+      );
+
+      // Assuming the response was successful and contained the needed data
+      if (response.statusCode == 200) {
+        // Here you extract the data you need to store from the response
+        var responseData = response.data;
+
+        // Extract playerData and inventory directly from the response
+        var playerData = responseData['playerData'];
+        var inventoryData = responseData[
+            'inventory']; // Directly access inventory from the response
+
+        final prefs = await SharedPreferences.getInstance();
+
+        // Storing playerData
+        if (playerData != null) {
+          await prefs.setString('playerData', jsonEncode(playerData));
+        }
+
+        // Storing inventory, handling it gracefully in case it's null
+        if (inventoryData != null) {
+          await prefs.setString('inventory', jsonEncode(inventoryData));
+        } else {
+          // Optionally handle the case where inventory is null, for example by storing an empty array or object
+          await prefs.setString(
+              'inventory',
+              jsonEncode(
+                  [])); // Example if you want to default to an empty list
+        }
+
+        // Continue to return the response as usual
+        return response;
+      } else {
+        // Handle other statuses or return the response for external handling
+        return response;
+      }
+    } on DioException catch (e) {
+      // Handle DioErrors here if needed
+      if (kDebugMode) {
+        print("DioError during verifyAndRetrieveData: $e");
+      }
+      rethrow;
+    }
   }
 
   // Add the missing _buildSkipButton method here

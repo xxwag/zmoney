@@ -1,5 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.gg.zmoney"> <!-- Replace with your package name -->
+    package="com.gg.zmoney"
+    xmlns:tools="http://schemas.android.com/tools"> <!-- Add this line to include tools namespace -->
 
     <!-- Correct placement of uses-permission -->
     <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
@@ -7,13 +8,13 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-    <uses-permission
-        android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
 
     <application
-        
         android:label="How Much?"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        tools:replace="android:label"> <!-- Add tools:replace attribute -->
 
         <!-- Sample Ad Manager app ID -->
         <meta-data

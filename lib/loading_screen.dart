@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:http/http.dart' as http;
+import 'package:permission_handler/permission_handler.dart';
+
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:zmoney/fukk_widgets/ngrok.dart';
 import 'package:zmoney/welcome_screen.dart';
@@ -33,9 +35,13 @@ class LoadingScreenState extends State<LoadingScreen> {
     "Try restarting the app if nothing helps.",
     // Add more reasons here
   ];
+  final Dio _dio = Dio()
+    ..options.connectTimeout = 10000 as Duration? // 10 seconds
+    ..options.receiveTimeout = 10000 as Duration?; // 10 seconds
 
   @override
   void initState() {
+    requestPermissions();
     super.initState();
     _verifyJwtAndNavigate();
     // Start the timer to show tips after 10 seconds
@@ -45,6 +51,24 @@ class LoadingScreenState extends State<LoadingScreen> {
       });
       _showReasonsOneByOne();
     });
+  }
+
+  Future<void> requestPermissions() async {
+    // Request a single permission
+    var status = await Permission.storage.request();
+
+    if (status.isGranted) {
+      print("Storage permission granted");
+      // Permission is granted. Continue with your operation
+    } else if (status.isDenied) {
+      print("Storage permission denied");
+      // User denied the permission. Handle as needed.
+    } else if (status.isPermanentlyDenied) {
+      // The user opted to never again see the permission request dialog for this
+      // app. The only way to change the permission's status now is to let the
+      // user manually enable it in the system settings.
+      openAppSettings();
+    }
   }
 
   void _showReasonsOneByOne() {
@@ -63,14 +87,27 @@ class LoadingScreenState extends State<LoadingScreen> {
   Future<void> _verifyJwtAndNavigate() async {
     String? jwtToken = await _secureStorage.read(key: 'jwtToken');
     if (jwtToken != null) {
-      final http.Response playerDataResponse =
-          await verifyAndRetrieveData(jwtToken);
-      if (playerDataResponse.statusCode == 200) {
-        var playerData = jsonDecode(playerDataResponse.body)['playerData'];
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('playerData', jsonEncode(playerData));
-        _navigateToScreen(const LandingPage());
-      } else {
+      try {
+        final Response playerDataResponse =
+            await verifyAndRetrieveData(jwtToken);
+        if (playerDataResponse.statusCode == 200) {
+          // Directly access playerData and inventory from the response
+          var playerData = playerDataResponse.data['playerData'];
+          var inventoryData = playerDataResponse.data[
+              'inventory']; // Updated to access inventory directly from the response
+
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString(
+              'playerData', jsonEncode(playerData)); // Storing account info
+          await prefs.setString(
+              'inventory', jsonEncode(inventoryData)); // Storing inventory info
+          print('inventory data: $inventoryData');
+          _navigateToScreen(const LandingPage());
+        } else {
+          _navigateToScreen(const WelcomeScreen());
+        }
+      } catch (e) {
+        print("Error during Dio request: $e");
         _navigateToScreen(const WelcomeScreen());
       }
     } else {
@@ -78,21 +115,19 @@ class LoadingScreenState extends State<LoadingScreen> {
     }
   }
 
-  Future<http.Response> verifyAndRetrieveData(String jwtToken) async {
-    return http.post(
-      Uri.parse('${NgrokManager.ngrokUrl}/api/verifyAndRetrieveData'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'token': jwtToken}),
+  Future<Response> verifyAndRetrieveData(String jwtToken) async {
+    return _dio.post(
+      '${NgrokManager.ngrokUrl}/api/verifyAndRetrieveData',
+      options: Options(headers: {'Content-Type': 'application/json'}),
+      data: {'token': jwtToken},
     );
   }
 
   void _navigateToScreen(Widget screen) {
-    _loadingTimer?.cancel(); // Stop the loading tips timer
+    _loadingTimer?.cancel();
     if (mounted) {
-      Future.delayed(const Duration(seconds: 3), () {
-        Navigator.pushReplacement(
-            context, MaterialPageRoute(builder: (context) => screen));
-      });
+      Navigator.pushReplacement(
+          context, MaterialPageRoute(builder: (context) => screen));
     }
   }
 

@@ -17,10 +17,10 @@ dependencies:
   google_mobile_ads: ^4.0.0
   confetti: ^0.7.0
   shared_preferences: ^2.2.2
-  http: ^1.0.0
   
-  
-  
+  path: ^1.8.0 # Check pub.dev for the latest version
+  http: ^0.13.0
+  translator: ^0.1.7
   flutter_dotenv: ^5.1.0
   flutter_secure_storage: ^9.0.0
   google_sign_in: ^6.1.6
@@ -34,10 +34,12 @@ dependencies:
   firebase_analytics: ^10.8.0
   firebase_analytics_web: ^0.5.5+12
   url_launcher: ^6.2.4
+ 
+  firebase_ui_oauth: ^1.5.1
   games_services: ^4.0.1
   audioplayers: ^5.2.1
   intl: ^0.18.1
-  firebase_performance: 0.9.3+8
+  firebase_performance: 0.9.3+17
   video_player: ^2.8.2
   flutter_appauth: ^6.0.4
   font_awesome_flutter: ^10.7.0
@@ -50,8 +52,11 @@ dependencies:
   firebase_storage: ^11.6.8
   firebase_app_check: ^0.2.1+16
   in_app_purchase: ^3.1.13
+  dio: ^5.4.1
+  permission_handler: ^11.3.0
+  flutter_phone_direct_caller: ^2.1.1
 
- 
+  
   
 dev_dependencies:
   flutter_test:
