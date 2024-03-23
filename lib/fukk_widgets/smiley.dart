@@ -153,6 +153,8 @@ class AnimatedSmileyState extends State<AnimatedSmiley>
                       child: Text(
                         widget.smileyText,
                         style: TextStyle(
+                          fontStyle: FontStyle.normal,
+
                           backgroundColor: Colors.transparent,
                           decoration: TextDecoration.none,
                           color: Colors.transparent,

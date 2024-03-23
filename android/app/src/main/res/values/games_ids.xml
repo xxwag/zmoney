@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--Google Play game services IDs. Save this file as res/values/games-ids.xml in your project.-->
+<resources>
+  <!--app_id-->
+  <string name="app_id" translatable="false">446412900874</string>
+  <!--package_name-->
+  <string name="package_name" translatable="false">com.gg.zmoney</string>
+  <!--achievement Your First Guess-->
+  <string name="achievement_your_first_guess" translatable="false">CgkIipShgv8MEAIQCA</string>
+  <!--achievement Guessing starter-->
+  <string name="achievement_guessing_starter" translatable="false">CgkIipShgv8MEAIQCg</string>
+  <!--achievement Rules read-->
+  <string name="achievement_rules_read" translatable="false">CgkIipShgv8MEAIQCw</string>
+  <!--achievement Welcome back!-->
+  <string name="achievement_welcome_back" translatable="false">CgkIipShgv8MEAIQDA</string>
+  <!--achievement Guessing sprint-->
+  <string name="achievement_guessing_sprint" translatable="false">CgkIipShgv8MEAIQDQ</string>
+  <!--achievement Making yourself at home-->
+  <string name="achievement_making_yourself_at_home" translatable="false">CgkIipShgv8MEAIQDg</string>
+  <!--achievement Down low-->
+  <string name="achievement_down_low" translatable="false">CgkIipShgv8MEAIQDw</string>
+  <!--achievement Up high-->
+  <string name="achievement_up_high" translatable="false">CgkIipShgv8MEAIQEA</string>
+  <!--achievement Slept on the keyboard-->
+  <string name="achievement_slept_on_the_keyboard" translatable="false">CgkIipShgv8MEAIQEQ</string>
+  <!--achievement Today's the day-->
+  <string name="achievement_todays_the_day" translatable="false">CgkIipShgv8MEAIQEg</string>
+  <!--achievement Number alphabet-->
+  <string name="achievement_number_alphabet" translatable="false">CgkIipShgv8MEAIQEw</string>
+  <!--achievement Nice-->
+  <string name="achievement_nice" translatable="false">CgkIipShgv8MEAIQFA</string>
+  <!--event Money louder!-->
+  <string name="event_money_louder" translatable="false">CgkIipShgv8MEAIQCQ</string>
+  <!--leaderboard Winner contest-->
+  <string name="leaderboard_winner_contest" translatable="false">CgkIipShgv8MEAIQAg</string>
+</resources>

@@ -23,19 +23,32 @@ import com.google.android.gms.ads.MobileAds
 import com.google.android.ump.ConsentInformation
 import com.google.android.ump.ConsentRequestParameters
 import com.google.android.ump.UserMessagingPlatform
+import android.net.Uri
+
+import android.content.Context
+import android.telecom.TelecomManager
+import android.content.BroadcastReceiver;
+import android.content.IntentFilter;
+import android.telephony.PhoneStateListener;
+import android.telephony.TelephonyManager;
+import android.content.pm.PackageManager
+import android.os.Build
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.plugin.common.MethodChannel
 import android.util.Log
 
 class MainActivity : FlutterActivity() {
-   
+  
     private val CHANNEL = "com.gg.zmoney/game_services"
     private val authChannel = "com.gg.zmoney/auth"
+     private val callControlChannel = "com.gg.zmoney/call_control"
+     private lateinit var methodChannel: MethodChannel
     private lateinit var billingClient: BillingClient
     private lateinit var consentInformation: ConsentInformation
     private val TAG = "MainActivity"
     private lateinit var firebaseAnalytics: FirebaseAnalytics
     private lateinit var gamesSignInClient: GamesSignInClient
+    
     
     private lateinit var auth: FirebaseAuth
 
@@ -57,6 +70,8 @@ class MainActivity : FlutterActivity() {
     FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(true)
     FirebaseCrashlytics.getInstance().log("MainActivity Loaded Successfully")
     initializeUMP()
+
+  setupMethodChannel()
 
       // Initialize BillingClient
         billingClient = BillingClient.newBuilder(this)
@@ -122,6 +137,7 @@ class MainActivity : FlutterActivity() {
             else -> result.notImplemented()
         }
     }
+    
  // New authentication channel setup
         MethodChannel(flutterEngine!!.dartExecutor.binaryMessenger, authChannel).setMethodCallHandler { call, result ->
             when (call.method) {
@@ -141,6 +157,95 @@ class MainActivity : FlutterActivity() {
                 else -> result.notImplemented()
             }
         }
+    }
+
+
+   private fun setupMethodChannel() {
+    methodChannel = MethodChannel(flutterEngine!!.dartExecutor.binaryMessenger, callControlChannel)
+    methodChannel.setMethodCallHandler { call, result ->
+        when (call.method) {
+            "initiateCall" -> {
+                val number = call.argument<String>("number")
+                if (number != null) {
+                    openDialerWithNumber(number) // Your existing logic to initiate call
+                    result.success(true)
+                } else {
+                    result.error("INVALID_ARGUMENT", "A phone number is required", null)
+                }
+            }
+            "killCall" -> {
+                val success = endCall(this)
+                if (success) {
+                    result.success(true)
+                } else {
+                    result.error("UNAVAILABLE", "Could not end the call", null)
+                }
+            }
+            "onCallStateChange" -> {
+                // Handle call state changes, possibly to kill the call
+                val newState = call.argument<String>("state")
+                handleCallStateChange(newState, result)
+            }
+            else -> result.notImplemented()
+        }
+    }
+}
+
+private fun handleCallStateChange(state: String?, result: MethodChannel.Result) {
+    when(state) {
+        "OFFHOOK" -> {
+            // Potentially wait for further state before ending the call or taking action
+            Log.d(TAG, "Call state changed to OFFHOOK")
+        }
+        "IDLE" -> {
+            // Call has ended, you might want to take some action here
+            Log.d(TAG, "Call state changed to IDLE, considering ending call")
+            endCall(this)
+        }
+        else -> {
+            Log.d(TAG, "Unhandled call state: $state")
+        }
+    }
+    result.success(null) // Acknowledge handling of call state change
+}
+
+
+    private fun openDialerWithNumber(number: String) {
+    val intent = Intent(Intent.ACTION_CALL).apply {
+                data = Uri.parse("tel:$number")
+            }
+        startActivity(intent)
+    }
+
+
+    private fun endCall(context: Context): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            val telecomManager = context.getSystemService(Context.TELECOM_SERVICE) as TelecomManager
+            if (context.checkSelfPermission(android.Manifest.permission.ANSWER_PHONE_CALLS) == PackageManager.PERMISSION_GRANTED) {
+                // For API level 28 and above, use TelecomManager
+                return telecomManager.endCall()
+            } else {
+                Log.e("MainActivity", "ANSWER_PHONE_CALLS permission not granted")
+                // Permission not granted handling
+            }
+        } else {
+            // For API levels below 28, attempt to use TelephonyManager via reflection
+            try {
+                val telephonyManager = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
+                val c = Class.forName(telephonyManager.javaClass.name)
+                val m = c.getDeclaredMethod("getITelephony")
+                m.isAccessible = true
+                val telephonyService = m.invoke(telephonyManager)
+                val cTelephonyService = Class.forName(telephonyService.javaClass.name)
+                val mEndCall = cTelephonyService.getDeclaredMethod("endCall")
+                mEndCall.invoke(telephonyService)
+                return true
+            } catch (ex: Exception) {
+                Log.e("MainActivity", "Failed to end call with reflection: ${ex.message}")
+                // Reflection approach failed
+            }
+        }
+        return false
     }
 
   private fun unlockAchievement(achievementId: String) {
@@ -214,8 +319,7 @@ class MainActivity : FlutterActivity() {
             Log.d(TAG, "signIn: ${task.isSuccessful}")
             result.success(wasSuccessful)
 
-            logLoginEvent()
-
+            
             if (wasSuccessful) {
                 // Retrieve player ID from Google Play Games
                 getPlayerId()
@@ -322,11 +426,7 @@ private fun signInWithGooglePlayGames() {
     }
 }
 
-    private fun logLoginEvent() {
-        val bundle = Bundle()
-        firebaseAnalytics.logEvent(FirebaseAnalytics.Event.LOGIN, bundle)
-        Log.e(TAG, "Firebase log callback sent properly")
-    }
+  
 
     private fun checkPlayerAuthentication() {
         gamesSignInClient.isAuthenticated().addOnCompleteListener { task ->

@@ -36,12 +36,10 @@ class LoadingScreenState extends State<LoadingScreen> {
     // Add more reasons here
   ];
   final Dio _dio = Dio()
-    ..options.connectTimeout = 10000 as Duration? // 10 seconds
-    ..options.receiveTimeout = 10000 as Duration?; // 10 seconds
-
+    ..options.connectTimeout = Duration(seconds: 10) // 10 seconds
+    ..options.receiveTimeout = Duration(seconds: 10); // 10 seconds
   @override
   void initState() {
-    requestPermissions();
     super.initState();
     _verifyJwtAndNavigate();
     // Start the timer to show tips after 10 seconds
@@ -51,24 +49,6 @@ class LoadingScreenState extends State<LoadingScreen> {
       });
       _showReasonsOneByOne();
     });
-  }
-
-  Future<void> requestPermissions() async {
-    // Request a single permission
-    var status = await Permission.storage.request();
-
-    if (status.isGranted) {
-      print("Storage permission granted");
-      // Permission is granted. Continue with your operation
-    } else if (status.isDenied) {
-      print("Storage permission denied");
-      // User denied the permission. Handle as needed.
-    } else if (status.isPermanentlyDenied) {
-      // The user opted to never again see the permission request dialog for this
-      // app. The only way to change the permission's status now is to let the
-      // user manually enable it in the system settings.
-      openAppSettings();
-    }
   }
 
   void _showReasonsOneByOne() {
@@ -113,6 +93,62 @@ class LoadingScreenState extends State<LoadingScreen> {
     } else {
       _navigateToScreen(const WelcomeScreen());
     }
+  }
+
+  Future<void> _checkAndRequestStoragePermission() async {
+    final storageStatus = await Permission.storage.status;
+    if (!storageStatus.isGranted) {
+      await _showPermissionRequestDialog();
+    }
+  }
+
+  Future<void> _showPermissionRequestDialog() async {
+    await showDialog(
+      context: context,
+      barrierDismissible: false, // User must tap button!
+      builder: (BuildContext context) => AlertDialog(
+        title: Text("Storage Permission Needed"),
+        content: Text(
+            "This app needs storage access to function properly. Without it, some features may not work."),
+        actions: <Widget>[
+          TextButton(
+            child: Text("Understand"),
+            onPressed: () {
+              Navigator.of(context).pop();
+              Permission.storage.request().then((status) {
+                // Check permission status
+                if (!status.isGranted) {
+                  // User denied the permission, handle accordingly
+                  _handlePermissionDenied();
+                }
+              });
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _handlePermissionDenied() {
+    // Inform the user that the permission was denied and the app's functionality will be limited
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) => AlertDialog(
+        title: Text("Permission Denied"),
+        content: Text(
+            "Without storage access, some features may not work properly. Please consider granting it in your app settings if you change your mind."),
+        actions: <Widget>[
+          TextButton(
+            child: Text("Ok"),
+            onPressed: () {
+              Navigator.of(context).pop();
+              // Here, you might want to navigate the user away from features that require the denied permission
+            },
+          ),
+        ],
+      ),
+    );
   }
 
   Future<Response> verifyAndRetrieveData(String jwtToken) async {

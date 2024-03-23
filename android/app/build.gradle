@@ -60,10 +60,10 @@ android {
         applicationId "com.gg.zmoney"
         // You can update the following values to match your application needs.
         // For more information, see: https://docs.flutter.dev/deployment/android#reviewing-the-gradle-build-configuration.
-        minSdkVersion 21
+        minSdkVersion flutter.minSdkVersion
         compileSdkVersion 34
         targetSdkVersion 33
-        versionCode 32 // Increment this number manually
+        versionCode 36 // Increment this number manually
         versionName "1.0.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         multiDexEnabled true
@@ -71,7 +71,7 @@ android {
         manifestPlaceholders = [
         'applicationName': "com.gg.zmoney.MainActivity", // Replace with your application class name
         'appAuthRedirectScheme': 'com.gg.zmoney'
-    ]
+     ]
     }
 
       signingConfigs {

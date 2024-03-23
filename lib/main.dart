@@ -7,6 +7,7 @@ import 'package:firebase_app_check/firebase_app_check.dart';
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_core/firebase_core.dart';
 
@@ -23,6 +24,7 @@ final translator =
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  await _checkAndRequestStoragePermission();
   await dotenv.load(fileName: ".env");
 
   const secureStorage = FlutterSecureStorage();
@@ -49,6 +51,19 @@ void main() async {
     userLanguage: userLanguage, // Use the awaited userLanguage
   );
   GamesServices.signIn();
+}
+
+Future<void> _checkAndRequestStoragePermission() async {
+  final storageStatus = await Permission.storage.status;
+  if (storageStatus.isGranted) {
+  } else {
+    Permission.storage.request().then((status) {
+      if (status.isGranted) {
+      } else {
+        return;
+      }
+    });
+  }
 }
 
 Future<String> getPreferredLanguage() async {
