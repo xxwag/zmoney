@@ -17,8 +17,10 @@ import 'package:flutter/services.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:zmoney/fukk_widgets/ad_service.dart';
 import 'package:zmoney/fukk_widgets/app_assets.dart';
 import 'package:zmoney/fukk_widgets/language_selector.dart';
+import 'package:zmoney/fukk_widgets/play_google.dart';
 import 'package:zmoney/fukk_widgets/skin.dart';
 import 'package:zmoney/fukk_widgets/statistics_playerdata.dart';
 import 'package:zmoney/fukk_widgets/translator.dart';
@@ -54,7 +56,7 @@ class LandingPageState extends State<LandingPage>
   late bool _timerStarted = false;
   late BannerAd _bannerAd;
   RewardedAd? _rewardedAd; // Declare _rewardedAd as nullable
-  bool _isRewardedAdReady = false;
+  final bool _isRewardedAdReady = false;
 // Add a new boolean to track if the timer has finished.
   bool _timerFinished = false;
   bool _isBannerAdReady = false;
@@ -105,6 +107,7 @@ class LandingPageState extends State<LandingPage>
     'Rules',
     'Game Menu',
     'Zmoney Store',
+    'Watch ad to guess again right now!',
   ]; // Make it an empty, growable list
 
   late Future<List<Skin>> futureSkins; // To store the future list of skins
@@ -128,6 +131,7 @@ class LandingPageState extends State<LandingPage>
   List<Skin> skins = [];
 
   late Directory directory; // To hold the application directory path
+  final AdService _adService = AdService();
 
   RewardedInterstitialAd? _rewardedInterstitialAd;
   bool _preventAd =
@@ -135,7 +139,7 @@ class LandingPageState extends State<LandingPage>
   bool _arrowsVisible = true;
   late AnimationController _glowController; // Renamed for clarity
   late Animation<double> _glowAnimation; // Renamed for clarity
-  static const platform = MethodChannel('com.gg.zmoney/game_services');
+
   bool _isLoading = true;
   // In your LandingPageState class
   double _initializationProgress =
@@ -148,10 +152,29 @@ class LandingPageState extends State<LandingPage>
   @override
   void initState() {
     super.initState();
+    AdService().initBannerAd(
+      onBannerAdLoaded: () {
+        setState(() {
+          _isBannerAdReady = true;
+        });
+      },
+      onBannerAdFailedToLoad: () {
+        setState(() {
+          _isBannerAdReady = false;
+        });
+      },
+    );
+    AdService().loadRewardedAd(
+      onRewardedAdLoaded: () {
+        // Here, you can set state or perform other actions upon successful loading.
+      },
+      onRewardedAdFailedToLoad: () {
+        // Handle the failure of ad loading.
+      },
+    );
+    AdService().loadRewardedInterstitialAd();
     _initializeAsyncOperations().then((_) {
-      _initBannerAd();
-      _loadRewardedAd();
-      _loadRewardedInterstitialAd();
+      _checkLastGuessTimeAndStartTimerIfNeeded();
       if (mounted) {
         setState(() {
           _isLoading = false; // Set loading to false when done
@@ -163,7 +186,7 @@ class LandingPageState extends State<LandingPage>
 
   Future<void> _initializeAsyncOperations() async {
     // Assume there are 5 steps in total
-    double progressIncrement = 1.0 / 5;
+    double progressIncrement = 1.0 / 6;
 
     // Update the progress and message for each step
     await _initSkinsAndDirectory();
@@ -177,6 +200,9 @@ class LandingPageState extends State<LandingPage>
 
     await _fetchPrizePoolFromServer();
     _updateProgress(progressIncrement, "Fetched prize pool from server");
+
+    await _loadCurrentSkinIndex();
+    _updateProgress(progressIncrement, "Loading current skin");
 
     _confettiController = ConfettiController();
     _glowController =
@@ -199,48 +225,40 @@ class LandingPageState extends State<LandingPage>
     }
   }
 
-  void _loadRewardedInterstitialAd() {
-    if (_rewardedInterstitialAd == null) {
-      return;
-    }
+  Future<void> _checkLastGuessTimeAndStartTimerIfNeeded() async {
+    final prefs = await SharedPreferences.getInstance();
+    final lastGuessTimeMillis = prefs.getInt('lastGuessTime');
 
-    RewardedInterstitialAd.load(
-      adUnitId: 'ca-app-pub-4652990815059289/7189734426',
-      request: const AdRequest(),
-      rewardedInterstitialAdLoadCallback: RewardedInterstitialAdLoadCallback(
-        onAdLoaded: (RewardedInterstitialAd ad) {
-          _rewardedInterstitialAd = ad;
-        },
-        onAdFailedToLoad: (LoadAdError error) {
-          _rewardedInterstitialAd = null;
-        },
-      ),
-    );
+    if (lastGuessTimeMillis != null) {
+      final lastGuessTime =
+          DateTime.fromMillisecondsSinceEpoch(lastGuessTimeMillis);
+      final currentTime = DateTime.now();
+      final differenceInSeconds =
+          currentTime.difference(lastGuessTime).inSeconds;
+
+      const tenMinutesInSeconds = 10 * 60;
+      if (differenceInSeconds < tenMinutesInSeconds) {
+        setState(() {
+          _remainingTime = tenMinutesInSeconds - differenceInSeconds;
+          _timerStarted = true;
+          isButtonLocked = true;
+        });
+        startTimer(); // Start the timer based on the calculated remaining time
+      }
+    }
   }
 
-  Future<void> _showRewardedInterstitialAd() async {
-    if (_rewardedInterstitialAd == null) {
-      return;
+  Future<void> _loadCurrentSkinIndex() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedSkinIndex = prefs.getInt('currentSkinIndex');
+    if (savedSkinIndex != null &&
+        savedSkinIndex >= 0 &&
+        savedSkinIndex < skins.length) {
+      setState(() {
+        currentSkinIndex = savedSkinIndex;
+      });
     }
-    _rewardedInterstitialAd!.fullScreenContentCallback =
-        FullScreenContentCallback(
-      onAdDismissedFullScreenContent: (RewardedInterstitialAd ad) {
-        ad.dispose();
-        _loadRewardedInterstitialAd();
-        _preventAd = true; // Prevent ad from showing on the next guess
-      },
-      onAdFailedToShowFullScreenContent:
-          (RewardedInterstitialAd ad, AdError error) {
-        ad.dispose();
-        _loadRewardedInterstitialAd();
-      },
-    );
-    _rewardedInterstitialAd!.show(
-        onUserEarnedReward: (AdWithoutView ad, RewardItem reward) {
-      // Handle reward
-      _timerFinished = true;
-    });
-    _rewardedInterstitialAd = null;
+    // Optionally, handle the case where skins haven't been initialized yet
   }
 
   @override
@@ -248,159 +266,58 @@ class LandingPageState extends State<LandingPage>
     super.didChangeAppLifecycleState(state);
     if (state == AppLifecycleState.resumed) {
       // Only initialize or load ads when the app resumes to avoid unnecessary memory usage
-      _isBannerAdReady ? null : _initBannerAd(); // Conditional loading
-      _isRewardedAdReady ? null : _loadRewardedAd(); // Conditional loading
+      _isBannerAdReady
+          ? null
+          : AdService().initBannerAd(
+              onBannerAdLoaded: () {
+                setState(() {
+                  _isBannerAdReady = true;
+                });
+              },
+              onBannerAdFailedToLoad: () {
+                setState(() {
+                  _isBannerAdReady = false;
+                });
+              },
+            ); // Conditional loading
+      _isRewardedAdReady
+          ? null
+          : AdService().loadRewardedAd(
+              onRewardedAdLoaded: () {
+                // Here, you can set state or perform other actions upon successful loading.
+              },
+              onRewardedAdFailedToLoad: () {
+                // Handle the failure of ad loading.
+              },
+            ); // Conditional loading
       _fetchPrizePoolFromServer();
     }
-  }
-
-  void _setupRewardedAdListeners() {
-    _rewardedAd?.fullScreenContentCallback = FullScreenContentCallback(
-      onAdShowedFullScreenContent: (RewardedAd ad) => print('Ad showed.'),
-      onAdDismissedFullScreenContent: (RewardedAd ad) {
-        print('Ad dismissed.');
-        ad.dispose();
-        setState(() {
-          _rewardedAd = null;
-          _isRewardedAdReady = false;
-        });
-        _loadRewardedAd(); // Consider preloading the next ad.
-      },
-      onAdFailedToShowFullScreenContent: (RewardedAd ad, AdError error) {
-        print('Ad failed to show.');
-        ad.dispose();
-        setState(() {
-          _rewardedAd = null;
-          _isRewardedAdReady = false;
-        });
-      },
-    );
   }
 
   // Function to handle the press of the ad button
   void _onPressAdButton() {
     // Close the keyboard
     FocusScope.of(context).unfocus();
+    Future.delayed(const Duration(milliseconds: 300), () {
+      AdService().showRewardedAd(
+        onRewardedAdSuccess: unlockButtonAndStopTimer,
+        onRewardedAdFailedToShow: () {
+          // Handle the ad failed to show scenario
+        },
+        onRewardedAdDismissed: () {
+          // Handle the ad dismissed scenario
+        },
+      );
+    });
+  }
 
-    if (_isRewardedAdReady && _rewardedAd != null) {
-      Future.delayed(const Duration(milliseconds: 300), () {
-        _showRewardedAd();
+  void unlockButtonAndStopTimer() {
+    if (mounted) {
+      setState(() {
+        isButtonLocked = false; // Unlock the "Go" button
+        _timer?.cancel(); // Stop the timer
+        _timerStarted = false;
       });
-    } else {
-      _loadRewardedAd();
-      // Implement logic to wait for the ad to load or check periodically if it's ready
-      // Note: The detailed implementation will depend on your app's structure
-    }
-  }
-
-  void _loadRewardedAd() {
-    // First, dispose of any existing ad
-    _rewardedAd?.dispose();
-    _rewardedAd = null;
-    _isRewardedAdReady = false;
-
-    RewardedAd.load(
-      adUnitId: 'ca-app-pub-4652990815059289/8386402654',
-      request: AdRequest(),
-      rewardedAdLoadCallback: RewardedAdLoadCallback(
-        onAdLoaded: (RewardedAd ad) {
-          setState(() {
-            _rewardedAd = ad;
-            _isRewardedAdReady = true;
-          });
-          _setupRewardedAdListeners();
-        },
-        onAdFailedToLoad: (LoadAdError error) {
-          setState(() {
-            _rewardedAd = null;
-            _isRewardedAdReady = false;
-          });
-          print("RewardedAd failed to load: $error");
-          // Optionally implement retry logic here
-        },
-      ),
-    );
-  }
-
-  void _showRewardedAd() {
-    if (_isRewardedAdReady) {
-      _rewardedAd?.show(
-        onUserEarnedReward: (AdWithoutView ad, RewardItem reward) {
-          // User has earned the reward. Implement any logic needed when a reward is earned.
-          // Example: Call a method to skip timer or unlock content
-          _timerFinished = true;
-          _timerStarted = false;
-          isButtonLocked = false; // Unlock the Go button here as well
-          ad.dispose();
-          // Preemptively load a new rewarded ad for future use
-          _loadRewardedAd();
-        },
-      );
-
-      _rewardedAd?.fullScreenContentCallback = FullScreenContentCallback(
-        onAdDismissedFullScreenContent: (AdWithoutView ad) {
-          // Dispose of the ad when it's dismissed to free up resources
-          ad.dispose();
-          // Preemptively load a new rewarded ad for future use
-          _loadRewardedAd();
-        },
-        onAdFailedToShowFullScreenContent: (AdWithoutView ad, AdError error) {
-          // Log or handle the error if the ad fails to show
-          if (kDebugMode) {
-            print('Failed to show rewarded ad: $error');
-          }
-          // Dispose of the ad to free up resources
-          ad.dispose();
-          // Attempt to load a new rewarded ad
-          _loadRewardedAd();
-        },
-        // Consider handling other callback events if needed
-      );
-    } else {
-      // This block executes if the rewarded ad is not ready to be shown
-      // Log this status or inform the user as needed
-      if (kDebugMode) {
-        print('Rewarded ad is not ready yet.');
-      }
-      // Optionally, trigger a load or retry mechanism for the rewarded ad here
-    }
-  }
-
-  void _initBannerAd() {
-    // Initialize the BannerAd instance and assign it to the _bannerAd variable.
-    _bannerAd = BannerAd(
-      adUnitId:
-          'ca-app-pub-4652990815059289/6968524603', // Replace with your ad unit ID
-      size: AdSize.banner,
-      request: const AdRequest(),
-      listener: BannerAdListener(
-        onAdLoaded: (Ad ad) {
-          // When the ad is loaded, set _isBannerAdReady to true and update the UI as needed
-          setState(() {
-            _isBannerAdReady = true;
-          });
-        },
-        onAdFailedToLoad: (Ad ad, LoadAdError error) {
-          // Handle the error when loading an ad fails
-          _retryLoadRewardedAd;
-          if (kDebugMode) {
-            print('BannerAd failed to load: $error');
-          }
-          ad.dispose(); // Dispose the ad to free up resources
-          // Optionally, implement a retry mechanism or update UI to reflect the failure
-        },
-        // You may handle other ad lifecycle events, such as onAdOpened, onAdClosed, etc.
-      ),
-    );
-
-    // Load the ad
-    _bannerAd.load();
-  }
-
-  void _retryLoadRewardedAd({int attempt = 1}) {
-    const maxAttempts = 3;
-    if (attempt <= maxAttempts) {
-      Future.delayed(Duration(seconds: attempt * 2), () => _loadRewardedAd());
     }
   }
 
@@ -581,6 +498,7 @@ class LandingPageState extends State<LandingPage>
       'Rules',
       'Game Menu',
       'Zmoney Store',
+      'Watch ad to guess again right now!',
       // Add more keys as needed
     ];
 
@@ -727,7 +645,8 @@ class LandingPageState extends State<LandingPage>
     }
   }
 
-  void _toggleSkin(bool isIncrementing) {
+  void _toggleSkin(bool isIncrementing) async {
+    PlayGoogle.unlockAchievement("CgkIipShgv8MEAIQDg");
     setState(() {
       _arrowsVisible = false;
       if (isIncrementing) {
@@ -738,19 +657,24 @@ class LandingPageState extends State<LandingPage>
         currentSkinIndex = (currentSkinIndex - 1 + skins.length) % skins.length;
       }
     });
+
+    // Save the currentSkinIndex to SharedPreferences
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('currentSkinIndex', currentSkinIndex);
   }
 
   @override
   Widget build(BuildContext context) {
     var screenSize = MediaQuery.of(context).size;
     var isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
-
-// Use the currentSkinIndex to get the current Skin object
+    final bool isBannerAdReady = _adService.isBannerAdReady;
 
     // Check if the skins list is empty. If so, display a placeholder or loading indicator.
     if (skins.isEmpty) {
       return CircularProgressIndicator(); // Or a Placeholder widget
     }
+
+// Use the currentSkinIndex to get the current Skin object
 
     // Safely access the skins list knowing it's not empty
     Skin currentSkin = skins[currentSkinIndex];
@@ -898,7 +822,7 @@ class LandingPageState extends State<LandingPage>
                             width: screenSize.width,
                             height:
                                 bannerAdHeight, // Adjust based on actual ad size
-                            child: AdWidget(ad: _bannerAd), // Your banner ad
+                            child: AdWidget(ad: _adService.bannerAd!),
                           ),
                         ),
 
@@ -926,8 +850,6 @@ class LandingPageState extends State<LandingPage>
                         child: LanguageSelectorWidget(
                           onLanguageChanged: (String newLanguageCode) {
                             initializeTranslations();
-
-                            setState(() {});
                           },
                           dropdownColor: currentSkin.buttonColor,
                           textColor:
@@ -1053,7 +975,7 @@ class LandingPageState extends State<LandingPage>
                                       _buildGoButton(screenSize,
                                           translatedTexts[2], isButtonLocked),
                                       // Modified Skip Button to show Rewarded Ad
-                                      if (_timerStarted && _isRewardedAdReady)
+                                      if (_timerStarted)
                                         TextButton(
                                           onPressed: _onPressAdButton,
                                           child: AnimatedSwitcher(
@@ -1071,7 +993,7 @@ class LandingPageState extends State<LandingPage>
                                                     width:
                                                         5), // A little spacing between the icon and text
                                                 Text(
-                                                  "Watch ad to guess again right now!",
+                                                  translatedTexts[21],
                                                   key:
                                                       UniqueKey(), // Important for unique identification
                                                   style: TextStyle(
@@ -1194,7 +1116,7 @@ class LandingPageState extends State<LandingPage>
   }
 
   void startTimer() {
-    const oneSec = Duration(seconds: 1);
+    const oneSec = Duration(seconds: 1); // Adjusted from 5 to 1 second
     _timer?.cancel(); // Cancel any existing timer first
 
     final endTime = DateTime.now().add(Duration(seconds: _remainingTime));
@@ -1207,17 +1129,11 @@ class LandingPageState extends State<LandingPage>
         timer.cancel();
         onTimerEnd();
       } else {
-        // Throttle UI updates to every few seconds to reduce rebuilds
-        if (_remainingTime - secondsLeft >= 5 || secondsLeft == 0) {
-          setState(() {
-            _remainingTime = secondsLeft;
-          });
-        }
+        setState(() {
+          _remainingTime = secondsLeft;
+        });
       }
     });
-
-    // Ensure initial state is set outside the periodic callback
-    setState(() {});
   }
 
   void onTimerEnd() {
@@ -1316,6 +1232,146 @@ class LandingPageState extends State<LandingPage>
     );
   }
 
+  Future<void> submitGuess() async {
+    String guessStr = _numberController.text;
+
+    if (guessStr.isEmpty) {
+      _showEmptyTextFieldNotification();
+      return;
+    }
+
+    if (guessStr.length < 4) {
+      // Call the unlockAchievement method
+      PlayGoogle.unlockAchievement("CgkIipShgv8MEAIQDw");
+    } else {
+      PlayGoogle.unlockAchievement("CgkIipShgv8MEAIQEA");
+    }
+
+    setState(() {
+      _isWaitingForResponse = true;
+    });
+
+    if (NgrokManager.ngrokUrl.isEmpty) {
+      setState(() {
+        _isWaitingForResponse = false;
+      });
+      _showServerNotRunningDialog();
+      return;
+    }
+
+    int? guessInt = int.tryParse(guessStr);
+    if (guessInt == null) {
+      setState(() {
+        _isWaitingForResponse = false;
+      });
+      return;
+    }
+
+    // Retrieve userId and prizePoolAmount
+    final prefs = await SharedPreferences.getInstance();
+    final String playerDataJson = prefs.getString('playerData') ?? '{}';
+    var playerData = jsonDecode(playerDataJson);
+    // Store the last guess time in SharedPreferences
+    int currentTimeMillis = DateTime.now().millisecondsSinceEpoch;
+    await prefs.setInt('lastGuessTime', currentTimeMillis);
+
+    // Retrieve or define userId and prizePoolAmount here
+    final int userId =
+        playerData['user_id']; // Example retrieval from player data
+
+    try {
+      var response = await http.post(
+        Uri.parse('${NgrokManager.ngrokUrl}/api/guess'),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          'guess': guessInt,
+          'userId': userId, // Now using the retrieved or defined userId
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        var result = json.decode(response.body);
+        bool isCorrect = result['correct'];
+
+        double prizePoolAmount =
+            _prizePoolAmount.toDouble(); // Assuming this is already a double
+
+        // Update guess count and potentially other fields based on guess correctness
+        // Update guess count and potentially other fields based on guess correctness
+        int totalGuesses = (playerData['total_guesses'] ?? 0) + 1;
+        playerData['total_guesses'] = totalGuesses;
+
+// If total guesses are exactly 10, unlock an achievement
+        if (totalGuesses > 10) {
+          PlayGoogle.unlockAchievement("CgkIipShgv8MEAIQCg");
+        }
+
+        if (isCorrect) {
+          PlayGoogle.unlockAchievement('CgkIipShgv8MEAIQCA');
+          _preventAd = true;
+          playerData['wins'] = ((playerData['wins'] ?? 0) as int) + 1;
+          playerData['total_win_amount'] =
+              (playerData['total_win_amount'] ?? 0.0) + prizePoolAmount;
+          if (prizePoolAmount >
+              (playerData['highest_win_amount']?.toDouble() ?? 0.0)) {
+            playerData['highest_win_amount'] = prizePoolAmount;
+          }
+        }
+        // Update last_guesses
+        List<String> guesses = (playerData['last_guesses'] != null)
+            ? List<String>.from(playerData['last_guesses'].split(','))
+            : [];
+        guesses.add(guessStr); // Add the new guess to the list
+        playerData['last_guesses'] =
+            guesses.join(','); // Convert list back to string and save
+
+        await prefs.setString('playerData', jsonEncode(playerData));
+        // Refresh UI and PlayerDataWidget
+
+        double actualPrizePool =
+            double.parse(result['actualPrizePool'].toString());
+        // Now submit this actualPrizePool value as the score
+
+        await Leaderboards.submitScore(
+            score: Score(
+                androidLeaderboardID: 'CgkIipShgv8MEAIQAg',
+                value: actualPrizePool.toInt()));
+
+        setState(() {
+          _isWaitingForResponse = false;
+          isButtonLocked = true;
+          _showResultDialog(isCorrect);
+          _remainingTime = 600;
+          startTimer();
+          playerDataWidgetKey =
+              UniqueKey(); // This forces the PlayerDataWidget to rebuild and reload data
+        });
+        //_showResultDialog(isCorrect);
+      } else {
+        setState(() {
+          _isWaitingForResponse = false;
+        });
+        // Consider showing an error dialog or notification here
+      }
+    } catch (e) {
+      setState(() {
+        _isWaitingForResponse = false;
+      });
+
+      // Implement the 33% chance logic and check the _preventAd flag
+      if (!_preventAd && math.Random().nextInt(3) == 0) {
+        // Approximately 33% chance
+        await AdService().showRewardedInterstitialAd();
+      } else {
+        // If an ad was shown last time, reset the flag to allow showing ads again
+        if (_preventAd) {
+          _preventAd = false;
+        }
+      }
+      _showServerNotRunningDialog();
+    }
+  }
+
   Widget _buildGoButton(Size screenSize, String buttonText, bool isLocked) {
     // Define the default and loading button colors
     Skin currentSkin = skins[currentSkinIndex];
@@ -1403,147 +1459,6 @@ class LandingPageState extends State<LandingPage>
               ),
       ),
     );
-  }
-
-  Future<void> submitGuess() async {
-    // Assuming NgrokManager.fetchNgrokData() and _numberController are defined elsewhere correctly
-    //await NgrokManager.fetchNgrokData();
-    String guessStr = _numberController.text;
-
-    if (guessStr.isEmpty) {
-      _showEmptyTextFieldNotification();
-      return;
-    }
-
-    setState(() {
-      _isWaitingForResponse = true;
-    });
-
-    if (NgrokManager.ngrokUrl.isEmpty) {
-      setState(() {
-        _isWaitingForResponse = false;
-      });
-      _showServerNotRunningDialog();
-      return;
-    }
-
-    int? guessInt = int.tryParse(guessStr);
-    if (guessInt == null) {
-      setState(() {
-        _isWaitingForResponse = false;
-      });
-      return;
-    }
-
-    // Retrieve userId and prizePoolAmount
-    final prefs = await SharedPreferences.getInstance();
-    final String playerDataJson = prefs.getString('playerData') ?? '{}';
-    var playerData = jsonDecode(playerDataJson);
-
-    // Retrieve or define userId and prizePoolAmount here
-    final int userId =
-        playerData['user_id']; // Example retrieval from player data
-
-    try {
-      var response = await http.post(
-        Uri.parse('${NgrokManager.ngrokUrl}/api/guess'),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          'guess': guessInt,
-          'userId': userId, // Now using the retrieved or defined userId
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        var result = json.decode(response.body);
-        bool isCorrect = result['correct'];
-
-        final prefs = await SharedPreferences.getInstance();
-        final String playerDataJson = prefs.getString('playerData') ?? '{}';
-        var playerData = jsonDecode(playerDataJson);
-        double prizePoolAmount =
-            _prizePoolAmount.toDouble(); // Assuming this is already a double
-
-        // Update guess count and potentially other fields based on guess correctness
-        playerData['total_guesses'] = (playerData['total_guesses'] ?? 0) + 1;
-        if (isCorrect) {
-          unlockAchievement('CgkIipShgv8MEAIQCA');
-          _preventAd = true;
-          playerData['wins'] = ((playerData['wins'] ?? 0) as int) + 1;
-          playerData['total_win_amount'] =
-              (playerData['total_win_amount'] ?? 0.0) + prizePoolAmount;
-          if (prizePoolAmount >
-              (playerData['highest_win_amount']?.toDouble() ?? 0.0)) {
-            playerData['highest_win_amount'] = prizePoolAmount;
-          }
-        }
-        // Update last_guesses
-        List<String> guesses = (playerData['last_guesses'] != null)
-            ? List<String>.from(playerData['last_guesses'].split(','))
-            : [];
-        guesses.add(guessStr); // Add the new guess to the list
-        playerData['last_guesses'] =
-            guesses.join(','); // Convert list back to string and save
-
-        await prefs.setString('playerData', jsonEncode(playerData));
-        // Refresh UI and PlayerDataWidget
-
-        double actualPrizePool =
-            double.parse(result['actualPrizePool'].toString());
-        // Now submit this actualPrizePool value as the score
-
-        await Leaderboards.submitScore(
-            score: Score(
-                androidLeaderboardID: 'CgkIipShgv8MEAIQAg',
-                value: actualPrizePool.toInt()));
-
-        setState(() {
-          _isWaitingForResponse = false;
-          isButtonLocked = true;
-          _showResultDialog(isCorrect);
-          _remainingTime = 600;
-          startTimer();
-          playerDataWidgetKey =
-              UniqueKey(); // This forces the PlayerDataWidget to rebuild and reload data
-        });
-        //_showResultDialog(isCorrect);
-      } else {
-        setState(() {
-          _isWaitingForResponse = false;
-        });
-        // Consider showing an error dialog or notification here
-      }
-    } catch (e) {
-      setState(() {
-        _isWaitingForResponse = false;
-      });
-
-      // Implement the 33% chance logic and check the _preventAd flag
-      if (!_preventAd && math.Random().nextInt(3) == 0) {
-        // Approximately 33% chance
-        await _showRewardedInterstitialAd();
-      } else {
-        // If an ad was shown last time, reset the flag to allow showing ads again
-        if (_preventAd) {
-          _preventAd = false;
-        }
-      }
-      _showServerNotRunningDialog();
-    }
-  }
-
-  Future<void> unlockAchievement(String achievementId) async {
-    try {
-      final bool result = await platform
-          .invokeMethod('unlockAchievement', {'achievementId': achievementId});
-      if (kDebugMode) {
-        print(result);
-      }
-    } on PlatformException {
-      if (kDebugMode) {
-        print('achievement error');
-      }
-    }
   }
 
   void _showServerNotRunningDialog() {

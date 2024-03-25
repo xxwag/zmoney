@@ -21,14 +21,10 @@
   <string name="achievement_down_low" translatable="false">CgkIipShgv8MEAIQDw</string>
   <!--achievement Up high-->
   <string name="achievement_up_high" translatable="false">CgkIipShgv8MEAIQEA</string>
-  <!--achievement Slept on the keyboard-->
+  <!--achievement Slept on the keyboard!-->
   <string name="achievement_slept_on_the_keyboard" translatable="false">CgkIipShgv8MEAIQEQ</string>
-  <!--achievement Today's the day-->
-  <string name="achievement_todays_the_day" translatable="false">CgkIipShgv8MEAIQEg</string>
-  <!--achievement Number alphabet-->
-  <string name="achievement_number_alphabet" translatable="false">CgkIipShgv8MEAIQEw</string>
-  <!--achievement Nice-->
-  <string name="achievement_nice" translatable="false">CgkIipShgv8MEAIQFA</string>
+  <!--achievement Wise Man Medal !-->
+  <string name="achievement_wise_man_medal" translatable="false">CgkIipShgv8MEAIQFQ</string>
   <!--event Money louder!-->
   <string name="event_money_louder" translatable="false">CgkIipShgv8MEAIQCQ</string>
   <!--leaderboard Winner contest-->

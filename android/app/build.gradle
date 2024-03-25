@@ -63,7 +63,7 @@ android {
         minSdkVersion flutter.minSdkVersion
         compileSdkVersion 34
         targetSdkVersion 33
-        versionCode 36 // Increment this number manually
+        versionCode 37 // Increment this number manually
         versionName "1.0.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         multiDexEnabled true

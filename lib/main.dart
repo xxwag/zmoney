@@ -7,6 +7,7 @@ import 'package:firebase_app_check/firebase_app_check.dart';
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -33,7 +34,7 @@ void main() async {
   // Fetch Ngrok data
   await NgrokManager.fetchNgrokData();
   runApp(const MyApp(homeScreen: LoadingScreen()));
-
+  MobileAds.instance.initialize();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   FirebaseAppCheck.instance

@@ -12,6 +12,7 @@ import 'package:video_player/video_player.dart';
 import 'package:zmoney/fukk_widgets/call_page.dart';
 import 'package:zmoney/fukk_widgets/ngrok.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:zmoney/fukk_widgets/play_google.dart';
 import 'package:zmoney/fukk_widgets/store_page.dart';
 import 'package:zmoney/welcome_screen.dart';
 
@@ -41,6 +42,7 @@ class SideMenuDrawerState extends State<SideMenuDrawer> {
   }
 
   void showRulesDialog(BuildContext context) {
+    PlayGoogle.unlockAchievement("CgkIipShgv8MEAIQCw");
     showDialog(
       context: context,
       builder: (BuildContext context) {

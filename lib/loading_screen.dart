@@ -7,6 +7,7 @@ import 'package:permission_handler/permission_handler.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:zmoney/fukk_widgets/ngrok.dart';
+import 'package:zmoney/fukk_widgets/play_google.dart';
 import 'package:zmoney/welcome_screen.dart';
 import 'landing_page.dart';
 
@@ -83,6 +84,7 @@ class LoadingScreenState extends State<LoadingScreen> {
               'inventory', jsonEncode(inventoryData)); // Storing inventory info
           print('inventory data: $inventoryData');
           _navigateToScreen(const LandingPage());
+          PlayGoogle.unlockAchievement("CgkIipShgv8MEAIQDA");
         } else {
           _navigateToScreen(const WelcomeScreen());
         }
