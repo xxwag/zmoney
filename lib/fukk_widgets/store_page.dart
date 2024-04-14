@@ -14,10 +14,10 @@ class InAppPurchaseScreen extends StatefulWidget {
   const InAppPurchaseScreen({super.key});
 
   @override
-  _InAppPurchaseScreenState createState() => _InAppPurchaseScreenState();
+  InAppPurchaseScreenState createState() => InAppPurchaseScreenState();
 }
 
-class _InAppPurchaseScreenState extends State<InAppPurchaseScreen> {
+class InAppPurchaseScreenState extends State<InAppPurchaseScreen> {
   final InAppPurchase _iap = InAppPurchase.instance;
   bool _available = true;
   List<ProductDetails> _products = [];

@@ -66,7 +66,6 @@ class MainActivity : FlutterActivity() {
     auth = FirebaseAuth.getInstance()
 
     
-    MobileAds.initialize(this) {}
     FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(true)
     FirebaseCrashlytics.getInstance().log("MainActivity Loaded Successfully")
     initializeUMP()

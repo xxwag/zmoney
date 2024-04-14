@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 
 class SmileyFaceThrower {
@@ -36,24 +37,23 @@ class SmileyFaceThrower {
     final random = Random();
     final smileyText = smileyTexts[random.nextInt(smileyTexts.length)];
     final selectedFont = fontFamilies[random.nextInt(fontFamilies.length)];
-    final descriptionText = descriptionTexts[random
-        .nextInt(descriptionTexts.length)]; // Select a random description text
+    final descriptionText =
+        descriptionTexts[random.nextInt(descriptionTexts.length)];
 
-    // Define a callable class instance for deferred removal
     final removeOverlay = _RemoveOverlay();
 
     final OverlayEntry overlayEntry = OverlayEntry(
       builder: (context) {
+        final size = MediaQuery.of(context).size;
         final startPosition = Offset(
-          Random().nextBool()
-              ? Random().nextDouble() * MediaQuery.of(context).size.width
-              : MediaQuery.of(context).size.width *
-                  (Random().nextBool() ? 1.2 : -0.2),
-          Random().nextDouble() * MediaQuery.of(context).size.height,
+          random.nextBool()
+              ? -100
+              : size.width + 100, // Start outside screen horizontally
+          random.nextDouble() * size.height, // Random vertical start
         );
         final endPosition = Offset(
-          Random().nextDouble() * MediaQuery.of(context).size.width * 0.8,
-          Random().nextDouble() * MediaQuery.of(context).size.height * 0.8,
+          size.width / 2, // Center of the screen horizontally
+          size.height / 2, // Center of the screen vertically
         );
 
         return AnimatedSmiley(
@@ -62,14 +62,15 @@ class SmileyFaceThrower {
           smileyText: smileyText,
           selectedFont: selectedFont,
           descriptionText: descriptionText,
-          onEnd: () =>
-              removeOverlay.call(), // Use the callable class for removal
+          onEnd: () => removeOverlay.call(),
+          duration: Duration(
+              seconds:
+                  random.nextInt(3) + 5), // Randomize between 5 to 7 seconds
         );
       },
     );
 
-    removeOverlay.overlayEntry =
-        overlayEntry; // Assign the overlayEntry after it's created
+    removeOverlay.overlayEntry = overlayEntry;
     Overlay.of(context).insert(overlayEntry);
   }
 }
@@ -89,6 +90,7 @@ class AnimatedSmiley extends StatefulWidget {
   final String selectedFont;
   final String descriptionText; // New parameter for description text
   final VoidCallback onEnd;
+  final Duration duration;
 
   const AnimatedSmiley({
     super.key,
@@ -98,6 +100,7 @@ class AnimatedSmiley extends StatefulWidget {
     required this.selectedFont,
     required this.descriptionText, // Initialize the descriptionText
     required this.onEnd,
+    required this.duration, // Accept duration
   });
 
   @override
@@ -153,11 +156,8 @@ class AnimatedSmileyState extends State<AnimatedSmiley>
                       child: Text(
                         widget.smileyText,
                         style: TextStyle(
-                          fontStyle: FontStyle.normal,
-
-                          backgroundColor: Colors.transparent,
                           decoration: TextDecoration.none,
-                          color: Colors.transparent,
+
                           fontSize: _sizeAnimation.value,
                           // Not applying the selected font to the emoji
                         ),
@@ -168,14 +168,16 @@ class AnimatedSmileyState extends State<AnimatedSmiley>
                 Padding(
                   padding: const EdgeInsets.only(
                       top: 4.0), // Padding between the icon and description
-                  child: Text(
+                  child: AutoSizeText(
+                    minFontSize: 18,
+                    maxFontSize: 23,
                     widget
                         .descriptionText, // Use the randomly selected description text
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       decoration: TextDecoration.none,
                       backgroundColor: Colors.transparent,
-                      fontSize: 23, // Adjust based on your preference
+                      fontSize: 20, // Adjust based on your preference
                       fontFamily: widget
                           .selectedFont, // Apply the selected font only to the description
                     ),

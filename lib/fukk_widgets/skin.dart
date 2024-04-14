@@ -7,6 +7,7 @@ class Skin {
   final Color specialTextColor;
   final Color buttonColor;
   final Color buttonTextColor;
+  final Color overlayButtonColor1;
   final BoxDecoration decoration;
   final Color textColorSwitchTrue; // Color when switch condition is true
   final Color textColorSwitchFalse; // Color when switch condition is false
@@ -14,6 +15,7 @@ class Skin {
   bool isAvailable; // Mark if the skin is available based on inventory
 
   Skin({
+    required this.overlayButtonColor1,
     required this.backgroundColor,
     required this.prizePoolTextColor,
     required this.textColor,

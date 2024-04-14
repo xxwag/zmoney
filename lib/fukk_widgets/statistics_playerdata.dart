@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:games_services/games_services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -204,18 +205,33 @@ class PlayerDataWidgetState extends State<PlayerDataWidget> {
       children: [
         _buildAmountRow(title, amount,
             isCurrency: isCurrency, leadingIcon: leadingIcon),
-        const Padding(
+        Padding(
           padding: EdgeInsets.only(top: 8.0),
-          child: Text(
-            "current revenue + your score * your total win amount",
-            style: TextStyle(
-              fontFamily: 'Proxima',
-              fontSize: 12, // Adjust the size as needed
-              fontStyle:
-                  FontStyle.italic, // Use italic for the explanation if desired
-              color: Colors
-                  .grey, // Use a subtle color to indicate this is an explanation
-            ),
+          child: FutureBuilder<String>(
+            future: translator.translate(
+                "**current revenue + your score * your total win amount"), // Request translation for this text
+            builder: (context, snapshot) {
+              // Use AutoSizeText with translated text if available
+              return SizedBox(
+                width: double.infinity,
+                child: AutoSizeText(
+                  snapshot.hasData
+                      ? snapshot.data!
+                      : '', // Display translated text if available, else empty string
+                  maxLines: 1,
+                  minFontSize: 5,
+                  maxFontSize: 15,
+                  style: TextStyle(
+                    fontFamily: 'Proxima',
+                    fontSize: 12, // Adjust the size as needed
+                    fontStyle: FontStyle
+                        .italic, // Use italic for the explanation if desired
+                    color: Colors
+                        .grey, // Use a subtle color to indicate this is an explanation
+                  ),
+                ),
+              );
+            },
           ),
         ),
       ],
@@ -396,9 +412,27 @@ class _StatisticsFloatingButtonState extends State<StatisticsFloatingButton>
 
   @override
   Widget build(BuildContext context) {
-    return FloatingActionButton(
-      onPressed: () => _toggleOverlay(context),
-      child: Icon(isOverlayVisible ? Icons.close : Icons.bar_chart),
+    return Container(
+      width: 80, // Specify the width
+      height: 80, // Specify the height
+      child: FloatingActionButton(
+        onPressed: () => _toggleOverlay(context),
+        child: Padding(
+          padding: const EdgeInsets.only(
+              left: 22.0, top: 22.0), // Adjust padding as needed
+          child: Align(
+            alignment:
+                Alignment.topLeft, // Aligns the icon to the top-left corner
+            child: Icon(isOverlayVisible ? Icons.close : Icons.bar_chart,
+                size: 30), // You can adjust the icon size too
+          ),
+        ),
+        // Customizing the shape
+        shape: RoundedRectangleBorder(
+          borderRadius:
+              BorderRadius.all(Radius.circular(50)), // Adjusted roundness
+        ),
+      ),
     );
   }
 

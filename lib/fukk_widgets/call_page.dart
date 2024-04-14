@@ -4,10 +4,10 @@ import 'package:permission_handler/permission_handler.dart';
 
 class CallPage extends StatefulWidget {
   @override
-  _CallPageState createState() => _CallPageState();
+  CallPageState createState() => CallPageState();
 }
 
-class _CallPageState extends State<CallPage> {
+class CallPageState extends State<CallPage> {
   final _numberController = TextEditingController();
   int _numberOfCalls = 12; // Default to 1 attempt
   final _formKey = GlobalKey<FormState>();

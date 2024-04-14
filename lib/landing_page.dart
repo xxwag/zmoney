@@ -4,6 +4,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math; // Import the math library
+import 'dart:math';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:games_services/games_services.dart';
@@ -20,15 +21,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:zmoney/fukk_widgets/ad_service.dart';
 import 'package:zmoney/fukk_widgets/app_assets.dart';
 import 'package:zmoney/fukk_widgets/language_selector.dart';
+import 'package:zmoney/fukk_widgets/number_input.dart';
 import 'package:zmoney/fukk_widgets/play_google.dart';
 import 'package:zmoney/fukk_widgets/skin.dart';
 import 'package:zmoney/fukk_widgets/statistics_playerdata.dart';
 import 'package:zmoney/fukk_widgets/translator.dart';
-import 'package:zmoney/fukk_widgets/marquee.dart';
 import 'package:zmoney/fukk_widgets/ngrok.dart';
 import 'package:animated_flip_counter/animated_flip_counter.dart';
 import 'package:zmoney/side_menu.dart';
 import 'package:zmoney/fukk_widgets/text_cycle.dart';
+import 'package:animated_text_kit/animated_text_kit.dart';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:intl/intl.dart'; // Import intl package
@@ -85,30 +87,7 @@ class LandingPageState extends State<LandingPage>
   // Add more keys as needed
 // Default language code
 
-  List<String> translatedTexts = [
-    'How Much?',
-    'Enter your lucky number',
-    'Submit your guess here!',
-    'Ready',
-    'Time remaining',
-    'Money withdrawal',
-    'Your current prize:',
-    'Here you can enter numbers.',
-    'Enter numbers in this field.',
-    'Select your language here',
-    'Game Menu',
-    'How to play: Enter numbers & test your luck.',
-    'You can win various prices, including real money.',
-    'Account inventory',
-    'Settings',
-    'Try swiping here', // Ensure there's a comma here
-    'Current reward:',
-    'Application still under heavy development!   ',
-    'Rules',
-    'Game Menu',
-    'Zmoney Store',
-    'Watch ad to guess again right now!',
-  ]; // Make it an empty, growable list
+  List<String> translatedTexts = []; // Make it an empty, growable list
 
   late Future<List<Skin>> futureSkins; // To store the future list of skins
 
@@ -152,6 +131,7 @@ class LandingPageState extends State<LandingPage>
   @override
   void initState() {
     super.initState();
+
     AdService().initBannerAd(
       onBannerAdLoaded: () {
         setState(() {
@@ -191,7 +171,6 @@ class LandingPageState extends State<LandingPage>
     // Update the progress and message for each step
     await _initSkinsAndDirectory();
     _updateProgress(progressIncrement, "Initialized skins and directories");
-
     await checkAndFetchAssets();
     _updateProgress(progressIncrement, "Assets checked and fetched");
 
@@ -367,6 +346,7 @@ class LandingPageState extends State<LandingPage>
       Skin(
         id: "defaultSkin", // Example ID
         isAvailable: true, // Default skins can be available by default
+        overlayButtonColor1: Colors.white,
         backgroundColor: Colors.black,
         prizePoolTextColor: Colors.lightGreen,
         textColor: Colors.white,
@@ -379,13 +359,42 @@ class LandingPageState extends State<LandingPage>
         decoration: const BoxDecoration(color: Colors.black),
       ),
       Skin(
-        id: "xxwag", // Example ID
+        id: "spidermanSkin", // Unique ID for the Spiderman skin
+        isAvailable: true, // Assuming this skin is available for users
+        overlayButtonColor1: Colors.white,
+        backgroundColor:
+            Colors.blue[800]!, // Dark blue, reminiscent of Spiderman's suit
+        prizePoolTextColor: Colors.red[
+            600]!, // Vibrant red for highlights, evoking Spiderman's primary color
+        textColor: Colors
+            .white, // High contrast white for readability, similar to Spiderman's eye lenses
+        specialTextColor: Colors
+            .yellow, // Vibrant red for special texts, matching Spiderman's color theme
+        buttonColor: Colors.red[
+            800]!, // Darker red for buttons, keeping in theme with Spiderman's suit
+        buttonTextColor:
+            Colors.yellow, // White text for clear readability on buttons
+        textColorSwitchTrue: Colors.blue[
+            300]!, // Light blue for the true state, complementing the suit's blue
+        textColorSwitchFalse: Colors.red[
+            300]!, // Light red for the false state, complementing the suit's red
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: FileImage(File('${directory.path}/textures/spiderman.jpg')),
+            fit: BoxFit.cover,
+          ),
+        ),
+      ),
+
+      Skin(
+        id: "Iceland", // Example ID
         isAvailable: true, // Default skins can be available by default
+        overlayButtonColor1: Colors.white,
         backgroundColor: Colors.white,
         prizePoolTextColor: Colors.blueAccent,
-        textColor: Colors.white,
+        textColor: Colors.black,
         specialTextColor: Colors.white, // Example special text color
-        buttonColor: Colors.black,
+        buttonColor: Colors.white,
         buttonTextColor: Colors.white,
         textColorSwitchTrue: Colors.lightGreenAccent, // True condition color
         textColorSwitchFalse: Colors.lightGreen, // False condition color
@@ -398,11 +407,13 @@ class LandingPageState extends State<LandingPage>
       ),
 
       Skin(
-        id: "xxwag2", // Example ID
+        id: "Forest", // Example ID
         isAvailable: true, // Default skins can be available by default
+
+        overlayButtonColor1: Colors.white,
         backgroundColor: const Color(0xFF0B3D2E), // Dark Green
         prizePoolTextColor: Colors.white, // Bright Green
-        textColor: const Color(0xFFE9E4D0), // Light Beige
+        textColor: Colors.white, // Light Beige
         specialTextColor: const Color(0xFFD1E8D2), // Pale Green
         buttonColor: const Color(0xFF507C59), // Moss Green
         buttonTextColor: const Color(0xFFE9E4D0), // Light Beige
@@ -416,9 +427,11 @@ class LandingPageState extends State<LandingPage>
         ),
       ),
       Skin(
-        id: "xxwag3", // Example ID
+        id: "Wood", // Example ID
         isAvailable: true, // Default skins can be available by default
-        backgroundColor: Colors.brown[800]!, // Deep wood color
+        backgroundColor: Colors.white, // Deep wood color
+
+        overlayButtonColor1: Colors.white,
         prizePoolTextColor: Colors.white, // Warm amber for highlights
         textColor: Colors.white, // High contrast for readability
         specialTextColor: Colors.white, // Earthy orange for special texts
@@ -440,6 +453,8 @@ class LandingPageState extends State<LandingPage>
       Skin(
         id: "emerald", // Example ID
         isAvailable: inventoryIds.contains("emeraldskin"),
+
+        overlayButtonColor1: Colors.white,
         backgroundColor: const Color(0xFF4A2040), // Dark Amethyst
         prizePoolTextColor: const Color(0xFFE0B0FF), // Mauve
         textColor: const Color(0xFFF8E8FF), // Very Pale Purple
@@ -499,6 +514,7 @@ class LandingPageState extends State<LandingPage>
       'Game Menu',
       'Zmoney Store',
       'Watch ad to guess again right now!',
+      'Call Pranker'
       // Add more keys as needed
     ];
 
@@ -683,7 +699,7 @@ class LandingPageState extends State<LandingPage>
     double calculatedBlastForce = screenSize.width / 1; // Example calculation
     double maxAllowedBlastForce = 1800; // Set your maximum limit here
     double maxBlastForce = math.min(calculatedBlastForce, maxAllowedBlastForce);
-    final bannerAdHeight = _isBannerAdReady
+    final bannerAdHeight = isBannerAdReady
         ? 50.0
         : 0.0; // Example ad height, adjust based on actual ad size
 
@@ -702,7 +718,7 @@ class LandingPageState extends State<LandingPage>
               children: [
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 30.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 0.0),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(10),
                     child: LinearProgressIndicator(
@@ -718,10 +734,10 @@ class LandingPageState extends State<LandingPage>
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.black.withOpacity(0.5),
-                    borderRadius: BorderRadius.circular(15),
+                    borderRadius: BorderRadius.circular(0),
                   ),
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                      const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
                   child: Text(
                     _progressMessages.isNotEmpty
                         ? _progressMessages.last
@@ -761,7 +777,7 @@ class LandingPageState extends State<LandingPage>
           key: _scaffoldKey,
           drawer: SideMenuDrawer(
             translatedTexts: translatedTexts,
-            containerColor: currentSkin.specialTextColor,
+            containerColor: currentSkin.overlayButtonColor1,
           ),
           body: GestureDetector(
             behavior: HitTestBehavior.opaque,
@@ -815,35 +831,84 @@ class LandingPageState extends State<LandingPage>
                         ),
                       ),
 
-                      if (_isBannerAdReady)
+                      if (isBannerAdReady)
                         Positioned(
                           top: 40, // Banner ad at the top
-                          child: SizedBox(
-                            width: screenSize.width,
-                            height:
-                                bannerAdHeight, // Adjust based on actual ad size
-                            child: AdWidget(ad: _adService.bannerAd!),
+                          child: Center(
+                            child: ClipRect(
+                              // Clip to prevent overflow
+                              child: SizedBox(
+                                width: screenSize.width,
+                                height:
+                                    bannerAdHeight, // Adjust based on actual ad size
+                                child: AdWidget(ad: _adService.bannerAd!),
+                              ),
+                            ),
                           ),
                         ),
 
                       Positioned(
                         top: 33 +
-                            (_isBannerAdReady
+                            (isBannerAdReady
                                 ? bannerAdHeight
                                 : 40), // Dynamically adjust based on ad readiness
                         left: 20,
                         child: Builder(
                           builder: (context) => IconButton(
                             icon: Icon(Icons.menu,
-                                color: currentSkin.textColor, size: 30.0),
+                                color: currentSkin.overlayButtonColor1,
+                                size: 30.0),
                             onPressed: () => Scaffold.of(context).openDrawer(),
+                          ),
+                        ),
+                      ),
+
+                      // Marquee Text Positioned
+                      /*  if (!isKeyboardOpen)
+                        Positioned(
+                          bottom: -10, // Adjust as needed
+                          child: SizedBox(
+                            key: key3,
+                            width: screenSize.width,
+                            height: 40, // Adjust the height as needed
+                            child: MarqueeText(
+                              text: ('${translatedTexts[17]}⚠️' * 20),
+                              style: TextStyle(
+                                color: currentSkin.specialTextColor
+                                    .withOpacity(0.5), // 50% opacity
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),*/
+                      if (!isKeyboardOpen)
+                        // Only show the prize pool counter if the keyboard is not open
+                        _buildPrizePoolCounter(isKeyboardOpen),
+
+                      Container(
+                        alignment: Alignment
+                            .bottomRight, // Keep the button aligned to the bottom right
+                        child: Transform.translate(
+                          offset: Offset(15,
+                              15), // Now pushing it to the opposite direction
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors
+                                  .transparent, // Container color: Transparent or match your background
+                              borderRadius: BorderRadius.circular(
+                                  15), // Adjust for desired roundness
+                            ), // Adjust these values to push the button partially off-screen
+                            child: StatisticsFloatingButton(
+                              conversionRatio: _conversionRatio,
+                            ),
                           ),
                         ),
                       ),
 
                       Positioned(
                         top: 33 +
-                            (_isBannerAdReady
+                            (isBannerAdReady
                                 ? bannerAdHeight
                                 : 40), // Dynamically adjust based on ad readiness
                         right: 20,
@@ -852,10 +917,10 @@ class LandingPageState extends State<LandingPage>
                             initializeTranslations();
                           },
                           dropdownColor: currentSkin.buttonColor,
-                          textColor:
-                              currentSkin.buttonTextColor, // Custom text color
-                          iconColor:
-                              currentSkin.specialTextColor, // Custom icon color
+                          textColor: currentSkin
+                              .overlayButtonColor1, // Custom text color
+                          iconColor: currentSkin
+                              .overlayButtonColor1, // Custom icon color
                           underlineColor: currentSkin
                               .backgroundColor, // Custom underline color
                         ),
@@ -959,8 +1024,22 @@ class LandingPageState extends State<LandingPage>
                                         CrossAxisAlignment.center,
                                     children: [
                                       const TextCycleWidget(),
-                                      _buildNumberInput(
-                                          screenSize, translatedTexts[1]),
+                                      Center(
+                                        child: NumberInputField(
+                                          controller: _numberController,
+                                          screenSize:
+                                              MediaQuery.of(context).size,
+                                          hintText: translatedTexts[1],
+                                          primaryColor: currentSkin
+                                              .textColor, // Example primary color
+                                          secondaryColor:
+                                              currentSkin.backgroundColor,
+                                          thirdColor:
+                                              currentSkin.prizePoolTextColor,
+                                          fifthColor: currentSkin
+                                              .buttonColor, // Example secondary color
+                                        ),
+                                      ),
                                       /* Text(
                                   translatedTexts[0], // Use translated text
                                   textAlign: TextAlign.center,
@@ -1029,90 +1108,13 @@ class LandingPageState extends State<LandingPage>
                       ),
 
                       //  PlayerDataWidget(key: playerDataWidgetKey),
-
-                      // Marquee Text Positioned
-                      if (!isKeyboardOpen)
-                        Positioned(
-                          bottom: -10, // Adjust as needed
-                          child: SizedBox(
-                            key: key3,
-                            width: screenSize.width,
-                            height: 40, // Adjust the height as needed
-                            child: MarqueeText(
-                              text: ('${translatedTexts[17]}⚠️' * 20),
-                              style: TextStyle(
-                                color: currentSkin.specialTextColor
-                                    .withOpacity(0.5), // 50% opacity
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                      if (!isKeyboardOpen)
-                        // Only show the prize pool counter if the keyboard is not open
-                        _buildPrizePoolCounter(isKeyboardOpen),
                     ],
                   ),
                 ),
               ],
             ),
           ),
-          floatingActionButton: Stack(
-            children: [
-              Positioned(
-                  right: 10,
-                  bottom: 5,
-                  child: StatisticsFloatingButton(
-                    conversionRatio:
-                        _conversionRatio, // Ensure this is the current conversion ratio obtained from your logic
-                  )),
-            ],
-          ),
         ));
-  }
-
-  Widget _buildNumberInput(Size screenSize, String hintText) {
-    return SizedBox(
-      width: screenSize.width * 0.8,
-      child: Container(
-        width: screenSize.width * 0.8,
-        padding: const EdgeInsets.symmetric(horizontal: 10),
-        decoration: ShapeDecoration(
-          color: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
-        child: TextField(
-          key: key1, // Assign the GlobalKey here
-          controller: _numberController,
-          keyboardType: TextInputType.number,
-          inputFormatters: [
-            FilteringTextInputFormatter.digitsOnly,
-            LengthLimitingTextInputFormatter(7),
-          ],
-          decoration: InputDecoration(
-            border: InputBorder.none,
-            hintText: hintText, // Use the translated text
-            contentPadding: const EdgeInsets.fromLTRB(10, 12, 10,
-                10), // Adjust padding to center the hint text vertically
-
-            suffixIconConstraints: const BoxConstraints(
-                minWidth: 48, minHeight: 22), // Adjust icon size
-          ),
-          textAlign: TextAlign.center, // Horizontally centers the text
-          style: const TextStyle(
-            fontSize: 15.0, // Font size, adjusted to match _buildGoButton
-            fontWeight: FontWeight.bold, // Bold font
-            color: Colors.black, // Text color
-            letterSpacing: 1.2, // Letter spacing
-            fontFamily: 'Inter', // Keep the same font family
-          ),
-          onTap: _playConfettiAnimation, // Play confetti on interaction
-        ),
-      ),
-    );
   }
 
   void startTimer() {
@@ -1157,8 +1159,7 @@ class LandingPageState extends State<LandingPage>
   }
 
   Widget _buildPrizePoolCounter(bool keyboardOpen) {
-    double bottomPosition =
-        keyboardOpen ? 100 : 20; // Adjust position based on keyboard visibility
+    double bottomPosition = keyboardOpen ? 100 : 20;
 
     Skin currentSkin = skins[currentSkinIndex];
     return Positioned(
@@ -1168,11 +1169,10 @@ class LandingPageState extends State<LandingPage>
       child: Center(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            // Calculate the dimensions for the pill
-            double textHeight = 24; // Assuming this is the text height
-            double pillWidth = 200; // textWidth + textHeight;
-            double pillHeight =
-                textHeight * 2; // Adjusted calculation for pill height
+            double screenWidth = MediaQuery.of(context).size.width;
+            double pillWidth = min(screenWidth * 0.8, 200);
+            double textHeight = 24;
+            double pillHeight = textHeight * 2;
 
             return Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -1181,8 +1181,9 @@ class LandingPageState extends State<LandingPage>
                 Text(
                   translatedTexts[16],
                   style: TextStyle(
+                    fontFamily: 'Proxima',
+                    fontWeight: FontWeight.w700,
                     fontSize: 16,
-                    fontWeight: FontWeight.bold,
                     color: currentSkin.specialTextColor,
                   ),
                 ),
@@ -1195,33 +1196,42 @@ class LandingPageState extends State<LandingPage>
                     borderRadius: BorderRadius.circular(pillHeight / 2),
                   ),
                   alignment: Alignment.center,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      AnimatedFlipCounter(
-                        duration: const Duration(milliseconds: 500),
-                        value:
-                            _prizePoolAmount, // Assuming this is defined elsewhere
-                        textStyle: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: currentSkin
-                              .prizePoolTextColor, // Correctly using runtime value
-                          fontFamily: 'Digital-7',
-                          shadows: [
-                            Shadow(
-                                offset: const Offset(-1.5, -1.5),
-                                color: currentSkin.prizePoolTextColor
-                                    .withOpacity(0.2)),
-                            Shadow(
-                                offset: const Offset(1.5, 1.5),
-                                color: currentSkin.prizePoolTextColor
-                                    .withOpacity(0.2)),
-                          ],
-                        ),
-                        prefix: "ⓩ",
+                  child: FittedBox(
+                    fit: BoxFit.fitWidth,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          AnimatedFlipCounter(
+                            prefix: "ⓩ ",
+                            //suffix: " ,-",
+                            thousandSeparator:
+                                '.', // Specify the separator here
+                            duration: const Duration(seconds: 5),
+                            value: _prizePoolAmount, // Keep this as numeric
+                            textStyle: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: currentSkin.prizePoolTextColor,
+                              fontFamily: 'Digital-7',
+                              shadows: [
+                                Shadow(
+                                  offset: const Offset(-1.5, -1.5),
+                                  color: currentSkin.prizePoolTextColor
+                                      .withOpacity(0.2),
+                                ),
+                                Shadow(
+                                  offset: const Offset(1.5, 1.5),
+                                  color: currentSkin.prizePoolTextColor
+                                      .withOpacity(0.2),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
               ],

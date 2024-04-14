@@ -98,15 +98,18 @@ class _LanguageSelectorWidgetState extends State<LanguageSelectorWidget> {
         // Inform about the language change
         widget.onLanguageChanged(languageCode);
       } catch (e) {
-        // Catching a general exception if something goes wrong
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content:
-              Text('Failed to update language. Please try again. Error: $e'),
-        ));
+        if (mounted) {
+          // Catching a general exception if something goes wrong
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content:
+                Text('Failed to update language. Please try again. Error: $e'),
+          ));
+        }
       } finally {
         await Future.delayed(const Duration(seconds: 5));
-
-        _hideLoadingDialog(context); // Ensure loading dialog is closed
+        if (mounted) {
+          _hideLoadingDialog(context); // Ensure loading dialog is closed
+        }
         if (mounted) {
           setState(() {
             _isLocked = false; // Unlock the language selector
@@ -170,7 +173,7 @@ class _LanguageSelectorWidgetState extends State<LanguageSelectorWidget> {
           ),
         );
       }).toList(),
-      dropdownColor: widget.dropdownColor,
+      dropdownColor: widget.dropdownColor?.withOpacity(0.5),
     );
   }
 }

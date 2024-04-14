@@ -36,6 +36,7 @@ class SideMenuDrawerState extends State<SideMenuDrawer> {
   @override
   void initState() {
     super.initState();
+    print(widget.translatedTexts);
     containerColor = widget.containerColor; // Initialization
     // Access the singleton VideoPlayerManager instance
     VideoPlayerManager().play();
@@ -93,7 +94,7 @@ class SideMenuDrawerState extends State<SideMenuDrawer> {
                   VideoPlayer(videoPlayerController)
                 else
                   Container(
-                    color: containerColor,
+                    color: widget.containerColor,
                     child: const Center(
                         child:
                             CircularProgressIndicator()), // Show loading spinner
@@ -159,8 +160,9 @@ class SideMenuDrawerState extends State<SideMenuDrawer> {
           ),
           ListTile(
             leading: const Icon(Icons.phone),
-            title: Text(widget
-                .translatedTexts[5]), // Assuming this is the balance list title
+
+            title: Text(widget.translatedTexts[
+                22]), // Assuming this is the balance list title
             onTap: () {
               // Navigate to MoneyWithdrawalScreen
               Navigator.push(

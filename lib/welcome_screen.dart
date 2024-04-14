@@ -711,11 +711,13 @@ class WelcomeScreenState extends State<WelcomeScreen>
           final Response playerDataResponse =
               await verifyAndRetrieveData(jwtToken);
           if (playerDataResponse.statusCode == 200) {
-            Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (context) => const LandingPage()));
-            await _showSnackBar("Sign-in successful.");
+            if (mounted) {
+              Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (context) => const LandingPage()));
+              await _showSnackBar("Sign-in successful.");
 
-            signInSuccess = true;
+              signInSuccess = true;
+            }
           } else {
             await _showSnackBar("Error verifying token and retrieving data.");
           }
@@ -848,10 +850,12 @@ class WelcomeScreenState extends State<WelcomeScreen>
             final Response playerDataResponse =
                 await verifyAndRetrieveData(jwtToken);
             if (playerDataResponse.statusCode == 200) {
-              Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (context) => const LandingPage()));
+              if (mounted) {
+                Navigator.of(context).pushReplacement(MaterialPageRoute(
+                    builder: (context) => const LandingPage()));
 
-              await _showSnackBar("Sign-in successful.");
+                await _showSnackBar("Sign-in successful.");
+              }
             } else {
               await _showSnackBar("Error verifying token and retrieving data.");
               _isAuthenticating = false; // Unlock UI
@@ -994,9 +998,11 @@ class WelcomeScreenState extends State<WelcomeScreen>
               final Response playerDataResponse =
                   await verifyAndRetrieveData(jwtToken);
               if (playerDataResponse.statusCode == 200) {
-                Navigator.of(context).pushReplacement(MaterialPageRoute(
-                    builder: (context) => const LandingPage()));
-                await _showSnackBar("GitHub Sign-in successful.");
+                if (mounted) {
+                  Navigator.of(context).pushReplacement(MaterialPageRoute(
+                      builder: (context) => const LandingPage()));
+                  await _showSnackBar("GitHub Sign-in successful.");
+                }
               } else {
                 await _showSnackBar(
                     "Error verifying token and retrieving data.");
