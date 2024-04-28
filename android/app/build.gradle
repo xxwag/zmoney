@@ -63,7 +63,8 @@ android {
         minSdkVersion flutter.minSdkVersion
         compileSdkVersion 34
         targetSdkVersion 33
-        versionCode 37 // Increment this number manually
+        
+        versionCode 38 // Increment this number manually
         versionName "1.0.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         multiDexEnabled true
@@ -90,6 +91,10 @@ android {
 
    buildTypes {
         release {
+             
+              minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.release
             // Other release configurations...
         }
@@ -121,8 +126,7 @@ dependencies {
 
     implementation 'com.android.billingclient:billing:6.2.0'
 
-    implementation 'com.android.support:multidex:1.0.3'
- 
+     implementation 'androidx.multidex:multidex:2.0.1'
     implementation 'com.google.android.material:material:1.9.0'
     implementation 'com.google.android.gms:play-services-gcm:15.0.1'
     // Correct place for Google Mobile Ads SDK dependency
